@@ -468,13 +468,6 @@
   <section id="dashboard-section" class="hidden py-16 px-6 bg-gray-900">
     <div class="max-w-7xl mx-auto flex flex-col md:flex-row">
       <div class="dashboard-sidebar p-6 md:block hidden">
-        <!-- Logo Section -->
-        <div class="logo-container">
-            <a href="#" id="sidebar-logo-link" class="flex items-center">
-                <img src="faviconfollowbuddy.png" alt="FollowBuddy Logo" class="rounded-lg">
-                <span>FollowBuddy</span>
-            </a>
-        </div>
         <nav>
           <ul>
             <li class="mb-4">
@@ -563,6 +556,19 @@
           </div>
           <p class="text-gray-500 text-sm mt-4 text-center">Your User ID: <span id="user-id-display" class="font-mono text-gray-700 break-all">Loading...</span></p>
         </div>
+
+        <!-- New Buttons for Opening Users by Color -->
+        <div class="flex justify-center space-x-4 mt-8">
+            <button id="open-green-users-btn" class="bg-green-600 text-white px-6 py-3 rounded-lg shadow hover:bg-green-700 transition-colors duration-200 font-medium">
+                Open Green Users
+            </button>
+            <button id="open-orange-users-btn" class="bg-orange-600 text-white px-6 py-3 rounded-lg shadow hover:bg-orange-700 transition-colors duration-200 font-medium">
+                Open Orange Users
+            </button>
+            <button id="open-red-users-btn" class="bg-red-600 text-white px-6 py-3 rounded-lg shadow hover:bg-red-700 transition-colors duration-200 font-medium">
+                Open Red Users
+            </button>
+        </div>
       </div>
     </div>
   </section>
@@ -570,13 +576,6 @@
   <section id="analytics-section" class="hidden py-16 px-6 bg-gray-900">
     <div class="max-w-7xl mx-auto flex flex-col md:flex-row">
         <div class="dashboard-sidebar p-6 md:block hidden">
-            <!-- Logo Section -->
-            <div class="logo-container">
-                <a href="#" id="sidebar-logo-link-analytics" class="flex items-center">
-                    <img src="faviconfollowbuddy.png" alt="FollowBuddy Logo" class="rounded-lg">
-                    <span>FollowBuddy</span>
-                </a>
-            </div>
             <nav>
                 <ul>
                     <li class="mb-4">
@@ -919,8 +918,10 @@
     let dataUploadSelectorDashboard; // New: Data upload selector for dashboard
     let dataUploadSelectorAnalytics; // New: Data upload selector for analytics
 
-    let sidebarLogoLink; // New: Sidebar logo link
-    let sidebarLogoLinkAnalytics; // New: Sidebar logo link for analytics
+    // New button elements
+    let openGreenUsersBtn;
+    let openOrangeUsersBtn;
+    let openRedUsersBtn;
 
     // Function to initialize Firebase
     async function initializeFirebaseApp() {
@@ -1073,8 +1074,9 @@
                 let unfollowedAccounts = [];
                 let newFollowerAccounts = []; // To store the list of new followers
 
-                if (currentIndex > 0) {
-                    const previousUploadMetadata = allUserUploadsMetadata[currentIndex - 1];
+                // Only calculate analytics if there is a previous upload to compare against
+                if (currentIndex < allUserUploadsMetadata.length - 1) { // Check if there's an older upload
+                    const previousUploadMetadata = allUserUploadsMetadata[currentIndex + 1]; // This is the older upload
                     const previousUploadDocRef = doc(dbInstance, `artifacts/${appId}/users/${currentUserId}/userUploads`, previousUploadMetadata.id);
                     const prevDocSnap = await getDoc(previousUploadDocRef);
 
@@ -1306,6 +1308,65 @@
         dashboardSection.scrollIntoView({ behavior: 'smooth' });
     }
 
+    // Function to find and load the upload with the most analytics change
+    async function findAndLoadBestAnalyticsData() {
+        if (!currentUserId || !dbInstance || allUserUploadsMetadata.length < 2) {
+            // Not enough data for analytics comparison, load latest (which will show 0 changes)
+            await loadLatestData();
+            return;
+        }
+
+        let bestUploadIdForAnalytics = allUserUploadsMetadata[0].id; // Default to the very latest upload
+        let maxTotalChange = -1;
+
+        // Iterate through uploads, considering each as the "current" for which we want to see analytics
+        // The loop goes up to the second to last element, because we need a "next" element (older) for comparison.
+        for (let i = 0; i < allUserUploadsMetadata.length - 1; i++) {
+            const currentUploadMetadata = allUserUploadsMetadata[i]; // This is the newer timestamp
+            const olderUploadMetadata = allUserUploadsMetadata[i + 1]; // This is the older timestamp
+
+            // Fetch full data for both current and older uploads
+            const currentUploadDocRef = doc(dbInstance, `artifacts/${appId}/users/${currentUserId}/userUploads`, currentUploadMetadata.id);
+            const olderUploadDocRef = doc(dbInstance, `artifacts/${appId}/users/${currentUserId}/userUploads`, olderUploadMetadata.id);
+
+            const [currentDocSnap, olderDocSnap] = await Promise.all([
+                getDoc(currentUploadDocRef),
+                getDoc(olderUploadDocRef)
+            ]);
+
+            if (currentDocSnap.exists() && olderDocSnap.exists()) {
+                const currentData = currentDocSnap.data();
+                const olderData = olderDocSnap.data();
+
+                const currentFollowersSet = new Set(currentData.followersList);
+                const olderFollowersSet = new Set(olderData.followersList);
+
+                // Calculate unfollowed (lost followers) from older to current
+                const unfollowedCount = Array.from(olderFollowersSet).filter(
+                    follower => !currentFollowersSet.has(follower)
+                ).length;
+
+                // Calculate new followers (gained followers) from older to current
+                const newFollowersCount = Array.from(currentFollowersSet).filter(
+                    follower => !olderFollowersSet.has(follower)
+                ).length;
+
+                const totalChange = unfollowedCount + newFollowersCount;
+
+                if (totalChange > maxTotalChange) {
+                    maxTotalChange = totalChange;
+                    bestUploadIdForAnalytics = currentUploadMetadata.id; // The ID of the newer upload in the pair
+                }
+            }
+        }
+
+        // Load the data for the best period found
+        await loadDataForUpload(bestUploadIdForAnalytics);
+        // Ensure the selector reflects the chosen upload
+        dataUploadSelectorAnalytics.value = bestUploadIdForAnalytics;
+        dataUploadSelectorDashboard.value = bestUploadIdForAnalytics;
+    }
+
     // Function to show analytics and hide other sections
     function showAnalytics() {
         heroSection.classList.add('hidden');
@@ -1315,14 +1376,8 @@
         dashboardSection.classList.add('hidden'); // Hide dashboard section
         analyticsSection.classList.remove('hidden'); // Show analytics section
 
-        // Ensure analytics displays current data
-        if (currentFileData) {
-            // Analytics metrics are updated when data is loaded via loadDataForUpload
-            // No need to re-calculate here, just ensure they are displayed
-            // renderUnfollowedAccountsList and renderNewFollowersList are also called by updateAnalyticsMetrics
-        } else {
-            updateAnalyticsMetrics(0, 0, [], []);
-        }
+        // Call the new function to find and load best analytics data
+        findAndLoadBestAnalyticsData();
         analyticsSection.scrollIntoView({ behavior: 'smooth' });
     }
 
@@ -1799,6 +1854,36 @@
         renderAccounts(filteredAccounts);
     }
 
+    // New function to open users by color category
+    function openUsersByColor(colorCategory) {
+        if (!allNonFollowers || allNonFollowers.length === 0) {
+            showAlert('No non-followers data available to open. Please upload your Instagram data first.', 'info');
+            return;
+        }
+
+        const usersToOpen = allNonFollowers.filter(account => {
+            if (!account.timestamp) return false;
+            const timeInfo = formatTimeDifference(account.timestamp);
+            return timeInfo.category === colorCategory;
+        });
+
+        if (usersToOpen.length === 0) {
+            showAlert(`No users found in the '${colorCategory}' category.`, 'info');
+            return;
+        }
+
+        let openedCount = 0;
+        usersToOpen.forEach(user => {
+            // Open in new tab, with a slight delay to avoid browser blocking pop-ups
+            setTimeout(() => {
+                window.open(`https://www.instagram.com/${user.username}/`, '_blank');
+            }, openedCount * 100); // 100ms delay between tabs
+            openedCount++;
+        });
+
+        showAlert(`Opening ${openedCount} ${colorCategory} users in new tabs. Please allow pop-ups.`, 'success');
+    }
+
 
     // Mobile Menu Toggle
     // These event listeners will be set up in window.onload
@@ -1833,7 +1918,7 @@
                     }
                 } else if (targetId === '#analytics-section') {
                     if (authInstance.currentUser) {
-                        await loadLatestData(); // Ensure latest data is loaded
+                        // Analytics now calls findAndLoadBestAnalyticsData internally
                         showAnalytics();
                     } else {
                         showAlert('Please log in to access the analytics.', 'info');
@@ -1859,7 +1944,7 @@
     const analyticsLinkClickHandler = async (e) => {
         e.preventDefault();
         if (authInstance.currentUser) {
-            await loadLatestData(); // Ensure latest data is loaded
+            // Analytics now calls findAndLoadBestAnalyticsData internally
             showAnalytics();
         } else {
             showAlert('Please log in to access the analytics.', 'info');
@@ -1971,8 +2056,11 @@
         dataUploadSelectorDashboard = document.getElementById('data-upload-selector-dashboard');
         dataUploadSelectorAnalytics = document.getElementById('data-upload-selector-analytics');
 
-        sidebarLogoLink = document.getElementById('sidebar-logo-link');
-        sidebarLogoLinkAnalytics = document.getElementById('sidebar-logo-link-analytics');
+        // Assign new button elements
+        openGreenUsersBtn = document.getElementById('open-green-users-btn');
+        openOrangeUsersBtn = document.getElementById('open-orange-users-btn');
+        openRedUsersBtn = document.getElementById('open-red-users-btn');
+
 
         // Now that elements are assigned, proceed with Firebase init and event listeners
         const firebaseInitialized = await initializeFirebaseApp();
@@ -2111,15 +2199,10 @@
         // Handle "Upload New Data" button click in dashboard (opens modal)
         uploadNewDataBtn.addEventListener('click', openUploadDataModal);
 
-        // Handle sidebar logo clicks
-        sidebarLogoLink.addEventListener('click', (e) => {
-            e.preventDefault();
-            showDashboard(); // Go to dashboard on logo click
-        });
-        sidebarLogoLinkAnalytics.addEventListener('click', (e) => {
-            e.preventDefault();
-            showDashboard(); // Go to dashboard on logo click from analytics sidebar
-        });
+        // Add event listeners for new "Open Users by Color" buttons
+        openGreenUsersBtn.addEventListener('click', () => openUsersByColor('green'));
+        openOrangeUsersBtn.addEventListener('click', () => openUsersByColor('orange'));
+        openRedUsersBtn.addEventListener('click', () => openUsersByColor('red'));
 
         // Initial render of accounts (will show "No data" message)
         renderAccounts([]);
