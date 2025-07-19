@@ -1621,7 +1621,7 @@
                     if (authInstance.currentUser) {
                         const userDocRef = doc(dbInstance, `artifacts/${appId}/users/${currentUserId}/instagramData/latest`);
                         try {
-                            const docSnap = await getDoc(userDocRef);
+                            const docSnap = await getDoc(userDocRef); // Await here
                             if (docSnap.exists() && docSnap.data().fileName) {
                                 currentFileData = docSnap.data();
                                 updateAnalyticsMetrics(currentFileData.unfollowedYouCount || 0, currentFileData.newFollowersCount || 0);
@@ -1668,25 +1668,30 @@
         if (authInstance.currentUser) {
             const userDocRef = doc(dbInstance, `artifacts/${appId}/users/${currentUserId}/instagramData/latest`);
             try {
-                const docSnap = getDoc(userDocRef); // Use getDoc directly
-                if (docSnap.exists() && docSnap.data().fileName) {
-                    currentFileData = docSnap.data();
-                    updateAnalyticsMetrics(currentFileData.unfollowedYouCount || 0, currentFileData.newFollowersCount || 0);
-                    heroSection.classList.add('hidden');
-                    featuresSection.classList.add('hidden');
-                    uploadSection.classList.add('hidden');
-                    pricingSection.classList.add('hidden');
-                    dashboardSection.classList.add('hidden');
-                    analyticsSection.classList.remove('hidden'); // Show analytics
-                    analyticsSection.scrollIntoView({ behavior: 'smooth' });
-                } else {
+                // Await here to ensure docSnap is a DocumentSnapshot
+                getDoc(userDocRef).then(docSnap => {
+                    if (docSnap.exists() && docSnap.data().fileName) {
+                        currentFileData = docSnap.data();
+                        updateAnalyticsMetrics(currentFileData.unfollowedYouCount || 0, currentFileData.newFollowersCount || 0);
+                        heroSection.classList.add('hidden');
+                        featuresSection.classList.add('hidden');
+                        uploadSection.classList.add('hidden');
+                        pricingSection.classList.add('hidden');
+                        dashboardSection.classList.add('hidden');
+                        analyticsSection.classList.remove('hidden'); // Show analytics
+                        analyticsSection.scrollIntoView({ behavior: 'smooth' });
+                    } else {
+                        showUploadSection(false);
+                        showAlert('Please upload your Instagram data to see the analytics.', 'info');
+                    }
+                }).catch(error => {
+                    console.error('Error fetching data for analytics link:', error);
+                    showAlert('Failed to load analytics data. Please try again.', 'error');
                     showUploadSection(false);
-                    showAlert('Please upload your Instagram data to see the analytics.', 'info');
-                }
+                });
             } catch (error) {
-                console.error('Error fetching data for analytics link:', error);
-                showAlert('Failed to load analytics data. Please try again.', 'error');
-                showUploadSection(false);
+                console.error('Error in analyticsLinkClickHandler try block:', error);
+                showAlert('An unexpected error occurred while trying to access analytics. Please try again.', 'error');
             }
         } else {
             showAlert('Please log in to access the analytics.', 'info');
