@@ -1,0 +1,1915 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>FollowBuddy Clone</title>
+
+  <!-- Google font -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet" />
+  <!-- Font Awesome for icons -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <!-- Tailwind CSS -->
+  <script src="https://cdn.tailwindcss.com"></script>
+  <!-- JSZip Library for ZIP file handling -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <style>
+    /* Custom CSS for Inter font and general body styles */
+    body {
+      font-family: 'Inter', sans-serif;
+      background: #1a202c; /* Dark background */
+      color: #e2e8f0; /* Light text color */
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+    /* Hide scrollbar for a cleaner look */
+    body::-webkit-scrollbar {
+      display: none;
+    }
+    body {
+      -ms-overflow-style: none;
+      /* IE and Edge */
+      scrollbar-width: none;
+      /* Firefox */
+    }
+    /* Custom styles for the file upload area */
+    .upload-area {
+      border: 2px dashed #4a5568; /* Darker slate-500 */
+      background-color: #2d3748; /* Darker slate-800 */
+      transition: all 0.2s ease-in-out;
+    }
+    .upload-area.drag-over {
+      background-color: #4a5568; /* Darker slate-700 */
+      border-color: #6366f1; /* Indigo-500 */
+    }
+    /* Custom modal styles */
+    .modal {
+        display: none; /* Hidden by default */
+        position: fixed; /* Stay in place */
+        z-index: 1000; /* Sit on top */
+        left: 0;
+        top: 0;
+        width: 100%; /* Full width */
+        height: 100%; /* Full height */
+        overflow: auto; /* Enable scroll if needed */
+        background-color: rgba(0,0,0,0.6); /* Darker overlay */
+        justify-content: center;
+        align-items: center;
+    }
+    .modal-content {
+        background-color: #2d3748; /* Default dark background for modal */
+        margin: auto;
+        padding: 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.3);
+        width: 80%;
+        max-width: 400px;
+        text-align: center;
+        color: #e2e8f0; /* Default light text color */
+    }
+    /* Adjusted for Safe Users modal */
+    #safe-users-modal .modal-content {
+        max-width: 600px; /* Wider for bulk input */
+    }
+    /* Modal content themes */
+    .modal-content.modal-success {
+        background-color: #10B981; /* Green-500 */
+        color: #ffffff;
+    }
+    .modal-content.modal-error {
+        background-color: #EF4444; /* Red-500 */
+        color: #ffffff;
+    }
+    .modal-content.modal-info {
+        background-color: #3B82F6; /* Blue-500 */
+        color: #ffffff;
+    }
+    /* Adjust alert message text color for themed modals */
+    .modal-content.modal-success #alert-message,
+    .modal-content.modal-error #alert-message,
+    .modal-content.modal-info #alert-message {
+        color: inherit; /* Inherit color from parent modal-content */
+    }
+
+    .close-button {
+        color: #94a3b8;
+        float: right;
+        font-size: 28px;
+        font-weight: bold;
+    }
+    .close-button:hover,
+    .close-button:focus {
+        color: #e2e8f0;
+        text-decoration: none;
+        cursor: pointer;
+    }
+    /* Dashboard specific styles */
+    .dashboard-sidebar {
+      width: 60px; /* Collapsed width */
+      flex-shrink: 0;
+      background-color: #2d3748; /* Darker sidebar */
+      box-shadow: 2px 0 5px rgba(0,0,0,0.1);
+      padding: 20px 0; /* Adjust padding for vertical centering of icons */
+      transition: width 0.3s ease-in-out; /* Smooth transition */
+      overflow: hidden; /* Hide overflowing text */
+      display: flex; /* Use flexbox for internal layout */
+      flex-direction: column;
+      align-items: center; /* Center items horizontally in collapsed state */
+    }
+
+    .dashboard-sidebar:hover {
+      width: 250px; /* Expanded width */
+      align-items: flex-start; /* Align items to start when expanded */
+    }
+
+    .dashboard-sidebar nav {
+      width: 100%; /* Ensure nav takes full width for hover effect */
+    }
+
+    .dashboard-sidebar nav ul {
+      list-style: none;
+      padding: 0;
+      margin: 0;
+    }
+
+    .dashboard-sidebar nav ul li {
+      margin-bottom: 10px; /* Spacing between nav items */
+      width: 100%; /* Ensure full width for hover effect */
+    }
+
+    .dashboard-sidebar nav ul li a {
+      white-space: nowrap;
+      display: flex;
+      align-items: center;
+      justify-content: center; /* Center icon in collapsed state */
+      padding: 10px 0; /* Vertical padding, no horizontal padding initially */
+      border-radius: 8px;
+      color: #e2e8f0; /* Default text color */
+      transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out, padding 0.3s ease-in-out;
+    }
+
+    .dashboard-sidebar:hover nav ul li a {
+      justify-content: flex-start; /* Align to start when expanded */
+      padding: 10px 15px; /* Add horizontal padding when expanded */
+    }
+
+    .dashboard-sidebar nav ul li a i {
+      margin-right: 0; /* No margin initially */
+      font-size: 1.2rem;
+      transition: margin-right 0.3s ease-in-out;
+    }
+
+    .dashboard-sidebar:hover nav ul li a i {
+      margin-right: 15px; /* Add margin when expanded */
+    }
+
+    .dashboard-sidebar nav ul li a span {
+      opacity: 0;
+      width: 0; /* Collapse text width */
+      overflow: hidden; /* Hide text overflow */
+      transition: opacity 0.3s ease-in-out, width 0.3s ease-in-out;
+    }
+
+    .dashboard-sidebar:hover nav ul li a span {
+      opacity: 1;
+      width: auto; /* Expand text width */
+    }
+
+    /* Navigation Heading specific styles */
+    .dashboard-sidebar .nav-heading {
+        display: flex;
+        align-items: center;
+        justify-content: center; /* Center icon initially */
+        margin-bottom: 20px;
+        color: #e2e8f0;
+        font-weight: bold;
+        font-size: 1.2rem;
+        padding: 0 10px; /* Adjust padding */
+        transition: justify-content 0.3s ease-in-out, padding 0.3s ease-in-out;
+        min-height: 1.5rem; /* Ensure consistent height for spacing */
+    }
+
+    .dashboard-sidebar:hover .nav-heading {
+        justify-content: flex-start; /* Align to start on hover */
+        padding: 0 15px; /* Adjust padding on hover */
+    }
+
+    .dashboard-sidebar .nav-heading i {
+        font-size: 1.5rem; /* Larger icon for heading */
+        margin-right: 0; /* No margin initially */
+        transition: margin-right 0.3s ease-in-out;
+        display: none; /* Hide icon by default */
+    }
+
+    .dashboard-sidebar:hover .nav-heading i {
+        margin-right: 10px; /* Add margin on hover */
+        display: none; /* Keep hidden as per request */
+    }
+
+    .dashboard-sidebar .nav-heading span {
+        opacity: 0;
+        width: 0;
+        overflow: hidden;
+        transition: opacity 0.3s ease-in-out, width 0.3s ease-in-out;
+    }
+
+    .dashboard-sidebar:hover .nav-heading span {
+        opacity: 1;
+        width: auto;
+    }
+
+
+    .dashboard-content {
+      flex-grow: 1;
+      padding: 20px;
+      background-color: #1a202c; /* Dark background */
+    }
+    .metric-card {
+      background-color: #2d3748; /* Darker card background */
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      padding: 20px;
+      text-align: center;
+      color: #e2e8f0; /* Light text color */
+    }
+    .metric-card .value {
+      font-size: 2.5rem;
+      font-weight: bold;
+      color: #6366f1; /* Indigo-500 */
+    }
+    .metric-card.not-following-back .value { /* Specific style for not-following-back metric */
+      color: #ef4444; /* red-500 */
+    }
+    .metric-card .value-main {
+        font-size: 2.5rem;
+        font-weight: bold;
+        color: #f97316; /* Orange-500 */
+    }
+    .metric-card .value-sub {
+        font-size: 1rem;
+        color: #ef4444; /* Red-500 */
+        margin-top: -0.5rem; /* Pull it up slightly */
+        text-align: center; /* Centered below main value */
+        padding-right: 0; /* Remove padding */
+    }
+    .metric-card .label {
+      font-size: 1rem;
+      color: #94a3b8; /* slate-400 */
+    }
+    .account-list-item {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 12px 0;
+      border-bottom: 1px solid #4a5568; /* Darker border */
+    }
+    .account-list-item:last-child {
+      border-bottom: none;
+    }
+    /* Custom style for valid ZIP file background */
+    .valid-zip-background {
+        background-color: rgba(34, 197, 94, 0.5); /* green-500 with 50% opacity */
+        padding: 2px 8px;
+        border-radius: 12px;
+        display: inline-flex;
+        align-items: center;
+        margin-left: 0.5rem; /* ml-2 */
+    }
+    /* Style for the "Times" column in the table */
+    .account-list-item .time-col {
+        text-align: right; /* Align to the right */
+        margin-left: auto; /* Pushes to the right */
+        padding-right: 5px; /* Add some padding from the edge */
+    }
+  </style>
+</head>
+<body class="flex flex-col min-h-screen">
+
+  <!-- Navigation Bar -->
+  <header class="bg-gray-900 shadow-sm py-4 px-6 flex justify-between items-center sticky top-0 z-50">
+    <div class="flex items-center space-x-2">
+      <i class="fas fa-users text-blue-400 text-2xl"></i>
+      <a href="#" class="text-2xl font-bold text-gray-100">FollowBuddy</a>
+    </div>
+    <nav class="hidden md:flex space-x-8">
+      <a href="#features" class="text-gray-300 hover:text-blue-400 transition-colors duration-200">Features</a>
+      <a href="#upload" class="text-gray-300 hover:text-blue-400 transition-colors duration-200">Upload</a>
+      <a href="#pricing" class="text-gray-300 hover:text-blue-400 transition-colors duration-200">Pricing</a>
+      <a href="#dashboard-section" id="dashboard-nav-link" class="text-gray-300 hover:text-blue-400 transition-colors duration-200">Dashboard</a>
+    </nav>
+    <div class="flex items-center space-x-4">
+      <button id="login-btn-nav" class="hidden md:block text-blue-400 hover:text-blue-200 transition-colors duration-200 font-medium">Account</button>
+      <button id="logout-btn-nav" class="hidden md:block bg-red-600 text-white px-4 py-2 rounded-lg shadow hover:bg-red-700 transition-colors duration-200 font-medium">Logout</button>
+      <button id="access-premium-btn" class="bg-blue-600 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-700 transition-colors duration-200 font-medium">Access Premium</button>
+    </div>
+    <!-- Mobile Menu Button -->
+    <button id="mobile-menu-button" class="md:hidden text-gray-300 hover:text-blue-400 focus:outline-none">
+      <i class="fas fa-bars text-xl"></i>
+    </button>
+  </header>
+
+  <!-- Mobile Menu Overlay -->
+  <div id="mobile-menu" class="hidden fixed inset-0 bg-gray-900 z-40 flex flex-col items-center justify-center space-y-6 md:hidden">
+    <button id="close-mobile-menu" class="absolute top-4 right-4 text-gray-300 hover:text-blue-400 focus:outline-none">
+      <i class="fas fa-times-circle text-2xl"></i>
+    </button>
+    <a href="#features" class="text-gray-100 text-2xl hover:text-blue-400 transition-colors duration-200" onclick="document.getElementById('mobile-menu').classList.add('hidden')">Features</a>
+    <a href="#upload" class="text-gray-100 text-2xl hover:text-blue-400 transition-colors duration-200" onclick="document.getElementById('mobile-menu').classList.add('hidden')">Upload</a>
+    <a href="#pricing" class="text-gray-100 text-2xl hover:text-blue-400 transition-colors duration-200" onclick="document.getElementById('mobile-menu').classList.add('hidden')">Pricing</a>
+    <a href="#dashboard-section" id="dashboard-nav-link-mobile" class="text-gray-100 text-2xl hover:text-blue-400 transition-colors duration-200">Dashboard</a>
+    <button id="login-btn-mobile" class="text-blue-400 text-2xl hover:text-blue-200 transition-colors duration-200 font-medium">Account</button>
+    <button id="logout-btn-mobile" class="bg-red-600 text-white px-6 py-3 rounded-lg shadow hover:bg-red-700 transition-colors duration-200 font-medium text-2xl">Logout</button>
+  </div>
+
+
+  <!-- Hero Section -->
+  <section id="hero-section" class="bg-gradient-to-r from-blue-700 to-purple-800 text-white py-20 px-6 text-center">
+    <h1 class="text-5xl font-extrabold mb-4 leading-tight">Find Out Who's Not Following You Back!</h1>
+    <p class="text-xl mb-8 max-w-2xl mx-auto">Discover your unfollowers on Instagram safely and easily, without sharing your password.</p>
+    <a href="#upload" class="bg-white text-blue-600 px-8 py-4 rounded-full text-lg font-bold shadow-lg hover:bg-gray-100 transition-all duration-300 transform hover:scale-105">Get Started Now</a>
+  </section>
+
+  <!-- Features Section -->
+  <section id="features" class="py-16 px-6 bg-gray-800">
+    <div class="max-w-6xl mx-auto">
+      <h2 class="text-4xl font-bold text-center mb-12 text-gray-100">Core Features</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
+        <!-- Feature 1: Safe Unfollower Tracking -->
+        <div class="bg-gray-700 p-8 rounded-xl shadow-lg flex flex-col items-center text-center">
+          <i class="fas fa-shield-alt text-5xl text-blue-400 mb-6"></i>
+          <h3 class="text-2xl font-semibold mb-4 text-gray-100">Safe Unfollower Tracking</h3>
+          <p class="text-gray-300">Identify who has unfollowed you on Instagram without risking your account with potentially unsafe third-party apps.</p>
+        </div>
+        <!-- Feature 2: Full Instagram Compliance -->
+        <div class="bg-gray-700 p-8 rounded-xl shadow-lg flex flex-col items-center text-center">
+          <i class="fab fa-instagram text-5xl text-purple-500 mb-6"></i>
+          <h3 class="text-2xl font-semibold mb-4 text-gray-100">Full Instagram Compliance</h3>
+          <p class="text-gray-300">Utilizes approved Instagram data and does not require users to enter their Instagram passwords, ensuring full compliance.</p>
+        </div>
+        <!-- Feature 3: No Login Required -->
+        <div class="bg-gray-700 p-8 rounded-xl shadow-lg flex flex-col items-center text-center">
+          <i class="fas fa-lock text-5xl text-green-400 mb-6"></i>
+          <h3 class="text-2xl font-semibold mb-4 text-gray-100">No Login Required</h3>
+          <p class="text-gray-300">Users can track unfollowers without entering their Instagram login details, enhancing security and privacy.</p>
+        </div>
+        <!-- Feature 4: Simple and Easy to Use -->
+        <div class="bg-gray-700 p-8 rounded-xl shadow-lg flex flex-col items-center text-center">
+          <i class="fas fa-lightbulb text-5xl text-yellow-400 mb-6"></i>
+          <h3 class="text-2xl font-semibold mb-4 text-gray-100">Simple and Easy to Use</h3>
+          <p class="text-gray-300">The app is regularly updated with new features and improvements, including ways to visualize follower changes and reminders.</p>
+        </div>
+        <!-- Feature 5: Real Human Support -->
+        <div class="bg-gray-700 p-8 rounded-xl shadow-lg flex flex-col items-center text-center">
+          <i class="fas fa-headset text-5xl text-red-500 mb-6"></i>
+          <h3 class="text-2xl font-semibold mb-4 text-gray-100">Real Human Support</h3>
+          <p class="text-gray-300">FollowBuddy offers support from a real human team, not automated bots, for personalized assistance.</p>
+        </div>
+        <!-- Feature 6: Regular Updates -->
+        <div class="bg-gray-700 p-8 rounded-xl shadow-lg flex flex-col items-center text-center">
+          <i class="fas fa-sync-alt text-5xl text-indigo-400 mb-6"></i>
+          <h3 class="text-2xl font-semibold mb-4 text-gray-100">Regular Updates</h3>
+          <p class="text-gray-300">The app is regularly updated with new features and improvements, including ways to visualize follower changes and reminders.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- File Upload Section -->
+  <section id="upload" class="py-16 px-6 bg-gray-900 flex-grow flex items-center justify-center">
+    <div class="bg-gray-800 p-8 rounded-xl shadow-lg max-w-2xl w-full text-center">
+      <h2 class="text-3xl font-bold mb-8 text-gray-100">Find Out Who's Not Following You Back!</h2>
+
+      <!-- Initial Upload Area -->
+      <div id="initial-upload-area">
+        <div id="upload-area" class="upload-area p-12 rounded-lg flex flex-col items-center justify-center mb-8">
+          <i class="fas fa-cloud-upload-alt text-6xl text-gray-500 mb-4"></i>
+          <p class="text-gray-400 text-lg mb-4">Upload your Instagram ZIP files</p>
+          <p class="text-gray-500 mb-6">Drag and drop your ZIP file here, or click to browse</p>
+          <input type="file" id="file-input" accept=".zip" class="hidden" />
+          <button id="choose-file-btn" class="bg-blue-600 text-white px-6 py-3 rounded-lg shadow hover:bg-blue-700 transition-colors duration-200 flex items-center space-x-2">
+            <i class="fas fa-plus-circle"></i>
+            <span>Choose File</span>
+          </button>
+        </div>
+      </div>
+
+      <!-- File Upload Success State (Initially Hidden) -->
+      <div id="upload-success-state" class="hidden">
+        <div class="border-2 border-green-500 bg-green-900 p-6 rounded-lg mb-8">
+          <i class="fas fa-check-circle text-green-400 text-5xl mb-4"></i>
+          <p class="text-green-200 text-xl font-semibold mb-2">File uploaded successfully!</p>
+          <p class="text-green-300">Your file is ready for analysis. Click the button below to proceed.</p>
+        </div>
+
+        <div class="bg-gray-700 p-4 rounded-lg shadow-sm flex items-center justify-between mb-8 border border-gray-600">
+          <div class="flex items-center space-x-3">
+            <i class="fas fa-file-archive text-blue-400 text-2xl"></i>
+            <div>
+              <p id="uploaded-file-name" class="font-medium text-gray-100 text-left"></p>
+              <p class="text-gray-400 text-sm flex items-center space-x-2">
+                <span id="uploaded-file-size"></span>
+                <span class="valid-zip-background"><i class="fas fa-check-circle mr-1"></i>Valid ZIP file</span>
+              </p>
+            </div>
+          </div>
+          <button id="remove-file-btn" class="text-gray-400 hover:text-red-500 transition-colors duration-200">
+            <i class="fas fa-times-circle text-xl"></i>
+          </button>
+        </div>
+
+        <button id="find-non-followers-btn" class="bg-blue-600 text-white px-8 py-4 rounded-full text-lg font-bold shadow-lg hover:bg-blue-700 transition-all duration-300 transform hover:scale-105 flex items-center justify-center mx-auto mb-4">
+          Find My Non-Followers <i class="fas fa-arrow-right ml-3"></i>
+        </button>
+      </div>
+
+      <div class="bg-blue-900 p-6 rounded-lg text-left text-blue-200">
+        <p class="font-semibold mb-2"><i class="fas fa-info-circle mr-2"></i>File Requirements:</p>
+        <ul class="list-disc list-inside space-y-1">
+          <li>ZIP files only (.zip)</li>
+          <li>Maximum size: 50MB (though larger files are handled by the script if browser memory allows)</li>
+        </ul>
+      </div>
+    </div>
+  </section>
+
+  <!-- Dashboard Section (Initially Hidden) -->
+  <section id="dashboard-section" class="hidden py-16 px-6 bg-gray-900">
+    <div class="max-w-7xl mx-auto flex flex-col md:flex-row">
+      <!-- Sidebar -->
+      <div class="dashboard-sidebar p-6 md:block hidden">
+        <div class="nav-heading">
+            <span>Navigation</span>
+        </div>
+        <nav>
+          <ul>
+            <li class="mb-4">
+              <a href="#" id="dashboard-link" class="flex items-center text-blue-400 font-semibold hover:text-blue-200 transition-colors duration-200">
+                <i class="fas fa-home text-lg"></i><span>Home</span>
+              </a>
+            </li>
+            <li class="mb-4">
+              <a href="#" id="analytics-link" class="flex items-center text-gray-300 hover:text-blue-400 transition-colors duration-200">
+                <i class="fas fa-chart-line text-lg"></i><span>Analytics</span>
+              </a>
+            </li>
+            <li class="mb-4">
+              <a href="#" id="accounts-link" class="flex items-center text-gray-300 hover:text-blue-400 transition-colors duration-200">
+                <i class="fas fa-user-friends text-lg"></i><span>Accounts</span>
+              </a>
+            </li>
+            <li class="mb-4">
+              <a href="#" id="settings-link" class="flex items-center text-gray-300 hover:text-blue-400 transition-colors duration-200">
+                <i class="fas fa-cog text-lg"></i><span>Settings</span>
+              </a>
+            </li>
+          </ul>
+        </nav>
+      </div>
+
+      <!-- Main Content -->
+      <div class="dashboard-content">
+        <div class="flex justify-between items-center mb-8">
+          <h2 class="text-3xl font-bold text-gray-100">Your Instagram Dashboard</h2>
+          <div class="flex space-x-3">
+            <button id="safe-users-btn" class="bg-green-600 text-white px-4 py-2 rounded-lg shadow hover:bg-green-700 transition-colors duration-200 font-medium">
+                <i class="fas fa-user-plus mr-2"></i>Safe Users
+            </button>
+            <button id="upload-new-data-btn" class="bg-blue-600 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-700 transition-colors duration-200 font-medium">
+              <i class="fas fa-upload mr-2"></i>Upload New Data
+            </button>
+          </div>
+        </div>
+
+        <!-- Metric Cards -->
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <div class="metric-card">
+            <p class="label">Total Followers</p>
+            <p class="value" id="followers-count">0</p>
+          </div>
+          <div class="metric-card">
+            <p class="label">Total Following</p>
+            <p class="value" id="following-count">0</p>
+          </div>
+          <div class="metric-card">
+            <p class="label">Not Following Back</p>
+            <p class="value-main" id="not-following-back-filtered-count">0</p>
+            <p class="value-sub" id="not-following-back-total-count">/ 0</p>
+          </div>
+          <div class="metric-card">
+            <p class="label">You Don't Follow Back</p>
+            <p class="value" id="you-dont-follow-back-count">0</p>
+          </div>
+        </div>
+        <!-- Accounts List -->
+        <div class="bg-gray-800 p-6 rounded-xl shadow-lg">
+          <div class="flex justify-between items-center mb-6">
+            <h3 class="text-xl font-bold text-gray-100">Accounts Not Following You Back</h3>
+            <div class="flex items-center space-x-4">
+              <input type="text" id="search-input" placeholder="Search for a specific account..." class="border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-700 text-gray-100" />
+              <select id="time-filter-select" class="border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-700 text-gray-100">
+                <option value="all">All Times</option>
+                <option value="green">Green (Recent)</option>
+                <option value="orange">Orange (1-7 Days)</option>
+                <option value="red">Red (>7 Days)</option>
+              </select>
+              <select id="sort-select" class="border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-700 text-gray-100">
+                <option value="newest">Newest</option>
+                <option value="oldest">Oldest</option>
+                <option value="alpha-asc">Alphabetical (A-Z)</option>
+                <option value="alpha-desc">Alphabetical (Z-A)</option>
+                <option value="color">By Color</option>
+              </select>
+              <button class="text-gray-300 hover:text-blue-400"><i class="fas fa-download mr-2"></i>Download CSV</button>
+            </div>
+          </div>
+
+          <!-- List of Non-Followers -->
+          <div id="non-followers-list" class="space-y-2">
+            <p id="no-data-message" class="text-gray-500 text-center">Upload your Instagram data to see who isn't following you back!</p>
+          </div>
+          <p class="text-gray-500 text-sm mt-4 text-center">Your User ID: <span id="user-id-display" class="font-mono text-gray-700 break-all">Loading...</span></p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Analytics Section (Initially Hidden) -->
+  <section id="analytics-section" class="hidden py-16 px-6 bg-gray-900">
+    <div class="max-w-7xl mx-auto">
+      <h2 class="text-3xl font-bold text-gray-100 mb-8">Your Instagram Analytics</h2>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+        <div class="metric-card">
+          <p class="label">Unfollowed You</p>
+          <p class="value" id="unfollowedYouCount">0</p>
+        </div>
+        <div class="metric-card">
+          <p class="label">New Followers</p>
+          <p class="value" id="newFollowersCount">0</p>
+        </div>
+      </div>
+      <div class="bg-gray-800 p-6 rounded-xl shadow-lg">
+        <h3 class="text-xl font-bold text-gray-100 mb-4">Follower Trends</h3>
+        <p class="text-gray-400 mb-4">Graph showing new follows and unfollows over time (Coming Soon!)</p>
+        <!-- Placeholder for graph -->
+        <canvas id="follower-trend-chart" class="w-full h-64 bg-gray-700 rounded-lg"></canvas>
+      </div>
+    </div>
+  </section>
+
+
+  <!-- Pricing Section (Placeholder) -->
+  <section id="pricing" class="py-16 px-6 bg-gray-800 text-center">
+    <h2 class="text-4xl font-bold text-gray-100 mb-12">Simple & Transparent Pricing</h2>
+    <div class="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">
+      <!-- Free Tier -->
+      <div class="bg-gray-700 p-8 rounded-xl shadow-lg border-2 border-gray-600">
+        <h3 class="text-2xl font-bold mb-4 text-gray-100">Free</h3>
+        <p class="text-4xl font-extrabold text-blue-400 mb-6">$0<span class="text-lg font-normal text-gray-400">/month</span></p>
+        <ul class="text-gray-300 space-y-3 mb-8 text-left">
+          <li class="flex items-center"><i class="fas fa-check-circle text-green-400 mr-2"></i>Basic unfollower tracking</li>
+          <li class="flex items-center"><i class="fas fa-check-circle text-green-400 mr-2"></i>Limited historical data</li>
+          <li class="flex items-center"><i class="fas fa-times-circle text-red-500 mr-2"></i>No premium features</li>
+        </ul>
+        <button class="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors duration-200">Get Started Free</button>
+      </div>
+      <!-- Pro Tier -->
+      <div class="bg-gray-700 p-8 rounded-xl shadow-xl border-2 border-blue-500 transform scale-105 relative">
+        <span class="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-blue-500 text-white text-xs font-bold px-3 py-1 rounded-full uppercase">Most Popular</span>
+        <h3 class="text-2xl font-bold mb-4 text-blue-400">Pro</h3>
+        <p class="text-4xl font-extrabold text-blue-400 mb-6">$9<span class="text-lg font-normal text-gray-400">/month</span></p>
+        <ul class="text-gray-300 space-y-3 mb-8 text-left">
+          <li class="flex items-center"><i class="fas fa-check-circle text-green-400 mr-2"></i>Unlimited unfollower tracking</li>
+          <li class="flex items-center"><i class="fas fa-check-circle text-green-400 mr-2"></i>Full historical data</li>
+          <li class="flex items-center"><i class="fas fa-check-circle text-green-400 mr-2"></i>Advanced analytics</li>
+          <li class="flex items-center"><i class="fas fa-check-circle text-green-400 mr-2"></i>Priority human support</li>
+        </ul>
+        <button class="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors duration-200">Choose Pro</button>
+      </div>
+      <!-- Enterprise Tier -->
+      <div class="bg-gray-700 p-8 rounded-xl shadow-lg border-2 border-gray-600">
+        <h3 class="text-2xl font-bold mb-4 text-gray-100">Enterprise</h3>
+        <p class="text-4xl font-extrabold text-blue-400 mb-6">$29<span class="text-lg font-normal text-gray-400">/month</span></p>
+        <ul class="text-gray-300 space-y-3 mb-8 text-left">
+          <li class="flex items-center"><i class="fas fa-check-circle text-green-400 mr-2"></i>All Pro features</li>
+          <li class="flex items-center"><i class="fas fa-check-circle text-green-400 mr-2"></i>Multi-account management</li>
+          <li class="flex items-center"><i class="fas fa-check-circle text-green-400 mr-2"></i>Custom integrations</li>
+          <li class="flex items-center"><i class="fas fa-check-circle text-green-400 mr-2"></i>Dedicated account manager</li>
+        </ul>
+        <button class="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors duration-200">Contact Sales</button>
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer class="bg-gray-900 text-white py-8 px-6 text-center mt-auto">
+    <div class="max-w-6xl mx-auto">
+      <div class="flex flex-col md:flex-row justify-between items-center mb-6 space-y-4 md:space-y-0">
+        <div class="text-xl font-bold">FollowBuddy</div>
+        <nav class="flex space-x-6">
+          <a href="#features" class="text-gray-300 hover:text-white transition-colors duration-200">Features</a>
+          <a href="#upload" class="text-gray-300 hover:text-white transition-colors duration-200">Upload</a>
+          <a href="#pricing" class="text-gray-300 hover:text-white transition-colors duration-200">Pricing</a>
+          <a href="#" class="text-gray-300 hover:text-white transition-colors duration-200">Privacy Policy</a>
+          <a href="#" class="text-gray-300 hover:text-white transition-colors duration-200">Terms of Service</a>
+        </nav>
+        <div class="flex space-x-4">
+          <a href="#" class="text-gray-300 hover:text-white transition-colors duration-200"><i class="fab fa-twitter"></i></a>
+          <a href="#" class="text-gray-300 hover:text-white transition-colors duration-200"><i class="fab fa-facebook-f"></i></a>
+          <a href="#" class="text-gray-300 hover:text-white transition-colors duration-200"><i class="fab fa-instagram"></i></a>
+        </div>
+      </div>
+      <p class="text-gray-400 text-sm">&copy; 2025 FollowBuddy. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <!-- Custom Alert Modal -->
+  <div id="custom-alert-modal" class="modal">
+    <div class="modal-content">
+      <span class="close-button" id="close-alert-modal">&times;</span>
+      <p id="alert-message" class="text-lg font-semibold text-gray-800"></p>
+      <button id="alert-ok-btn" class="mt-6 bg-blue-500 text-white px-6 py-2 rounded-lg hover:bg-blue-600 transition-colors duration-200">OK</button>
+    </div>
+  </div>
+
+  <!-- Safe Users Modal -->
+  <div id="safe-users-modal" class="modal">
+    <div class="modal-content">
+      <span class="close-button" id="close-safe-users-modal">&times;</span>
+      <h3 class="text-2xl font-bold mb-4 text-gray-100">Safe Users</h3>
+      <p class="text-gray-300 mb-4">Add users here to exclude them from your "Not Following You Back" list.</p>
+      <div class="flex flex-col gap-3 mb-4">
+        <div class="flex">
+            <input type="text" id="safe-user-input" placeholder="Enter single username" class="flex-grow border border-gray-600 rounded-l-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-700 text-gray-100" list="safe-user-suggestions" />
+            <datalist id="safe-user-suggestions"></datalist>
+            <button id="add-safe-user-btn" class="bg-blue-600 text-white px-4 py-2 rounded-r-lg shadow hover:bg-blue-700 transition-colors duration-200">Add</button>
+        </div>
+        <textarea id="bulk-safe-user-input" placeholder="Enter multiple usernames, separated by commas or new lines" rows="4" class="w-full border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-700 text-gray-100 resize-y"></textarea>
+        <button id="add-bulk-safe-user-btn" class="bg-purple-600 text-white px-4 py-2 rounded-lg shadow hover:bg-purple-700 transition-colors duration-200">Add All</button>
+      </div>
+      <div id="safe-users-list" class="max-h-48 overflow-y-auto border border-gray-600 rounded-lg p-2 bg-gray-700">
+        <p class="text-gray-500 text-center">No safe users added yet.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Upload Data Modal -->
+  <div id="upload-data-modal" class="modal">
+    <div class="modal-content">
+        <span class="close-button" id="close-upload-data-modal">&times;</span>
+        <h2 class="text-3xl font-bold mb-8 text-gray-100">Upload Your Instagram Data</h2>
+        <div id="modal-initial-upload-area">
+            <div id="modal-upload-area" class="upload-area p-12 rounded-lg flex flex-col items-center justify-center mb-8">
+                <i class="fas fa-cloud-upload-alt text-6xl text-gray-500 mb-4"></i>
+                <p class="text-gray-400 text-lg mb-4">Upload your Instagram ZIP files</p>
+                <p class="text-gray-500 mb-6">Drag and drop your ZIP file here, or click to browse</p>
+                <input type="file" id="modal-file-input" accept=".zip" class="hidden" />
+                <button id="modal-choose-file-btn" class="bg-blue-600 text-white px-6 py-3 rounded-lg shadow hover:bg-blue-700 transition-colors duration-200 flex items-center space-x-2">
+                    <i class="fas fa-plus-circle"></i>
+                    <span>Choose File</span>
+                </button>
+            </div>
+        </div>
+        <div class="bg-blue-900 p-6 rounded-lg text-left text-blue-200">
+            <p class="font-semibold mb-2"><i class="fas fa-info-circle mr-2"></i>File Requirements:</p>
+            <ul class="list-disc list-inside space-y-1">
+                <li>ZIP files only (.zip)</li>
+                <li>Maximum size: 50MB (though larger files are handled by the script if browser memory allows)</li>
+            </ul>
+        </div>
+    </div>
+  </div>
+
+  <!-- Authentication Modal -->
+  <div id="auth-modal" class="modal">
+    <div class="modal-content">
+      <span class="close-button" id="close-auth-modal">&times;</span>
+      <h3 class="text-2xl font-bold mb-4 text-gray-100">Account Access</h3>
+      <p class="text-gray-300 mb-6">Login or create an account to save your data.</p>
+      <input type="email" id="auth-email-input" placeholder="Email" class="w-full p-3 rounded-lg bg-gray-700 text-gray-100 border border-gray-600 mb-4 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+      <input type="password" id="auth-password-input" placeholder="Password" class="w-full p-3 rounded-lg bg-gray-700 text-gray-100 border border-gray-600 mb-6 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+      <button id="auth-login-btn" class="w-full bg-blue-600 text-white px-6 py-3 rounded-lg shadow hover:bg-blue-700 transition-colors duration-200 font-medium mb-3">Login</button>
+      <button id="auth-signup-btn" class="w-full bg-purple-600 text-white px-6 py-3 rounded-lg shadow hover:bg-purple-700 transition-colors duration-200 font-medium">Sign Up</button>
+    </div>
+  </div>
+
+
+  <!-- Firebase & app scripts -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
+    import { getAuth, onAuthStateChanged, signOut, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
+    import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+
+    // Global Firebase instances and user data
+    let appInstance;
+    let authInstance;
+    let dbInstance;
+    let currentUserId = null;
+    let currentFileData = null; // Store processed data temporarily
+    let allNonFollowers = []; // Store the filtered non-followers for display and search
+    let originalNotFollowingBack = []; // Store the original non-followers before safe user filtering
+    let safeUsers = []; // Store safe users
+
+    const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+
+    // Custom Alert Function
+    function showAlert(message, type = 'info') { // 'info', 'success', 'error'
+        const modal = document.getElementById('custom-alert-modal');
+        const alertMessage = document.getElementById('alert-message');
+        const closeButton = document.getElementById('close-alert-modal');
+        const okButton = document.getElementById('alert-ok-btn');
+        const modalContent = modal.querySelector('.modal-content');
+
+        // Reset classes
+        modalContent.classList.remove('modal-success', 'modal-error', 'modal-info');
+        
+        // Apply type-specific styles
+        if (type === 'success') {
+            modalContent.classList.add('modal-success');
+        } else if (type === 'error') {
+            modalContent.classList.add('modal-error');
+        } else { // default info
+            modalContent.classList.add('modal-info');
+        }
+
+        alertMessage.textContent = message;
+        modal.style.display = 'flex';
+
+        const closeAlert = () => {
+            modal.style.display = 'none';
+        };
+
+        closeButton.onclick = closeAlert;
+        okButton.onclick = closeAlert;
+        window.onclick = (event) => {
+            if (event.target == modal) {
+                closeAlert();
+            }
+        };
+    }
+
+    // Function to open the new Upload Data Modal
+    function openUploadDataModal() {
+        uploadDataModal.style.display = 'flex';
+        // Reset the modal's internal state to initial upload area
+        document.getElementById('modal-initial-upload-area').classList.remove('hidden');
+        // If there was a success state inside the modal, hide it. (Not implemented yet, but good to plan)
+    }
+
+    // Function to close the new Upload Data Modal
+    function closeUploadDataModalFunc() {
+        uploadDataModal.style.display = 'none';
+        modalFileInput.value = ''; // Clear the file input in modal
+    }
+
+    // Declare elements as `let` so they can be assigned inside window.onload
+    let loginBtnNav;
+    let logoutBtnNav;
+    let loginBtnMobile;
+    let logoutBtnMobile;
+    let accessPremiumBtn;
+    let initialUploadArea;
+    let uploadSuccessState;
+    let uploadedFileName;
+    let uploadedFileSize;
+    let removeFileBtn;
+    let findNonFollowersBtn;
+
+    let uploadArea;
+    let fileInput;
+    let chooseFileBtn;
+
+    let uploadDataModal;
+    let closeUploadDataModal;
+    let modalUploadArea;
+    let modalFileInput;
+    let modalChooseFileBtn;
+
+    let mobileMenuButton;
+    let mobileMenu;
+    let closeMobileMenu;
+    let dashboardSection;
+    let heroSection;
+    let uploadSection;
+    let featuresSection;
+    let pricingSection;
+    let dashboardNavLink;
+    let dashboardNavLinkMobile;
+    let nonFollowersList;
+    let noDataMessage;
+    let followingCountElem;
+    let followersCountElem;
+    let newFollowersCountElem;
+    let unfollowedYouCountElem;
+    let notFollowingBackFilteredCountElem;
+    let notFollowingBackTotalCountElem;
+    let youDontFollowBackCountElem;
+    let analyticsSection; // New: Analytics Section
+    let sortSelect; // New: Sort Selector
+
+    let uploadNewDataBtn;
+    let searchInput;
+    let timeFilterSelect;
+    let userIdDisplay;
+    let analyticsLink;
+    let dashboardLink;
+    let accountsLink;
+    let settingsLink;
+    let safeUsersBtn;
+    let safeUsersModal;
+    let closeSafeUsersModal;
+    let safeUserInput;
+    let safeUserSuggestionsDatalist;
+    let addSafeUserBtn;
+    let bulkSafeUserInput;
+    let addBulkSafeUserBtn;
+    let safeUsersListElem;
+
+    let authModal;
+    let closeAuthModal;
+    let authEmailInput;
+    let authPasswordInput;
+    let authLoginBtn;
+    let authSignupBtn;
+
+    // Function to initialize Firebase
+    async function initializeFirebaseApp() {
+        // Hardcoded Firebase Config for Canvas environment
+        const firebaseConfig = {
+            apiKey: "AIzaSyAZbNfrDlMXFtmws_5tJnxcyViaHMMFr5g",
+            authDomain: "followbuddy-5427d.firebaseapp.com",
+            projectId: "followbuddy-5427d",
+            storageBucket: "followbuddy-5427d.firebasestorage.app",
+            messagingSenderId: "363452171593",
+            appId: "1:363452171593:web:412e74ee7d956876228698",
+            measurementId: "G-YQ2MEKT92B"
+        };
+
+        console.log("Firebase Config being used:", firebaseConfig);
+
+        if (!firebaseConfig.apiKey || firebaseConfig.apiKey === "") {
+            console.error("Firebase API Key is missing or empty in the configuration.");
+            showAlert("Firebase API Key is missing. Please ensure your Firebase project is correctly configured and the API key is available.", 'error');
+            return false; // Indicate failure
+        }
+
+        try {
+            appInstance = initializeApp(firebaseConfig);
+            authInstance = getAuth(appInstance);
+            dbInstance = getFirestore(appInstance);
+
+            // Rely solely on onAuthStateChanged to determine user state
+            onAuthStateChanged(authInstance, async (user) => {
+                if (user) {
+                    currentUserId = user.uid;
+                    userIdDisplay.textContent = currentUserId; // Display user ID
+                    console.log('User logged in:', currentUserId);
+
+                    // Fetch data from Firestore
+                    const userDocRef = doc(dbInstance, `artifacts/${appId}/users/${currentUserId}/instagramData/latest`);
+                    try {
+                        const docSnap = await getDoc(userDocRef);
+                        if (docSnap.exists()) {
+                            currentFileData = docSnap.data();
+                            originalNotFollowingBack = currentFileData.originalNotFollowingBack || [];
+                            safeUsers = currentFileData.safeUsers || [];
+                            // Apply safe user filter to get allNonFollowers for display
+                            allNonFollowers = originalNotFollowingBack.filter(account => !safeUsers.includes(account.username)); // Filter by username
+                            console.log('Loaded data from Firestore:', currentFileData);
+                            console.log('Loaded safeUsers:', safeUsers);
+                            console.log('Filtered non-followers for display (allNonFollowers):', allNonFollowers);
+
+                            // Update UI with loaded data
+                            updateDashboardMetrics(
+                                currentFileData.totalFollowing,
+                                currentFileData.totalFollowers,
+                                allNonFollowers.length, // Filtered count
+                                originalNotFollowingBack.length, // Total count
+                                currentFileData.youDontFollowBackCount // This is now 'You Don't Follow Back'
+                            );
+                            updateAnalyticsMetrics(
+                                currentFileData.unfollowedYouCount || 0, // Ensure it's not undefined
+                                currentFileData.newFollowersCount || 0 // Ensure it's not undefined
+                            );
+                            renderAccounts(allNonFollowers);
+                            showDashboard(); // Automatically show dashboard if data is loaded
+                        } else {
+                            console.log('No existing data for this user in Firestore.');
+                            // If user is authenticated but no data, show upload section
+                            showUploadSection(false); 
+                            showAlert('Welcome! Please upload your Instagram data to get started.', 'info');
+                        }
+                    } catch (error) {
+                        console.error('Error fetching data from Firestore:', error);
+                        showAlert('Failed to load previous data. Please try uploading again.', 'error');
+                        showUploadSection(false); // Show initial upload state on error
+                        showLandingPage(); // If error, ensure landing page is shown
+                    }
+
+                    loginBtnNav.style.display = 'none';
+                    loginBtnMobile.style.display = 'none';
+                    logoutBtnNav.style.display = 'block';
+                    logoutBtnMobile.style.display = 'block';
+                    accessPremiumBtn.textContent = 'Go to Dashboard';
+                    accessPremiumBtn.onclick = () => {
+                         // If user clicks "Go to Dashboard", assume they want to see dashboard
+                        showDashboard();
+                    };
+                    
+                } else {
+                    // User is signed out or not authenticated
+                    currentUserId = crypto.randomUUID(); // Assign a random ID for unauthenticated users
+                    userIdDisplay.textContent = currentUserId; // Display user ID
+                    console.log('User not logged in, using anonymous ID:', currentUserId);
+
+                    loginBtnNav.style.display = 'block';
+                    loginBtnMobile.style.display = 'block';
+                    logoutBtnNav.style.display = 'none';
+                    logoutBtnMobile.style.display = 'none';
+                    accessPremiumBtn.textContent = 'Access Premium';
+                    accessPremiumBtn.onclick = handleLogin; // Opens auth modal
+                    showLandingPage();
+                    currentFileData = null; // Clear any temporary data
+                    allNonFollowers = [];
+                    originalNotFollowingBack = [];
+                    safeUsers = [];
+                    updateDashboardMetrics(0, 0, 0, 0, 0);
+                    updateAnalyticsMetrics(0, 0); // Reset analytics metrics
+                }
+            });
+
+            return true;
+        } catch (error) {
+            console.error('Firebase initialization or authentication failed:', error);
+            showAlert('Failed to initialize Firebase. Some features may not work. Error: ' + error.message, 'error');
+            return false;
+        }
+    }
+
+    // Function to render accounts (non-followers)
+    function renderAccounts(accountsToRender) {
+        nonFollowersList.innerHTML = ''; // Clear existing list
+        if (accountsToRender.length === 0) {
+            nonFollowersList.innerHTML = '<p id="no-data-message" class="text-gray-500 text-center">No accounts to display or no data uploaded yet.</p>';
+            return;
+        }
+        accountsToRender.forEach(account => {
+            const timeInfo = account.timestamp ? formatTimeDifference(account.timestamp) : { text: 'N/A', color: 'text-gray-500' };
+            const div = document.createElement('div');
+            div.className = 'account-list-item';
+            div.innerHTML = `
+                <a href="https://www.instagram.com/${account.username}/" target="_blank" rel="noopener noreferrer" class="font-medium text-blue-400 hover:underline">
+                    ${account.username}
+                </a>
+                <span class="time-col ${timeInfo.color}">${timeInfo.text}</span>
+            `;
+            nonFollowersList.appendChild(div);
+        });
+    }
+
+    // Function to format time difference for display
+    function formatTimeDifference(timestamp) {
+        // Instagram timestamps are in seconds (UTC). Date.now() is in milliseconds (UTC).
+        const now = Date.now(); // Current time in milliseconds
+        const diffMs = now - (timestamp * 1000); // Difference in milliseconds
+
+        if (diffMs < 0) {
+            return { text: 'Future follow?', color: 'text-gray-500', category: 'unknown' };
+        }
+
+        const seconds = Math.floor(diffMs / 1000);
+        const minutes = Math.floor(seconds / 60);
+        const hours = Math.floor(minutes / 60);
+        const days = Math.floor(hours / 24);
+        const months = Math.floor(days / 30.44); // Average days in a month
+        const years = Math.floor(days / 365.25); // Average days in a year
+
+        let text = '';
+        let color = 'text-gray-500'; // Default color
+        let category = 'unknown';
+
+        if (years > 0) {
+            text = `${years} Year${years > 1 ? 's' : ''} ago`;
+        } else if (months > 0) {
+            text = `${months} Month${months > 1 ? 's' : ''} ago`;
+        } else if (days > 0) {
+            text = `${days} Day${days > 1 ? 's' : ''} ago`;
+        } else if (hours > 0) {
+            text = `${hours} Hour${hours > 1 ? 's' : ''} ago`;
+        } else if (minutes > 0) {
+            text = `${minutes} Min${minutes > 1 ? 's' : ''} ago`;
+        } else {
+            text = `${seconds} Sec${seconds > 1 ? 's' : ''} ago`;
+        }
+
+        // Color coding based on recency
+        if (diffMs <= 24 * 60 * 60 * 1000) { // Within 24 hours
+            color = 'text-green-500';
+            category = 'green';
+        } else if (diffMs > 24 * 60 * 60 * 1000 && diffMs <= 7 * 24 * 60 * 60 * 1000) { // 1 day to 7 days
+            color = 'text-orange-500';
+            category = 'orange';
+        } else { // Older than 7 days
+            color = 'text-red-500';
+            category = 'red';
+        }
+
+        return { text, color, category };
+    }
+
+
+    // Function to update dashboard metrics
+    function updateDashboardMetrics(following, followers, filteredNotFollowingBack, totalNotFollowingBack, youDontFollowBack) {
+        // Update basic follower/following counts
+        followersCountElem.textContent = followers;
+        followingCountElem.textContent = following;
+        
+        // Update combined 'Not Following You Back' metric
+        notFollowingBackFilteredCountElem.textContent = filteredNotFollowingBack;
+        notFollowingBackTotalCountElem.textContent = `/ ${totalNotFollowingBack}`;
+        
+        // Update 'You Don't Follow Back' metric
+        youDontFollowBackCountElem.textContent = youDontFollowBack;
+    }
+
+    // Function to update analytics metrics
+    function updateAnalyticsMetrics(unfollowedYou, newFollowers) {
+        unfollowedYouCountElem.textContent = unfollowedYou;
+        newFollowersCountElem.textContent = newFollowers;
+        // Placeholder for graph rendering logic
+        // const chartCanvas = document.getElementById('follower-trend-chart');
+        // if (chartCanvas) {
+        //     // Initialize Chart.js or D3.js here with relevant data
+        //     // Example: new Chart(chartCanvas, { ... });
+        // }
+    }
+
+
+    // Function to show dashboard and hide other sections
+    function showDashboard() {
+        heroSection.classList.add('hidden');
+        featuresSection.classList.add('hidden');
+        uploadSection.classList.add('hidden');
+        pricingSection.classList.add('hidden');
+        analyticsSection.classList.add('hidden'); // Hide analytics section
+        dashboardSection.classList.remove('hidden');
+        dashboardNavLink.classList.remove('hidden');
+        dashboardNavLinkMobile.classList.remove('hidden');
+        
+        // Ensure the dashboard displays the current data if available
+        if (currentFileData) {
+            // Recalculate allNonFollowers based on current safeUsers
+            allNonFollowers = originalNotFollowingBack.filter(account => !safeUsers.includes(account.username)); // Filter by username
+            updateDashboardMetrics(
+                currentFileData.totalFollowing,
+                currentFileData.totalFollowers,
+                allNonFollowers.length, // Filtered count
+                originalNotFollowingBack.length, // Total count
+                currentFileData.youDontFollowBackCount
+            );
+            applyFiltersAndRenderAccounts(); // Apply filters when showing dashboard
+        } else {
+            // If no data, reset metrics and show "No data" message
+            updateDashboardMetrics(0, 0, 0, 0, 0);
+            renderAccounts([]);
+        }
+        dashboardSection.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // Function to show landing page and hide dashboard
+    function showLandingPage() {
+        heroSection.classList.remove('hidden');
+        featuresSection.classList.remove('hidden');
+        uploadSection.classList.remove('hidden');
+        pricingSection.classList.remove('hidden');
+        dashboardSection.classList.add('hidden');
+        analyticsSection.classList.add('hidden'); // Hide analytics section
+        dashboardNavLink.classList.remove('hidden'); // Dashboard link always visible on home
+        dashboardNavLinkMobile.classList.remove('hidden'); // Dashboard link always visible on home
+        // Scroll to top
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    // Authentication Functions
+    function openAuthModal() {
+        authModal.style.display = 'flex';
+    }
+
+    function closeAuthModalFunc() {
+        authModal.style.display = 'none';
+        authEmailInput.value = '';
+        authPasswordInput.value = '';
+    }
+
+    // The event listeners for auth buttons will be added inside window.onload
+    // to ensure elements are available. Their logic remains the same.
+    const handleLogin = async () => {
+      // This function is primarily for the "Access Premium" button for unauthenticated users
+      if (authInstance.currentUser) {
+            // If already logged in, check if data exists and go to dashboard/upload
+            if (currentFileData && currentFileData.fileName) {
+                showDashboard();
+            } else {
+                showUploadSection(false);
+                showAlert('Please upload your Instagram data to see the dashboard.', 'info');
+            }
+      } else {
+            openAuthModal(); // Open the authentication modal
+      }
+    };
+
+    const handleLogout = async () => {
+      try {
+        await signOut(authInstance);
+        showAlert('Logged out successfully.', 'success');
+        currentFileData = null; // Clear data on logout
+        allNonFollowers = [];
+        originalNotFollowingBack = [];
+        safeUsers = [];
+        updateDashboardMetrics(0, 0, 0, 0, 0);
+        updateAnalyticsMetrics(0, 0); // Reset analytics metrics
+        showLandingPage(); // Go back to landing page after logout
+      } catch (error) {
+        showAlert('Error during logout: ' + error.message, 'error');
+      }
+    };
+
+
+    // Function to show the correct upload state
+    // This function is now mostly for the landing page upload section
+    function showUploadSection(showSuccess = false, fileName = '', fileSize = '') {
+        heroSection.classList.add('hidden');
+        featuresSection.classList.remove('hidden'); // Keep features visible
+        pricingSection.classList.remove('hidden'); // Keep pricing visible
+        dashboardSection.classList.add('hidden');
+        analyticsSection.classList.add('hidden'); // Hide analytics section
+        uploadSection.classList.remove('hidden'); // Ensure upload section is visible
+
+        if (showSuccess) {
+            initialUploadArea.classList.add('hidden');
+            uploadSuccessState.classList.remove('hidden');
+            uploadedFileName.textContent = fileName;
+            uploadedFileSize.textContent = fileSize;
+        } else {
+            initialUploadArea.classList.remove('hidden');
+            uploadSuccessState.classList.add('hidden');
+        }
+        // Scroll to upload section
+        uploadSection.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // Handle "Find My Non-Followers" button click (on landing page upload success state)
+    // This event listener will be set up in window.onload
+    const findNonFollowersButtonClickHandler = () => {
+        if (currentFileData) {
+            // Ensure allNonFollowers is updated based on current safeUsers
+            allNonFollowers = originalNotFollowingBack.filter(account => !safeUsers.includes(account.username)); // Filter by username
+            updateDashboardMetrics(
+                currentFileData.totalFollowing,
+                currentFileData.totalFollowers,
+                allNonFollowers.length, // Filtered count
+                originalNotFollowingBack.length, // Total count
+                currentFileData.youDontFollowBackCount
+            );
+            showDashboard();
+        } else {
+            showAlert('No data processed yet. Please upload a file.', 'info');
+        }
+    };
+
+
+    // Handle "Remove File" button click
+    // This event listener will be set up in window.onload
+    const removeFileButtonClickHandler = async () => {
+        if (currentUserId && authInstance.currentUser) {
+            try {
+                // Delete data from Firestore
+                const userDocRef = doc(dbInstance, `artifacts/${appId}/users/${currentUserId}/instagramData/latest`);
+                await setDoc(userDocRef, {}); // Clear the document by setting it to an empty object
+                console.log('User data cleared from Firestore.');
+            } catch (error) {
+                console.error('Error clearing data from Firestore:', error);
+                showAlert('Failed to clear data from storage.', 'error');
+            }
+        }
+
+        currentFileData = null; // Clear processed data
+        allNonFollowers = []; // Clear non-followers list
+        originalNotFollowingBack = []; // Clear original list
+        safeUsers = []; // Clear safe users
+        updateDashboardMetrics(0, 0, 0, 0, 0); // Reset dashboard metrics
+        updateAnalyticsMetrics(0, 0); // Reset analytics metrics
+        fileInput.value = ''; // Clear the file input on landing page
+        modalFileInput.value = ''; // Clear the file input in modal
+        showUploadSection(false); // Show initial upload state on landing page
+        showAlert('File removed. You can upload a new one.', 'info');
+    };
+
+
+    async function handleFiles(files, isModalUpload = false) {
+      if (files.length === 0) {
+        showAlert('No file was selected or dropped.', 'info');
+        return;
+      }
+
+      const file = files[0];
+      if (file.type !== 'application/x-zip-compressed' && !file.name.endsWith('.zip')) {
+        showAlert('Invalid file type. Please upload a .zip file.', 'error');
+        return;
+      }
+
+      // Allow larger files, but still show the 50MB message in UI.
+      // The actual limit is constrained by browser memory for JSZip.
+      // For very large files (e.g., >200-300MB), consider server-side processing.
+      const MAX_FILE_SIZE_MB = 200; // Increased internal limit
+      if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) { 
+        showAlert(`File size exceeds ${MAX_FILE_SIZE_MB}MB. Please choose a smaller file.`, 'error');
+        return;
+      }
+
+      try {
+        const zip = await JSZip.loadAsync(file);
+
+        // Define the paths to the JSON files within the ZIP
+        const followingPath = 'connections/followers_and_following/following.json';
+        const followersPath = 'connections/followers_and_following/followers_1.json';
+
+        const followingFile = zip.file(followingPath);
+        const followersFile = zip.file(followersPath);
+
+        if (!followingFile || !followersFile) {
+          showAlert(`Required files not found in ZIP. Please ensure '${followingPath}' and '${followersPath}' exist.`, 'error');
+          return;
+        }
+
+        const followingContent = await followingFile.async('text');
+        const followersContent = await followersFile.async('text');
+
+        const followingData = JSON.parse(followingContent);
+        const followersData = JSON.parse(followersContent);
+
+        // Extract usernames and timestamps for "following"
+        const followingMap = new Map(); // Map<username, timestamp>
+        const followingUsernames = new Set();
+        followingData.relationships_following.forEach(item => {
+            if (item.string_list_data && item.string_list_data.length > 0) {
+                const username = item.string_list_data[0].value;
+                const timestamp = item.string_list_data[0].timestamp; // This is in seconds (UTC)
+                followingMap.set(username, timestamp);
+                followingUsernames.add(username);
+            }
+        });
+
+        // Extract usernames for "followers"
+        const followersUsernames = new Set();
+        followersData.forEach(item => {
+            if (item.string_list_data && item.string_list_data.length > 0) {
+                followersUsernames.add(item.string_list_data[0].value);
+            }
+        });
+
+        // Calculate metrics
+        const totalFollowing = followingUsernames.size;
+        const totalFollowers = followersUsernames.size;
+        
+        const calculatedNotFollowingBack = []; // This is the original, unfiltered list of {username, timestamp}
+        followingUsernames.forEach(username => {
+            if (!followersUsernames.has(username)) {
+                const timestamp = followingMap.get(username); // Get timestamp
+                calculatedNotFollowingBack.push({ username: username, timestamp: timestamp || null }); // Store object
+            }
+        });
+
+        // Store the original unfiltered list
+        originalNotFollowingBack = calculatedNotFollowingBack;
+
+        // Calculate mutuals (users you follow AND who follow you back)
+        let mutualsCount = 0;
+        followingUsernames.forEach(username => {
+            if (followersUsernames.has(username)) {
+                mutualsCount++;
+            }
+        });
+
+        // Calculate "You Don't Follow Back" (users who follow you but you don't follow back)
+        const youDontFollowBackCount = totalFollowers - mutualsCount;
+
+        // Placeholder for unfollowedYouCount and newFollowersCount
+        // These would require comparing current data with previously saved data.
+        // For now, they remain 0 as per the initial implementation.
+        const unfollowedYouCount = 0;
+        const newFollowersCount = 0;
+
+
+        // Filter notFollowingBack based on current safeUsers
+        allNonFollowers = originalNotFollowingBack.filter(account => !safeUsers.includes(account.username)); // Filter by username
+
+
+        // Store processed data
+        currentFileData = {
+            totalFollowing,
+            totalFollowers,
+            originalNotFollowingBack, // This is now array of {username, timestamp}
+            mutualsCount, // Keep mutualsCount for calculation, but display youDontFollowBackCount
+            youDontFollowBackCount, // New stat
+            unfollowedYouCount, // Placeholder for now
+            newFollowersCount, // Placeholder for now
+            safeUsers, // Current safe users
+            fileName: file.name,
+            fileSize: `${(file.size / 1024 / 1024).toFixed(2)} MB`
+        };
+        console.log('Processed allNonFollowers (filtered for display):', allNonFollowers);
+        console.log('Original Not Following Back:', originalNotFollowingBack);
+
+
+        // Save data to Firestore
+        if (currentUserId && authInstance.currentUser) { // Only save if a user is truly authenticated
+            const userDocRef = doc(dbInstance, `artifacts/${appId}/users/${currentUserId}/instagramData/latest`);
+            await setDoc(userDocRef, currentFileData);
+            console.log('User data saved to Firestore.');
+        } else {
+            console.warn('Not saving data to Firestore: User not authenticated.');
+        }
+
+        // Show the success state in the upload section or close modal
+        if (isModalUpload) {
+            closeUploadDataModalFunc(); // Close the modal
+            showAlert('Instagram data uploaded successfully!', 'success');
+            showDashboard(); // Go to dashboard after modal upload
+        } else {
+            showUploadSection(true, file.name, `${(file.size / 1024 / 1024).toFixed(2)} MB`);
+            // If on landing page and uploaded, automatically go to dashboard
+            showDashboard();
+        }
+
+      } catch (error) {
+        console.error('Error processing ZIP file:', error);
+        showAlert('Failed to process Instagram data. Please ensure it\'s a valid Instagram data export ZIP and contains the correct files. Error: ' + error.message, 'error');
+        // If error during modal upload, keep modal open for retry, or close and show main upload
+        if (isModalUpload) {
+            // Optionally, you could show an error message within the modal itself
+        } else {
+            showUploadSection(false); // Revert to initial upload state on error
+        }
+      }
+    }
+
+    // Safe Users Modal Functions
+    function openSafeUsersModal() {
+        safeUsersModal.style.display = 'flex';
+        renderSafeUsersList();
+        populateSafeUserSuggestions(); // Populate suggestions when modal opens
+    }
+
+    function closeSafeUsersModalFunc() {
+        safeUsersModal.style.display = 'none';
+        // Clear input fields when closing
+        safeUserInput.value = '';
+        bulkSafeUserInput.value = '';
+        safeUserSuggestionsDatalist.innerHTML = ''; // Clear suggestions
+    }
+
+    function renderSafeUsersList() {
+        safeUsersListElem.innerHTML = '';
+        if (safeUsers.length === 0) {
+            safeUsersListElem.innerHTML = '<p class="text-gray-500 text-center">No safe users added yet.</p>';
+            return;
+        }
+        safeUsers.forEach(user => {
+            const div = document.createElement('div');
+            div.className = 'flex justify-between items-center py-2 px-3 border-b border-gray-600 last:border-b-0 text-gray-200';
+            div.innerHTML = `
+                <span>${user}</span>
+                <button data-user="${user}" class="remove-safe-user-btn text-red-400 hover:text-red-500 transition-colors">
+                    <i class="fas fa-times-circle"></i>
+                </button>
+            `;
+            safeUsersListElem.appendChild(div);
+        });
+
+        // Add event listeners to new remove buttons
+        document.querySelectorAll('.remove-safe-user-btn').forEach(button => {
+            button.addEventListener('click', (e) => {
+                const userToRemove = e.currentTarget.dataset.user;
+                removeSafeUser(userToRemove);
+            });
+        });
+    }
+
+    function populateSafeUserSuggestions() {
+        safeUserSuggestionsDatalist.innerHTML = '';
+        if (!originalNotFollowingBack || originalNotFollowingBack.length === 0) {
+            return;
+        }
+
+        const currentInput = safeUserInput.value.toLowerCase();
+        const suggestedUsers = new Set();
+
+        originalNotFollowingBack.forEach(account => {
+            const username = account.username;
+            // Suggest if not already safe and matches current input
+            if (!safeUsers.includes(username) && username.toLowerCase().includes(currentInput)) {
+                suggestedUsers.add(username);
+            }
+        });
+
+        Array.from(suggestedUsers).sort().forEach(username => {
+            const option = document.createElement('option');
+            option.value = username;
+            safeUserSuggestionsDatalist.appendChild(option);
+        });
+    }
+
+    // This event listener will be set up in window.onload
+    const safeUserInputHandler = () => {
+        populateSafeUserSuggestions();
+    };
+
+
+    async function addSafeUser(username) {
+        if (username && !safeUsers.includes(username)) {
+            safeUsers.push(username);
+            return true; // Indicate success
+        }
+        return false; // Indicate already exists or invalid
+    }
+
+    async function processAndSaveSafeUsers(newUsersAdded = false) {
+        if (newUsersAdded && currentFileData) {
+            safeUsers.sort(); // Keep the list sorted
+            currentFileData.safeUsers = safeUsers; // Update currentFileData as well
+            await saveSafeUsersToFirestore();
+            // Re-render dashboard metrics and non-followers list
+            allNonFollowers = originalNotFollowingBack.filter(account => !safeUsers.includes(account.username)); // Filter by username
+            applyFiltersAndRenderAccounts(); // Re-apply filters and render
+        }
+        renderSafeUsersList(); // Always re-render the modal list
+    }
+
+    // These event listeners will be set up in window.onload
+    const addSafeUserButtonClickHandler = async () => {
+        const username = safeUserInput.value.trim();
+        if (username) {
+            const added = await addSafeUser(username);
+            if (added) {
+                safeUserInput.value = ''; // Clear input only on success
+                await processAndSaveSafeUsers(true);
+                showAlert('Safe user added!', 'success'); // Green success popup
+            } else {
+                showAlert('User is already in the safe list.', 'info');
+            }
+        }
+    };
+
+    const addBulkSafeUserButtonClickHandler = async () => {
+        const text = bulkSafeUserInput.value.trim();
+        if (!text) {
+            showAlert('Please enter usernames in the bulk input area.', 'info');
+            return;
+        }
+
+        const usernames = text.split(/[\n,]+/).map(name => name.trim()).filter(name => name.length > 0);
+        let anyAdded = false;
+        const alreadyInList = [];
+
+        for (const username of usernames) {
+            const added = await addSafeUser(username);
+            if (added) {
+                anyAdded = true;
+            } else {
+                alreadyInList.push(username);
+            }
+        }
+
+        if (anyAdded) {
+            bulkSafeUserInput.value = ''; // Clear bulk input on success
+            await processAndSaveSafeUsers(true);
+            showAlert('Safe users added!', 'success'); // Green success popup
+            closeSafeUsersModalFunc(); // Close modal after bulk add
+        } else if (alreadyInList.length > 0) {
+            showAlert(`All entered users are already in the safe list: ${alreadyInList.join(', ')}`, 'info');
+        } else {
+            showAlert('No valid users were entered.', 'info');
+        }
+    };
+
+
+    async function removeSafeUser(username) {
+        safeUsers = safeUsers.filter(user => user !== username);
+        await processAndSaveSafeUsers(true); // Treat removal as a change that needs saving
+        showAlert('Safe user removed!', 'info'); // Info popup for removal
+    }
+
+    async function saveSafeUsersToFirestore() {
+        if (currentUserId && authInstance.currentUser && dbInstance && currentFileData) {
+            try {
+                const userDocRef = doc(dbInstance, `artifacts/${appId}/users/${currentUserId}/instagramData/latest`);
+                // Update only the safeUsers array and other relevant fields
+                await setDoc(userDocRef, { 
+                    safeUsers: currentFileData.safeUsers,
+                    originalNotFollowingBack: currentFileData.originalNotFollowingBack,
+                    totalFollowing: currentFileData.totalFollowing, 
+                    totalFollowers: currentFileData.totalFollowers,
+                    youDontFollowBackCount: currentFileData.youDontFollowBackCount,
+                    unfollowedYouCount: currentFileData.unfollowedYouCount,
+                    newFollowersCount: currentFileData.newFollowersCount,
+                    fileName: currentFileData.fileName,
+                    fileSize: currentFileData.fileSize
+                }, { merge: false }); // Use merge: false to overwrite the whole document
+                console.log('Safe users and other data saved to Firestore.');
+            } catch (error) {
+                console.error('Error saving safe users to Firestore:', error);
+                showAlert('Failed to save safe users to storage.', 'error');
+            }
+        } else {
+            console.warn('Cannot save safe users: User not authenticated or currentFileData not available.');
+        }
+    }
+
+    // Function to apply search and time filters and render accounts
+    function applyFiltersAndRenderAccounts() {
+        let filteredAccounts = [...allNonFollowers]; // Start with the list already filtered by safe users
+
+        const searchTerm = searchInput.value.toLowerCase();
+        if (searchTerm) {
+            filteredAccounts = filteredAccounts.filter(account =>
+                account.username.toLowerCase().includes(searchTerm)
+            );
+        }
+
+        const timeFilter = timeFilterSelect.value;
+        if (timeFilter !== 'all') {
+            filteredAccounts = filteredAccounts.filter(account => {
+                if (!account.timestamp) return false; // Exclude if no timestamp
+                const timeInfo = formatTimeDifference(account.timestamp);
+                return timeInfo.category === timeFilter;
+            });
+        }
+
+        const sortOrder = sortSelect.value; // Get sort order
+        filteredAccounts.sort((a, b) => {
+            if (sortOrder === 'newest') {
+                return (b.timestamp || 0) - (a.timestamp || 0); // Descending by timestamp
+            } else if (sortOrder === 'oldest') {
+                return (a.timestamp || 0) - (b.timestamp || 0); // Ascending by timestamp
+            } else if (sortOrder === 'alpha-asc') {
+                return a.username.localeCompare(b.username); // A-Z
+            } else if (sortOrder === 'alpha-desc') {
+                return b.username.localeCompare(a.username); // Z-A
+            } else if (sortOrder === 'color') {
+                // Sort by color category: Green, Orange, Red
+                const categoryOrder = { 'green': 1, 'orange': 2, 'red': 3, 'unknown': 4 };
+                const catA = a.timestamp ? formatTimeDifference(a.timestamp).category : 'unknown';
+                const catB = b.timestamp ? formatTimeDifference(b.timestamp).category : 'unknown';
+                return categoryOrder[catA] - categoryOrder[catB];
+            }
+            return 0; // No sort
+        });
+
+        renderAccounts(filteredAccounts);
+    }
+
+
+    // Mobile Menu Toggle
+    // These event listeners will be set up in window.onload
+    const mobileMenuButtonClickHandler = () => {
+      mobileMenu.classList.remove('hidden');
+    };
+
+    const closeMobileMenuClickHandler = () => {
+      mobileMenu.classList.add('hidden');
+    };
+
+    // Smooth scrolling for navigation links
+    // These event listeners will be set up in window.onload
+    const navLinkClickHandler = async function (e) {
+        e.preventDefault();
+        const targetId = this.getAttribute('href');
+        // Add a check to ensure targetId is not just '#' or empty
+        if (targetId && targetId !== '#') {
+            const targetElement = document.querySelector(targetId);
+
+            if (targetElement) {
+                // Hide mobile menu if open
+                mobileMenu.classList.add('hidden');
+                // Handle section visibility based on navigation
+                if (targetId === '#dashboard-section') {
+                    if (authInstance.currentUser) {
+                        // If logged in, check for data before showing dashboard
+                        const userDocRef = doc(dbInstance, `artifacts/${appId}/users/${currentUserId}/instagramData/latest`);
+                        try {
+                            const docSnap = await getDoc(userDocRef);
+                            if (docSnap.exists() && docSnap.data().fileName) { // Check if fileName exists as a proxy for data
+                                currentFileData = docSnap.data(); // Ensure currentFileData is updated
+                                originalNotFollowingBack = currentFileData.originalNotFollowingBack || [];
+                                safeUsers = currentFileData.safeUsers || [];
+                                showDashboard();
+                            } else {
+                                showUploadSection(false); // Go to upload if no data
+                                showAlert('Please upload your Instagram data to see the dashboard.', 'info');
+                            }
+                        } catch (error) {
+                            console.error('Error fetching data for dashboard link:', error);
+                            showAlert('Failed to load dashboard data. Please try again.', 'error');
+                            showUploadSection(false); // Show upload section on error
+                        }
+                    } else {
+                        showAlert('Please log in to access the dashboard.', 'info');
+                        openAuthModal(); // Open auth modal if not logged in
+                    }
+                } else if (targetId === '#analytics-section') { // New logic for analytics
+                    if (authInstance.currentUser) {
+                        const userDocRef = doc(dbInstance, `artifacts/${appId}/users/${currentUserId}/instagramData/latest`);
+                        try {
+                            const docSnap = await getDoc(userDocRef);
+                            if (docSnap.exists() && docSnap.data().fileName) {
+                                currentFileData = docSnap.data();
+                                updateAnalyticsMetrics(currentFileData.unfollowedYouCount || 0, currentFileData.newFollowersCount || 0);
+                                heroSection.classList.add('hidden');
+                                featuresSection.classList.add('hidden');
+                                uploadSection.classList.add('hidden');
+                                pricingSection.classList.add('hidden');
+                                dashboardSection.classList.add('hidden');
+                                analyticsSection.classList.remove('hidden'); // Show analytics
+                                analyticsSection.scrollIntoView({ behavior: 'smooth' });
+                            } else {
+                                showUploadSection(false);
+                                showAlert('Please upload your Instagram data to see the analytics.', 'info');
+                            }
+                        } catch (error) {
+                            console.error('Error fetching data for analytics link:', error);
+                            showAlert('Failed to load analytics data. Please try again.', 'error');
+                            showUploadSection(false);
+                        }
+                    } else {
+                        showAlert('Please log in to access the analytics.', 'info');
+                        openAuthModal();
+                    }
+                } else if (targetId === '#upload') {
+                    showUploadSection(currentFileData !== null && currentFileData.fileName, currentFileData ? currentFileData.fileName : '', currentFileData ? currentFileData.fileSize : '');
+                }
+                else {
+                    showLandingPage(); // Show all landing sections
+                }
+                targetElement.scrollIntoView({
+                    behavior: 'smooth'
+                });
+            }
+        } else if (targetId === '#dashboard-link' || targetId === '#') { // Special handling for dashboard sidebar link and # for home
+            // The user clarified "home button needs to take me to the landing page"
+            showLandingPage();
+        }
+    };
+
+
+    // Event listener for Analytics link in sidebar
+    const analyticsLinkClickHandler = (e) => {
+        e.preventDefault();
+        if (authInstance.currentUser) {
+            const userDocRef = doc(dbInstance, `artifacts/${appId}/users/${currentUserId}/instagramData/latest`);
+            try {
+                const docSnap = getDoc(userDocRef); // Use getDoc directly
+                if (docSnap.exists() && docSnap.data().fileName) {
+                    currentFileData = docSnap.data();
+                    updateAnalyticsMetrics(currentFileData.unfollowedYouCount || 0, currentFileData.newFollowersCount || 0);
+                    heroSection.classList.add('hidden');
+                    featuresSection.classList.add('hidden');
+                    uploadSection.classList.add('hidden');
+                    pricingSection.classList.add('hidden');
+                    dashboardSection.classList.add('hidden');
+                    analyticsSection.classList.remove('hidden'); // Show analytics
+                    analyticsSection.scrollIntoView({ behavior: 'smooth' });
+                } else {
+                    showUploadSection(false);
+                    showAlert('Please upload your Instagram data to see the analytics.', 'info');
+                }
+            } catch (error) {
+                console.error('Error fetching data for analytics link:', error);
+                showAlert('Failed to load analytics data. Please try again.', 'error');
+                showUploadSection(false);
+            }
+        } else {
+            showAlert('Please log in to access the analytics.', 'info');
+            openAuthModal();
+        }
+    };
+
+    // Event listener for Accounts link
+    const accountsLinkClickHandler = (e) => {
+        e.preventDefault();
+        showAlert('Account management features are coming soon!', 'info');
+    };
+
+    // Event listener for Settings link
+    const settingsLinkClickHandler = (e) => {
+        e.preventDefault();
+        showAlert('Settings and preferences are coming soon!', 'info');
+    };
+
+    // Event listener for Dashboard link in sidebar (This is the "Home" link in sidebar)
+    // Renamed from dashboardLinkClickHandler to better reflect its new function
+    const sidebarHomeLinkClickHandler = (e) => {
+        e.preventDefault();
+        showLandingPage(); // Direct to landing page as per request
+    };
+
+
+    // Initial app setup on window load
+    window.onload = async function() {
+        // Assign all DOM elements here to ensure they are available
+        loginBtnNav = document.getElementById('login-btn-nav');
+        logoutBtnNav = document.getElementById('logout-btn-nav');
+        loginBtnMobile = document.getElementById('login-btn-mobile');
+        logoutBtnMobile = document.getElementById('logout-btn-mobile');
+        accessPremiumBtn = document.getElementById('access-premium-btn');
+        initialUploadArea = document.getElementById('initial-upload-area');
+        uploadSuccessState = document.getElementById('upload-success-state');
+        uploadedFileName = document.getElementById('uploaded-file-name');
+        uploadedFileSize = document.getElementById('uploaded-file-size');
+        removeFileBtn = document.getElementById('remove-file-btn');
+        findNonFollowersBtn = document.getElementById('find-non-followers-btn');
+
+        uploadArea = document.getElementById('upload-area');
+        fileInput = document.getElementById('file-input');
+        chooseFileBtn = document.getElementById('choose-file-btn');
+
+        uploadDataModal = document.getElementById('upload-data-modal');
+        closeUploadDataModal = document.getElementById('close-upload-data-modal');
+        modalUploadArea = document.getElementById('modal-upload-area');
+        modalFileInput = document.getElementById('modal-file-input');
+        modalChooseFileBtn = document.getElementById('modal-choose-file-btn');
+
+        mobileMenuButton = document.getElementById('mobile-menu-button');
+        mobileMenu = document.getElementById('mobile-menu');
+        closeMobileMenu = document.getElementById('close-mobile-menu');
+        dashboardSection = document.getElementById('dashboard-section');
+        heroSection = document.getElementById('hero-section');
+        uploadSection = document.getElementById('upload');
+        featuresSection = document.getElementById('features');
+        pricingSection = document.getElementById('pricing');
+        analyticsSection = document.getElementById('analytics-section'); // Assign new analytics section
+        dashboardNavLink = document.getElementById('dashboard-nav-link');
+        dashboardNavLinkMobile = document.getElementById('dashboard-nav-link-mobile');
+        nonFollowersList = document.getElementById('non-followers-list');
+        noDataMessage = document.getElementById('no-data-message');
+        followingCountElem = document.getElementById('following-count');
+        followersCountElem = document.getElementById('followers-count');
+        newFollowersCountElem = document.getElementById('newFollowersCount');
+        unfollowedYouCountElem = document.getElementById('unfollowedYouCount');
+        notFollowingBackFilteredCountElem = document.getElementById('not-following-back-filtered-count');
+        notFollowingBackTotalCountElem = document.getElementById('not-following-back-total-count');
+        youDontFollowBackCountElem = document.getElementById('you-dont-follow-back-count');
+
+        uploadNewDataBtn = document.getElementById('upload-new-data-btn');
+        searchInput = document.getElementById('search-input');
+        timeFilterSelect = document.getElementById('time-filter-select');
+        sortSelect = document.getElementById('sort-select'); // Assign new sort selector
+        userIdDisplay = document.getElementById('user-id-display');
+        analyticsLink = document.getElementById('analytics-link');
+        dashboardLink = document.getElementById('dashboard-link'); // This is the sidebar "Home" link
+        accountsLink = document.getElementById('accounts-link');
+        settingsLink = document.getElementById('settings-link');
+        safeUsersBtn = document.getElementById('safe-users-btn');
+        safeUsersModal = document.getElementById('safe-users-modal');
+        closeSafeUsersModal = document.getElementById('close-safe-users-modal');
+        safeUserInput = document.getElementById('safe-user-input');
+        safeUserSuggestionsDatalist = document.getElementById('safe-user-suggestions');
+        addSafeUserBtn = document.getElementById('add-safe-user-btn');
+        bulkSafeUserInput = document.getElementById('bulk-safe-user-input');
+        addBulkSafeUserBtn = document.getElementById('add-bulk-safe-user-btn');
+        safeUsersListElem = document.getElementById('safe-users-list');
+
+        authModal = document.getElementById('auth-modal');
+        closeAuthModal = document.getElementById('close-auth-modal');
+        authEmailInput = document.getElementById('auth-email-input');
+        authPasswordInput = document.getElementById('auth-password-input');
+        authLoginBtn = document.getElementById('auth-login-btn');
+        authSignupBtn = document.getElementById('auth-signup-btn');
+
+        // Now that elements are assigned, proceed with Firebase init and event listeners
+        const firebaseInitialized = await initializeFirebaseApp();
+        if (!firebaseInitialized) {
+            console.error("Firebase initialization failed. App will not function correctly.");
+        }
+
+        // Add event listeners for drag and drop and file input for the landing page upload area
+        uploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault(); // Prevent default to allow drop
+            uploadArea.classList.add('drag-over');
+        });
+
+        uploadArea.addEventListener('dragleave', () => {
+            uploadArea.classList.remove('drag-over');
+        });
+
+        uploadArea.addEventListener('drop', (e) => {
+            e.preventDefault(); // Prevent default file open
+            uploadArea.classList.remove('drag-over');
+            const files = e.dataTransfer.files;
+            handleFiles(files, false); // Pass false for isModalUpload
+        });
+
+        // Trigger file input when "Choose File" button is clicked
+        chooseFileBtn.addEventListener('click', () => {
+            fileInput.click();
+        });
+
+        // Handle file input change (when user clicks "Choose File" and selects)
+        fileInput.addEventListener('change', (event) => {
+            handleFiles(event.target.files, false); // Pass false for isModalUpload
+        });
+
+        // Handle "Find My Non-Followers" button click (on landing page upload success state)
+        findNonFollowersBtn.addEventListener('click', findNonFollowersButtonClickHandler);
+
+        // Handle "Remove File" button click
+        removeFileBtn.addEventListener('click', removeFileButtonClickHandler);
+
+        // Event listeners for Upload Data Modal (these should be inside window.onload too)
+        closeUploadDataModal.addEventListener('click', closeUploadDataModalFunc);
+        modalUploadArea.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            modalUploadArea.classList.add('drag-over');
+        });
+        modalUploadArea.addEventListener('dragleave', () => {
+            modalUploadArea.classList.remove('drag-over');
+        });
+        modalUploadArea.addEventListener('drop', (e) => {
+            e.preventDefault();
+            modalUploadArea.classList.remove('drag-over');
+            handleFiles(e.dataTransfer.files, true); // Pass true for isModalUpload
+        });
+        modalChooseFileBtn.addEventListener('click', () => {
+            modalFileInput.click();
+        });
+        modalFileInput.addEventListener('change', (event) => {
+            handleFiles(event.target.files, true); // Pass true for isModalUpload
+        });
+
+        // Event listeners for Authentication Modal
+        loginBtnNav.addEventListener('click', handleLogin);
+        loginBtnMobile.addEventListener('click', handleLogin);
+        logoutBtnNav.addEventListener('click', handleLogout);
+        logoutBtnMobile.addEventListener('click', handleLogout);
+        closeAuthModal.addEventListener('click', closeAuthModalFunc);
+        authLoginBtn.addEventListener('click', async () => {
+            const email = authEmailInput.value.trim();
+            const password = authPasswordInput.value.trim();
+            if (!email || !password) { showAlert('Please enter both email and password.', 'error'); return; }
+            try { await signInWithEmailAndPassword(authInstance, email, password); showAlert('Logged in successfully!', 'success'); closeAuthModalFunc(); }
+            catch (error) { console.error('Login failed:', error); showAlert(`Login failed: ${error.message}`, 'error'); }
+        });
+        authSignupBtn.addEventListener('click', async () => {
+            const email = authEmailInput.value.trim();
+            const password = authPasswordInput.value.trim();
+            if (!email || !password) { showAlert('Please enter both email and password.', 'error'); return; }
+            if (password.length < 6) { showAlert('Password should be at least 6 characters.', 'error'); return; }
+            try { await createUserWithEmailAndPassword(authInstance, email, password); showAlert('Account created and logged in successfully!', 'success'); closeAuthModalFunc(); }
+            catch (error) { console.error('Signup failed:', error); showAlert(`Signup failed: ${error.message}`, 'error'); }
+        });
+
+        // Event listeners for Dashboard filters/search/sort
+        searchInput.addEventListener('input', applyFiltersAndRenderAccounts);
+        timeFilterSelect.addEventListener('change', applyFiltersAndRenderAccounts);
+        sortSelect.addEventListener('change', applyFiltersAndRenderAccounts); // New event listener for sort
+
+        // Mobile Menu Toggle
+        mobileMenuButton.addEventListener('click', mobileMenuButtonClickHandler);
+        closeMobileMenu.addEventListener('click', closeMobileMenuClickHandler);
+
+        // Event listener for Analytics link (top nav and sidebar)
+        document.getElementById('analytics-link').addEventListener('click', analyticsLinkClickHandler);
+        // The dashboard-nav-link and dashboard-nav-link-mobile are for the main nav bar dashboard link.
+        // The dashboard-link is the sidebar "Home" link.
+        document.getElementById('dashboard-nav-link').addEventListener('click', navLinkClickHandler);
+        document.getElementById('dashboard-nav-link-mobile').addEventListener('click', navLinkClickHandler);
+        document.getElementById('dashboard-link').addEventListener('click', sidebarHomeLinkClickHandler); // Sidebar "Home" now goes to landing page
+
+        // Event listener for Accounts link
+        accountsLink.addEventListener('click', accountsLinkClickHandler);
+
+        // Event listener for Settings link
+        settingsLink.addEventListener('click', settingsLinkClickHandler);
+
+        // Event listeners for Safe Users modal
+        safeUsersBtn.addEventListener('click', openSafeUsersModal);
+        closeSafeUsersModal.addEventListener('click', closeSafeUsersModalFunc);
+        safeUserInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                addSafeUserBtn.click(); // Trigger click of add button
+            }
+        });
+        safeUserInput.addEventListener('input', safeUserInputHandler); // Add listener for suggestions
+        addSafeUserBtn.addEventListener('click', addSafeUserButtonClickHandler);
+        addBulkSafeUserBtn.addEventListener('click', addBulkSafeUserButtonClickHandler);
+
+        // Handle "Upload New Data" button click in dashboard (opens modal)
+        uploadNewDataBtn.addEventListener('click', openUploadDataModal);
+
+        // Initial render of accounts (will show "No data" message)
+        renderAccounts([]);
+    };
+
+  </script>
+</body>
+</html>
