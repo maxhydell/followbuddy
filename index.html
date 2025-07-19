@@ -3,15 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>FollowBuddy Clone</title>
+  <title>FollowBuddy</title>
 
-  <!-- Google font -->
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet" />
-  <!-- Font Awesome for icons -->
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-  <!-- Tailwind CSS -->
   <script src="https://cdn.tailwindcss.com"></script>
-  <!-- JSZip Library for ZIP file handling -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <style>
     /* Custom CSS for Inter font and general body styles */
@@ -286,7 +282,6 @@
 </head>
 <body class="flex flex-col min-h-screen">
 
-  <!-- Navigation Bar -->
   <header class="bg-gray-900 shadow-sm py-4 px-6 flex justify-between items-center sticky top-0 z-50">
     <div class="flex items-center space-x-2">
       <i class="fas fa-users text-blue-400 text-2xl"></i>
@@ -305,13 +300,11 @@
       <button id="logout-btn-nav" class="hidden md:block bg-red-600 text-white px-4 py-2 rounded-lg shadow hover:bg-red-700 transition-colors duration-200 font-medium">Logout</button>
       <button id="access-premium-btn" class="bg-blue-600 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-700 transition-colors duration-200 font-medium">Access Premium</button>
     </div>
-    <!-- Mobile Menu Button -->
     <button id="mobile-menu-button" class="md:hidden text-gray-300 hover:text-blue-400 focus:outline-none">
       <i class="fas fa-bars text-xl"></i>
     </button>
   </header>
 
-  <!-- Mobile Menu Overlay -->
   <div id="mobile-menu" class="hidden fixed inset-0 bg-gray-900 z-40 flex flex-col items-center justify-center space-y-6 md:hidden">
     <button id="close-mobile-menu" class="absolute top-4 right-4 text-gray-300 hover:text-blue-400 focus:outline-none">
       <i class="fas fa-times-circle text-2xl"></i>
@@ -327,49 +320,41 @@
   </div>
 
 
-  <!-- Hero Section -->
   <section id="hero-section" class="bg-gradient-to-r from-blue-700 to-purple-800 text-white py-20 px-6 text-center">
     <h1 class="text-5xl font-extrabold mb-4 leading-tight">Find Out Who's Not Following You Back!</h1>
     <p class="text-xl mb-8 max-w-2xl mx-auto">Discover your unfollowers on Instagram safely and easily, without sharing your password.</p>
     <a href="#upload" class="bg-white text-blue-600 px-8 py-4 rounded-full text-lg font-bold shadow-lg hover:bg-gray-100 transition-all duration-300 transform hover:scale-105">Get Started Now</a>
   </section>
 
-  <!-- Features Section -->
   <section id="features" class="py-16 px-6 bg-gray-800">
     <div class="max-w-6xl mx-auto">
       <h2 class="text-4xl font-bold text-center mb-12 text-gray-100">Core Features</h2>
       <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-10">
-        <!-- Feature 1: Safe Unfollower Tracking -->
         <div class="bg-gray-700 p-8 rounded-xl shadow-lg flex flex-col items-center text-center">
           <i class="fas fa-shield-alt text-5xl text-blue-400 mb-6"></i>
           <h3 class="text-2xl font-semibold mb-4 text-gray-100">Safe Unfollower Tracking</h3>
           <p class="text-gray-300">Identify who has unfollowed you on Instagram without risking your account with potentially unsafe third-party apps.</p>
         </div>
-        <!-- Feature 2: Full Instagram Compliance -->
         <div class="bg-gray-700 p-8 rounded-xl shadow-lg flex flex-col items-center text-center">
           <i class="fab fa-instagram text-5xl text-purple-500 mb-6"></i>
           <h3 class="text-2xl font-semibold mb-4 text-gray-100">Full Instagram Compliance</h3>
           <p class="text-gray-300">Utilizes approved Instagram data and does not require users to enter their Instagram passwords, ensuring full compliance.</p>
         </div>
-        <!-- Feature 3: No Login Required -->
         <div class="bg-gray-700 p-8 rounded-xl shadow-lg flex flex-col items-center text-center">
           <i class="fas fa-lock text-5xl text-green-400 mb-6"></i>
           <h3 class="text-2xl font-semibold mb-4 text-gray-100">No Login Required</h3>
           <p class="text-gray-300">Users can track unfollowers without entering their Instagram login details, enhancing security and privacy.</p>
         </div>
-        <!-- Feature 4: Simple and Easy to Use -->
         <div class="bg-gray-700 p-8 rounded-xl shadow-lg flex flex-col items-center text-center">
           <i class="fas fa-lightbulb text-5xl text-yellow-400 mb-6"></i>
           <h3 class="text-2xl font-semibold mb-4 text-gray-100">Simple and Easy to Use</h3>
           <p class="text-gray-300">The app is regularly updated with new features and improvements, including ways to visualize follower changes and reminders.</p>
         </div>
-        <!-- Feature 5: Real Human Support -->
         <div class="bg-gray-700 p-8 rounded-xl shadow-lg flex flex-col items-center text-center">
           <i class="fas fa-headset text-5xl text-red-500 mb-6"></i>
           <h3 class="text-2xl font-semibold mb-4 text-gray-100">Real Human Support</h3>
           <p class="text-gray-300">FollowBuddy offers support from a real human team, not automated bots, for personalized assistance.</p>
         </div>
-        <!-- Feature 6: Regular Updates -->
         <div class="bg-gray-700 p-8 rounded-xl shadow-lg flex flex-col items-center text-center">
           <i class="fas fa-sync-alt text-5xl text-indigo-400 mb-6"></i>
           <h3 class="text-2xl font-semibold mb-4 text-gray-100">Regular Updates</h3>
@@ -379,12 +364,10 @@
     </div>
   </section>
 
-  <!-- File Upload Section -->
   <section id="upload" class="py-16 px-6 bg-gray-900 flex-grow flex items-center justify-center">
     <div class="bg-gray-800 p-8 rounded-xl shadow-lg max-w-2xl w-full text-center">
       <h2 class="text-3xl font-bold mb-8 text-gray-100">Find Out Who's Not Following You Back!</h2>
 
-      <!-- Initial Upload Area -->
       <div id="initial-upload-area">
         <div id="upload-area" class="upload-area p-12 rounded-lg flex flex-col items-center justify-center mb-8">
           <i class="fas fa-cloud-upload-alt text-6xl text-gray-500 mb-4"></i>
@@ -398,7 +381,6 @@
         </div>
       </div>
 
-      <!-- File Upload Success State (Initially Hidden) -->
       <div id="upload-success-state" class="hidden">
         <div class="border-2 border-green-500 bg-green-900 p-6 rounded-lg mb-8">
           <i class="fas fa-check-circle text-green-400 text-5xl mb-4"></i>
@@ -437,10 +419,8 @@
     </div>
   </section>
 
-  <!-- Dashboard Section (Initially Hidden) -->
   <section id="dashboard-section" class="hidden py-16 px-6 bg-gray-900">
     <div class="max-w-7xl mx-auto flex flex-col md:flex-row">
-      <!-- Sidebar -->
       <div class="dashboard-sidebar p-6 md:block hidden">
         <div class="nav-heading">
             <span>Navigation</span>
@@ -471,7 +451,6 @@
         </nav>
       </div>
 
-      <!-- Main Content -->
       <div class="dashboard-content">
         <div class="flex justify-between items-center mb-8">
           <h2 class="text-3xl font-bold text-gray-100">Your Instagram Dashboard</h2>
@@ -488,7 +467,6 @@
           </div>
         </div>
 
-        <!-- Metric Cards -->
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
           <div class="metric-card">
             <p class="label">Total Followers</p>
@@ -508,7 +486,6 @@
             <p class="value" id="you-dont-follow-back-count">0</p>
           </div>
         </div>
-        <!-- Accounts List -->
         <div class="bg-gray-800 p-6 rounded-xl shadow-lg">
           <div class="flex justify-between items-center mb-6">
             <h3 class="text-xl font-bold text-gray-100">Accounts Not Following You Back</h3>
@@ -531,7 +508,6 @@
             </div>
           </div>
 
-          <!-- List of Non-Followers -->
           <div id="non-followers-list" class="space-y-2">
             <p id="no-data-message" class="text-gray-500 text-center">Upload your Instagram data to see who isn't following you back!</p>
           </div>
@@ -541,10 +517,8 @@
     </div>
   </section>
 
-  <!-- Analytics Section (Initially Hidden) -->
   <section id="analytics-section" class="hidden py-16 px-6 bg-gray-900">
     <div class="max-w-7xl mx-auto flex flex-col md:flex-row">
-        <!-- Sidebar for Analytics -->
         <div class="dashboard-sidebar p-6 md:block hidden">
             <div class="nav-heading">
                 <span>Navigation</span>
@@ -584,23 +558,18 @@
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                 <div class="metric-card">
-                    <p class="label">Unfollowed You</p>
-                    <p class="value flex items-center justify-center text-red-500">
-                        <i class="fas fa-arrow-down mr-2"></i><span id="unfollowedYouCount">0</span>
-                    </p>
+                    <p class="label">New Followers</p> <p class="value flex items-center justify-center text-green-500"> <i class="fas fa-arrow-up mr-2"></i><span id="newFollowersCount">0</span> </p>
                 </div>
                 <div class="metric-card">
-                    <p class="label">New Followers</p>
-                    <p class="value flex items-center justify-center text-green-500">
-                        <i class="fas fa-arrow-up mr-2"></i><span id="newFollowersCount">0</span>
-                    </p>
+                    <p class="label">Unfollowed You</p> <p class="value flex items-center justify-center text-red-500"> <i class="fas fa-arrow-down mr-2"></i><span id="unfollowedYouCount">0</span> </p>
                 </div>
             </div>
-            <!-- List of Unfollowed Accounts -->
             <div class="bg-gray-800 p-6 rounded-xl shadow-lg mb-8">
-                <h3 class="text-xl font-bold text-gray-100 mb-4">Accounts That Unfollowed You</h3>
-                <div id="unfollowed-list" class="space-y-2">
-                    <p class="text-gray-500 text-center">No unfollow data available for this period.</p>
+                <h3 class="text-xl font-bold text-gray-100 mb-4">New Followers</h3> <div id="new-followers-list" class="space-y-2"> <p class="text-gray-500 text-center">No new follower data available for this period.</p>
+                </div>
+            </div>
+            <div class="bg-gray-800 p-6 rounded-xl shadow-lg">
+                <h3 class="text-xl font-bold text-gray-100 mb-4">Unfollowers</h3> <div id="unfollowed-list" class="space-y-2"> <p class="text-gray-500 text-center">No unfollow data available for this period.</p>
                 </div>
             </div>
         </div>
@@ -608,11 +577,9 @@
   </section>
 
 
-  <!-- Pricing Section (Placeholder) -->
   <section id="pricing" class="py-16 px-6 bg-gray-800 text-center">
     <h2 class="text-4xl font-bold text-gray-100 mb-12">Simple & Transparent Pricing</h2>
     <div class="max-w-4xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-8">
-      <!-- Free Tier -->
       <div class="bg-gray-700 p-8 rounded-xl shadow-lg border-2 border-gray-600">
         <h3 class="text-2xl font-bold mb-4 text-gray-100">Free</h3>
         <p class="text-4xl font-extrabold text-blue-400 mb-6">$0<span class="text-lg font-normal text-gray-400">/month</span></p>
@@ -623,7 +590,6 @@
         </ul>
         <button class="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors duration-200">Get Started Free</button>
       </div>
-      <!-- Pro Tier -->
       <div class="bg-gray-700 p-8 rounded-xl shadow-xl border-2 border-blue-500 transform scale-105 relative">
         <span class="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 bg-blue-500 text-white text-xs font-bold px-3 py-1 rounded-full uppercase">Most Popular</span>
         <h3 class="text-2xl font-bold mb-4 text-blue-400">Pro</h3>
@@ -636,7 +602,6 @@
         </ul>
         <button class="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors duration-200">Choose Pro</button>
       </div>
-      <!-- Enterprise Tier -->
       <div class="bg-gray-700 p-8 rounded-xl shadow-lg border-2 border-gray-600">
         <h3 class="text-2xl font-bold mb-4 text-gray-100">Enterprise</h3>
         <p class="text-4xl font-extrabold text-blue-400 mb-6">$29<span class="text-lg font-normal text-gray-400">/month</span></p>
@@ -651,7 +616,6 @@
     </div>
   </section>
 
-  <!-- Footer -->
   <footer class="bg-gray-900 text-white py-8 px-6 text-center mt-auto">
     <div class="max-w-6xl mx-auto">
       <div class="flex flex-col md:flex-row justify-between items-center mb-6 space-y-4 md:space-y-0">
@@ -669,11 +633,10 @@
           <a href="#" class="text-gray-300 hover:text-white transition-colors duration-200"><i class="fab fa-instagram"></i></a>
         </div>
       </div>
-      <p class="text-gray-400 text-sm">&copy; 2025 FollowBuddy. All rights reserved.</p>
+      <p class="text-gray-400 text-sm">&copy; 2025 FollowBudd. All rights reserved. Developed by Max Hydell.</p>
     </div>
   </footer>
 
-  <!-- Custom Alert Modal -->
   <div id="custom-alert-modal" class="modal">
     <div class="modal-content">
       <span class="close-button" id="close-alert-modal">&times;</span>
@@ -682,7 +645,6 @@
     </div>
   </div>
 
-  <!-- Safe Users Modal -->
   <div id="safe-users-modal" class="modal">
     <div class="modal-content">
       <span class="close-button" id="close-safe-users-modal">&times;</span>
@@ -703,7 +665,6 @@
     </div>
   </div>
 
-  <!-- Upload Data Modal -->
   <div id="upload-data-modal" class="modal">
     <div class="modal-content">
         <span class="close-button" id="close-upload-data-modal">&times;</span>
@@ -730,7 +691,6 @@
     </div>
   </div>
 
-  <!-- Authentication Modal -->
   <div id="auth-modal" class="modal">
     <div class="modal-content">
       <span class="close-button" id="close-auth-modal">&times;</span>
@@ -744,7 +704,6 @@
   </div>
 
 
-  <!-- Firebase & app scripts -->
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
@@ -882,6 +841,7 @@
     let addBulkSafeUserBtn;
     let safeUsersListElem;
     let unfollowedListElem; // New: Unfollowed list element
+    let newFollowersListElem; // New: New Followers list element
 
     let authModal;
     let closeAuthModal;
@@ -954,7 +914,8 @@
                     safeUsers = [];
                     allUserUploadsMetadata = [];
                     updateDashboardMetrics(0, 0, 0, 0, 0);
-                    updateAnalyticsMetrics(0, 0, []); // Reset analytics metrics and unfollowed list
+                    // Pass swapped values to updateAnalyticsMetrics:
+                    updateAnalyticsMetrics(0, 0, [], []); 
                     populateUploadSelectors(); // Clear selectors
                 }
             });
@@ -1020,7 +981,7 @@
             originalNotFollowingBack = [];
             safeUsers = [];
             updateDashboardMetrics(0, 0, 0, 0, 0);
-            updateAnalyticsMetrics(0, 0, []);
+            updateAnalyticsMetrics(0, 0, [], []); // Reset analytics metrics and lists
             renderAccounts([]);
             return;
         }
@@ -1041,6 +1002,7 @@
                 let unfollowedYou = 0;
                 let newFollowers = 0;
                 let unfollowedAccounts = [];
+                let newFollowerAccounts = []; // To store the list of new followers
 
                 if (currentIndex > 0) {
                     const previousUploadMetadata = allUserUploadsMetadata[currentIndex - 1];
@@ -1052,16 +1014,17 @@
                         const currentFollowersSet = new Set(currentFileData.followersList);
                         const previousFollowersSet = new Set(prevData.followersList);
 
-                        // Calculate unfollowed
+                        // Calculate unfollowed (lost followers)
                         unfollowedAccounts = Array.from(previousFollowersSet).filter(
                             follower => !currentFollowersSet.has(follower)
                         );
                         unfollowedYou = unfollowedAccounts.length;
 
-                        // Calculate new followers
-                        newFollowers = Array.from(currentFollowersSet).filter(
+                        // Calculate new followers (gained followers)
+                        newFollowerAccounts = Array.from(currentFollowersSet).filter(
                             follower => !previousFollowersSet.has(follower)
-                        ).length;
+                        );
+                        newFollowers = newFollowerAccounts.length;
                     }
                 }
                 console.log(`Analytics for upload ${uploadId}: Unfollowed: ${unfollowedYou}, New Followers: ${newFollowers}`);
@@ -1072,7 +1035,8 @@
                     originalNotFollowingBack.length,
                     currentFileData.youDontFollowBackCount
                 );
-                updateAnalyticsMetrics(unfollowedYou, newFollowers, unfollowedAccounts);
+                // Swapping the arguments passed to updateAnalyticsMetrics to reflect the UI change
+                updateAnalyticsMetrics(newFollowers, unfollowedYou, newFollowerAccounts, unfollowedAccounts);
                 renderAccounts(allNonFollowers);
             } else {
                 console.log('No data found for the selected upload ID:', uploadId);
@@ -1082,7 +1046,7 @@
                 originalNotFollowingBack = [];
                 safeUsers = [];
                 updateDashboardMetrics(0, 0, 0, 0, 0);
-                updateAnalyticsMetrics(0, 0, []);
+                updateAnalyticsMetrics(0, 0, [], []);
                 renderAccounts([]);
             }
         } catch (error) {
@@ -1106,7 +1070,7 @@
             originalNotFollowingBack = [];
             safeUsers = [];
             updateDashboardMetrics(0, 0, 0, 0, 0);
-            updateAnalyticsMetrics(0, 0, []);
+            updateAnalyticsMetrics(0, 0, [], []);
             renderAccounts([]);
         }
     }
@@ -1149,6 +1113,25 @@
                 </a>
             `;
             unfollowedListElem.appendChild(div);
+        });
+    }
+
+    // Function to render new followers accounts list
+    function renderNewFollowersList(accounts) {
+        newFollowersListElem.innerHTML = '';
+        if (accounts.length === 0) {
+            newFollowersListElem.innerHTML = '<p class="text-gray-500 text-center">No new follower data available for this period.</p>';
+            return;
+        }
+        accounts.forEach(username => {
+            const div = document.createElement('div');
+            div.className = 'account-list-item';
+            div.innerHTML = `
+                <a href="https://www.instagram.com/${username}/" target="_blank" rel="noopener noreferrer" class="font-medium text-green-400 hover:underline">
+                    ${username}
+                </a>
+            `;
+            newFollowersListElem.appendChild(div);
         });
     }
 
@@ -1218,10 +1201,11 @@
     }
 
     // Function to update analytics metrics
-    function updateAnalyticsMetrics(unfollowedYou, newFollowers, unfollowedAccounts) {
-        unfollowedYouCountElem.textContent = unfollowedYou;
-        newFollowersCountElem.textContent = newFollowers;
-        renderUnfollowedAccountsList(unfollowedAccounts);
+    function updateAnalyticsMetrics(newFollowers, unfollowedYou, newFollowerAccounts, unfollowedAccounts) { // Swapped arguments order
+        newFollowersCountElem.textContent = newFollowers; // Flipped ID
+        unfollowedYouCountElem.textContent = unfollowedYou; // Flipped ID
+        renderNewFollowersList(newFollowerAccounts); // Render new followers to its new list
+        renderUnfollowedAccountsList(unfollowedAccounts); // Render unfollowed to its new list
     }
 
     // Function to show dashboard and hide other sections
@@ -1266,9 +1250,9 @@
         if (currentFileData) {
             // Analytics metrics are updated when data is loaded via loadDataForUpload
             // No need to re-calculate here, just ensure they are displayed
-            // renderUnfollowedAccountsList is also called by updateAnalyticsMetrics
+            // renderUnfollowedAccountsList and renderNewFollowersList are also called by updateAnalyticsMetrics
         } else {
-            updateAnalyticsMetrics(0, 0, []);
+            updateAnalyticsMetrics(0, 0, [], []);
         }
         analyticsSection.scrollIntoView({ behavior: 'smooth' });
     }
@@ -1323,7 +1307,7 @@
         safeUsers = [];
         allUserUploadsMetadata = []; // Clear upload metadata
         updateDashboardMetrics(0, 0, 0, 0, 0);
-        updateAnalyticsMetrics(0, 0, []); // Reset analytics metrics
+        updateAnalyticsMetrics(0, 0, [], []); // Reset analytics metrics
         populateUploadSelectors(); // Clear selectors
         showLandingPage(); // Go back to landing page after logout
       } catch (error) {
@@ -1400,7 +1384,7 @@
         originalNotFollowingBack = []; // Clear original list
         safeUsers = []; // Clear safe users
         updateDashboardMetrics(0, 0, 0, 0, 0); // Reset dashboard metrics
-        updateAnalyticsMetrics(0, 0, []); // Reset analytics metrics
+        updateAnalyticsMetrics(0, 0, [], []); // Reset analytics metrics
         fileInput.value = ''; // Clear the file input on landing page
         modalFileInput.value = ''; // Clear the file input in modal
         showUploadSection(false); // Show initial upload state on landing page
@@ -1524,7 +1508,8 @@
                 originalNotFollowingBack.length,
                 currentFileData.youDontFollowBackCount
             );
-            updateAnalyticsMetrics(0, 0, []); // Can't calculate historical unfollows/new followers without previous data
+            // Pass swapped values: 0 for newFollowers, 0 for unfollowedYou, empty lists
+            updateAnalyticsMetrics(0, 0, [], []); 
             renderAccounts(allNonFollowers);
             showDashboard();
             showAlert('Instagram data processed. Log in to save your data and access full analytics!', 'info');
@@ -1906,6 +1891,7 @@
         addBulkSafeUserBtn = document.getElementById('add-bulk-safe-user-btn');
         safeUsersListElem = document.getElementById('safe-users-list');
         unfollowedListElem = document.getElementById('unfollowed-list'); // Assign unfollowed list element
+        newFollowersListElem = document.getElementById('new-followers-list'); // Assign new followers list element
 
         authModal = document.getElementById('auth-modal');
         closeAuthModal = document.getElementById('close-auth-modal');
