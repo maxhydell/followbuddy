@@ -296,7 +296,9 @@
       <a href="#features" class="text-gray-300 hover:text-blue-400 transition-colors duration-200">Features</a>
       <a href="#upload" class="text-gray-300 hover:text-blue-400 transition-colors duration-200">Upload</a>
       <a href="#pricing" class="text-gray-300 hover:text-blue-400 transition-colors duration-200">Pricing</a>
-      <a href="#dashboard-section" id="dashboard-nav-link" class="text-gray-300 hover:text-blue-400 transition-colors duration-200">Dashboard</a>
+      <a href="#dashboard-section" id="dashboard-nav-link" class="text-gray-300 hover:text-blue-400 transition-colors duration-200 flex items-center">
+        <i class="fas fa-tachometer-alt mr-2"></i><span>Dashboard</span>
+      </a>
     </nav>
     <div class="flex items-center space-x-4">
       <button id="login-btn-nav" class="hidden md:block text-blue-400 hover:text-blue-200 transition-colors duration-200 font-medium">Account</button>
@@ -317,7 +319,9 @@
     <a href="#features" class="text-gray-100 text-2xl hover:text-blue-400 transition-colors duration-200" onclick="document.getElementById('mobile-menu').classList.add('hidden')">Features</a>
     <a href="#upload" class="text-gray-100 text-2xl hover:text-blue-400 transition-colors duration-200" onclick="document.getElementById('mobile-menu').classList.add('hidden')">Upload</a>
     <a href="#pricing" class="text-gray-100 text-2xl hover:text-blue-400 transition-colors duration-200" onclick="document.getElementById('mobile-menu').classList.add('hidden')">Pricing</a>
-    <a href="#dashboard-section" id="dashboard-nav-link-mobile" class="text-gray-100 text-2xl hover:text-blue-400 transition-colors duration-200">Dashboard</a>
+    <a href="#dashboard-section" id="dashboard-nav-link-mobile" class="text-gray-100 text-2xl hover:text-blue-400 transition-colors duration-200 flex items-center">
+        <i class="fas fa-tachometer-alt mr-2"></i><span>Dashboard</span>
+    </a>
     <button id="login-btn-mobile" class="text-blue-400 text-2xl hover:text-blue-200 transition-colors duration-200 font-medium">Account</button>
     <button id="logout-btn-mobile" class="bg-red-600 text-white px-6 py-3 rounded-lg shadow hover:bg-red-700 transition-colors duration-200 font-medium text-2xl">Logout</button>
   </div>
@@ -449,17 +453,17 @@
               </a>
             </li>
             <li class="mb-4">
-              <a href="#" id="analytics-link" class="flex items-center text-gray-300 hover:text-blue-400 transition-colors duration-200">
+              <a href="#" id="analytics-link-sidebar-dashboard" class="flex items-center text-gray-300 hover:text-blue-400 transition-colors duration-200">
                 <i class="fas fa-chart-line text-lg"></i><span>Analytics</span>
               </a>
             </li>
             <li class="mb-4">
-              <a href="#" id="accounts-link" class="flex items-center text-gray-300 hover:text-blue-400 transition-colors duration-200">
+              <a href="#" id="accounts-link-sidebar-dashboard" class="flex items-center text-gray-300 hover:text-blue-400 transition-colors duration-200">
                 <i class="fas fa-user-friends text-lg"></i><span>Accounts</span>
               </a>
             </li>
             <li class="mb-4">
-              <a href="#" id="settings-link" class="flex items-center text-gray-300 hover:text-blue-400 transition-colors duration-200">
+              <a href="#" id="settings-link-sidebar-dashboard" class="flex items-center text-gray-300 hover:text-blue-400 transition-colors duration-200">
                 <i class="fas fa-cog text-lg"></i><span>Settings</span>
               </a>
             </li>
@@ -471,7 +475,10 @@
       <div class="dashboard-content">
         <div class="flex justify-between items-center mb-8">
           <h2 class="text-3xl font-bold text-gray-100">Your Instagram Dashboard</h2>
-          <div class="flex space-x-3">
+          <div class="flex items-center space-x-3">
+            <select id="data-upload-selector-dashboard" class="border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-700 text-gray-100">
+                <option value="">Select Data Upload</option>
+            </select>
             <button id="safe-users-btn" class="bg-green-600 text-white px-4 py-2 rounded-lg shadow hover:bg-green-700 transition-colors duration-200 font-medium">
                 <i class="fas fa-user-plus mr-2"></i>Safe Users
             </button>
@@ -536,24 +543,67 @@
 
   <!-- Analytics Section (Initially Hidden) -->
   <section id="analytics-section" class="hidden py-16 px-6 bg-gray-900">
-    <div class="max-w-7xl mx-auto">
-      <h2 class="text-3xl font-bold text-gray-100 mb-8">Your Instagram Analytics</h2>
-      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-        <div class="metric-card">
-          <p class="label">Unfollowed You</p>
-          <p class="value" id="unfollowedYouCount">0</p>
+    <div class="max-w-7xl mx-auto flex flex-col md:flex-row">
+        <!-- Sidebar for Analytics -->
+        <div class="dashboard-sidebar p-6 md:block hidden">
+            <div class="nav-heading">
+                <span>Navigation</span>
+            </div>
+            <nav>
+                <ul>
+                    <li class="mb-4">
+                        <a href="#" id="dashboard-link-sidebar-analytics" class="flex items-center text-gray-300 hover:text-blue-400 transition-colors duration-200">
+                            <i class="fas fa-home text-lg"></i><span>Home</span>
+                        </a>
+                    </li>
+                    <li class="mb-4">
+                        <a href="#" id="analytics-link-sidebar-analytics" class="flex items-center text-blue-400 font-semibold hover:text-blue-200 transition-colors duration-200">
+                            <i class="fas fa-chart-line text-lg"></i><span>Analytics</span>
+                        </a>
+                    </li>
+                    <li class="mb-4">
+                        <a href="#" id="accounts-link-sidebar-analytics" class="flex items-center text-gray-300 hover:text-blue-400 transition-colors duration-200">
+                            <i class="fas fa-user-friends text-lg"></i><span>Accounts</span>
+                        </a>
+                    </li>
+                    <li class="mb-4">
+                        <a href="#" id="settings-link-sidebar-analytics" class="flex items-center text-gray-300 hover:text-blue-400 transition-colors duration-200">
+                            <i class="fas fa-cog text-lg"></i><span>Settings</span>
+                        </a>
+                    </li>
+                </ul>
+            </nav>
         </div>
-        <div class="metric-card">
-          <p class="label">New Followers</p>
-          <p class="value" id="newFollowersCount">0</p>
+
+        <div class="dashboard-content">
+            <div class="flex justify-between items-center mb-8">
+                <h2 class="text-3xl font-bold text-gray-100">Your Instagram Analytics</h2>
+                <select id="data-upload-selector-analytics" class="border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-700 text-gray-100">
+                    <option value="">Select Data Upload</option>
+                </select>
+            </div>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
+                <div class="metric-card">
+                    <p class="label">Unfollowed You</p>
+                    <p class="value flex items-center justify-center text-red-500">
+                        <i class="fas fa-arrow-down mr-2"></i><span id="unfollowedYouCount">0</span>
+                    </p>
+                </div>
+                <div class="metric-card">
+                    <p class="label">New Followers</p>
+                    <p class="value flex items-center justify-center text-green-500">
+                        <i class="fas fa-arrow-up mr-2"></i><span id="newFollowersCount">0</span>
+                    </p>
+                </div>
+            </div>
+            <!-- List of Unfollowed Accounts -->
+            <div class="bg-gray-800 p-6 rounded-xl shadow-lg mb-8">
+                <h3 class="text-xl font-bold text-gray-100 mb-4">Accounts That Unfollowed You</h3>
+                <div id="unfollowed-list" class="space-y-2">
+                    <p class="text-gray-500 text-center">No unfollow data available for this period.</p>
+                </div>
+            </div>
         </div>
-      </div>
-      <div class="bg-gray-800 p-6 rounded-xl shadow-lg">
-        <h3 class="text-xl font-bold text-gray-100 mb-4">Follower Trends</h3>
-        <p class="text-gray-400 mb-4">Graph showing new follows and unfollows over time (Coming Soon!)</p>
-        <!-- Placeholder for graph -->
-        <canvas id="follower-trend-chart" class="w-full h-64 bg-gray-700 rounded-lg"></canvas>
-      </div>
     </div>
   </section>
 
@@ -698,17 +748,18 @@
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
-    import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+    import { getFirestore, doc, setDoc, getDoc, collection, query, orderBy, getDocs } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
     // Global Firebase instances and user data
     let appInstance;
     let authInstance;
     let dbInstance;
     let currentUserId = null;
-    let currentFileData = null; // Store processed data temporarily
+    let currentFileData = null; // Store processed data temporarily for the currently selected upload
     let allNonFollowers = []; // Store the filtered non-followers for display and search
     let originalNotFollowingBack = []; // Store the original non-followers before safe user filtering
     let safeUsers = []; // Store safe users
+    let allUserUploadsMetadata = []; // Stores {id, timestamp, fileName, followersList, followingList} for all uploads
 
     const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
 
@@ -811,10 +862,16 @@
     let searchInput;
     let timeFilterSelect;
     let userIdDisplay;
-    let analyticsLink;
-    let dashboardLink;
-    let accountsLink;
-    let settingsLink;
+    let analyticsLinkDashboard; // Analytics link in dashboard sidebar
+    let dashboardLinkSidebar; // Home link in dashboard sidebar
+    let accountsLinkDashboard; // Accounts link in dashboard sidebar
+    let settingsLinkDashboard; // Settings link in dashboard sidebar
+
+    let analyticsLinkAnalytics; // Analytics link in analytics sidebar
+    let dashboardLinkSidebarAnalytics; // Home link in analytics sidebar
+    let accountsLinkAnalytics; // Accounts link in analytics sidebar
+    let settingsLinkAnalytics; // Settings link in analytics sidebar
+
     let safeUsersBtn;
     let safeUsersModal;
     let closeSafeUsersModal;
@@ -824,6 +881,7 @@
     let bulkSafeUserInput;
     let addBulkSafeUserBtn;
     let safeUsersListElem;
+    let unfollowedListElem; // New: Unfollowed list element
 
     let authModal;
     let closeAuthModal;
@@ -831,6 +889,9 @@
     let authPasswordInput;
     let authLoginBtn;
     let authSignupBtn;
+
+    let dataUploadSelectorDashboard; // New: Data upload selector for dashboard
+    let dataUploadSelectorAnalytics; // New: Data upload selector for analytics
 
     // Function to initialize Firebase
     async function initializeFirebaseApp() {
@@ -858,53 +919,13 @@
             authInstance = getAuth(appInstance);
             dbInstance = getFirestore(appInstance);
 
-            // Rely solely on onAuthStateChanged to determine user state
             onAuthStateChanged(authInstance, async (user) => {
                 if (user) {
                     currentUserId = user.uid;
-                    userIdDisplay.textContent = currentUserId; // Display user ID
+                    userIdDisplay.textContent = currentUserId;
                     console.log('User logged in:', currentUserId);
-
-                    // Fetch data from Firestore
-                    const userDocRef = doc(dbInstance, `artifacts/${appId}/users/${currentUserId}/instagramData/latest`);
-                    try {
-                        const docSnap = await getDoc(userDocRef);
-                        if (docSnap.exists()) {
-                            currentFileData = docSnap.data();
-                            originalNotFollowingBack = currentFileData.originalNotFollowingBack || [];
-                            safeUsers = currentFileData.safeUsers || [];
-                            // Apply safe user filter to get allNonFollowers for display
-                            allNonFollowers = originalNotFollowingBack.filter(account => !safeUsers.includes(account.username)); // Filter by username
-                            console.log('Loaded data from Firestore:', currentFileData);
-                            console.log('Loaded safeUsers:', safeUsers);
-                            console.log('Filtered non-followers for display (allNonFollowers):', allNonFollowers);
-
-                            // Update UI with loaded data
-                            updateDashboardMetrics(
-                                currentFileData.totalFollowing,
-                                currentFileData.totalFollowers,
-                                allNonFollowers.length, // Filtered count
-                                originalNotFollowingBack.length, // Total count
-                                currentFileData.youDontFollowBackCount // This is now 'You Don't Follow Back'
-                            );
-                            updateAnalyticsMetrics(
-                                currentFileData.unfollowedYouCount || 0, // Ensure it's not undefined
-                                currentFileData.newFollowersCount || 0 // Ensure it's not undefined
-                            );
-                            renderAccounts(allNonFollowers);
-                            showDashboard(); // Automatically show dashboard if data is loaded
-                        } else {
-                            console.log('No existing data for this user in Firestore.');
-                            // If user is authenticated but no data, show upload section
-                            showUploadSection(false); 
-                            showAlert('Welcome! Please upload your Instagram data to get started.', 'info');
-                        }
-                    } catch (error) {
-                        console.error('Error fetching data from Firestore:', error);
-                        showAlert('Failed to load previous data. Please try uploading again.', 'error');
-                        showUploadSection(false); // Show initial upload state on error
-                        showLandingPage(); // If error, ensure landing page is shown
-                    }
+                    await loadAllUserUploads(); // Load all uploads for the selector
+                    await loadLatestData(); // Load the latest data by default
 
                     loginBtnNav.style.display = 'none';
                     loginBtnMobile.style.display = 'none';
@@ -912,14 +933,12 @@
                     logoutBtnMobile.style.display = 'block';
                     accessPremiumBtn.textContent = 'Go to Dashboard';
                     accessPremiumBtn.onclick = () => {
-                         // If user clicks "Go to Dashboard", assume they want to see dashboard
                         showDashboard();
                     };
                     
                 } else {
-                    // User is signed out or not authenticated
-                    currentUserId = crypto.randomUUID(); // Assign a random ID for unauthenticated users
-                    userIdDisplay.textContent = currentUserId; // Display user ID
+                    currentUserId = crypto.randomUUID();
+                    userIdDisplay.textContent = currentUserId;
                     console.log('User not logged in, using anonymous ID:', currentUserId);
 
                     loginBtnNav.style.display = 'block';
@@ -927,14 +946,16 @@
                     logoutBtnNav.style.display = 'none';
                     logoutBtnMobile.style.display = 'none';
                     accessPremiumBtn.textContent = 'Access Premium';
-                    accessPremiumBtn.onclick = handleLogin; // Opens auth modal
+                    accessPremiumBtn.onclick = handleLogin;
                     showLandingPage();
-                    currentFileData = null; // Clear any temporary data
+                    currentFileData = null;
                     allNonFollowers = [];
                     originalNotFollowingBack = [];
                     safeUsers = [];
+                    allUserUploadsMetadata = [];
                     updateDashboardMetrics(0, 0, 0, 0, 0);
-                    updateAnalyticsMetrics(0, 0); // Reset analytics metrics
+                    updateAnalyticsMetrics(0, 0, []); // Reset analytics metrics and unfollowed list
+                    populateUploadSelectors(); // Clear selectors
                 }
             });
 
@@ -945,6 +966,151 @@
             return false;
         }
     }
+
+    // Load all user uploads metadata for the dropdowns
+    async function loadAllUserUploads() {
+        if (!currentUserId || !dbInstance) {
+            allUserUploadsMetadata = [];
+            populateUploadSelectors();
+            return;
+        }
+        try {
+            const uploadsRef = collection(dbInstance, `artifacts/${appId}/users/${currentUserId}/userUploads`);
+            const q = query(uploadsRef, orderBy('timestamp', 'desc')); // Order by newest first
+            const querySnapshot = await getDocs(q);
+            allUserUploadsMetadata = querySnapshot.docs.map(doc => ({
+                id: doc.id,
+                ...doc.data()
+            }));
+            populateUploadSelectors();
+        } catch (error) {
+            console.error('Error loading user uploads metadata:', error);
+            showAlert('Failed to load historical data uploads.', 'error');
+        }
+    }
+
+    // Populate the data upload selectors
+    function populateUploadSelectors() {
+        const selectors = [dataUploadSelectorDashboard, dataUploadSelectorAnalytics];
+        selectors.forEach(selector => {
+            selector.innerHTML = '<option value="">Select Data Upload</option>'; // Clear and add default
+            allUserUploadsMetadata.forEach(upload => {
+                const date = new Date(upload.timestamp * 1000); // Convert seconds to milliseconds
+                const option = document.createElement('option');
+                option.value = upload.id;
+                // Display only date and time
+                option.textContent = date.toLocaleString();
+                selector.appendChild(option);
+            });
+            // Select the latest upload if available
+            if (allUserUploadsMetadata.length > 0 && currentFileData) {
+                selector.value = currentFileData.id;
+            } else {
+                selector.value = ""; // No selection
+            }
+        });
+    }
+
+    // Load data for a specific upload ID
+    async function loadDataForUpload(uploadId) {
+        if (!currentUserId || !dbInstance || !uploadId) {
+            console.log("No upload ID provided or user not authenticated.");
+            currentFileData = null;
+            allNonFollowers = [];
+            originalNotFollowingBack = [];
+            safeUsers = [];
+            updateDashboardMetrics(0, 0, 0, 0, 0);
+            updateAnalyticsMetrics(0, 0, []);
+            renderAccounts([]);
+            return;
+        }
+
+        try {
+            const uploadDocRef = doc(dbInstance, `artifacts/${appId}/users/${currentUserId}/userUploads`, uploadId);
+            const docSnap = await getDoc(uploadDocRef);
+
+            if (docSnap.exists()) {
+                const data = docSnap.data();
+                currentFileData = { id: docSnap.id, ...data }; // Store the ID
+                originalNotFollowingBack = currentFileData.originalNotFollowingBack || [];
+                safeUsers = currentFileData.safeUsers || []; // Ensure safeUsers is loaded
+                allNonFollowers = originalNotFollowingBack.filter(account => !safeUsers.includes(account.username));
+
+                // Find the previous upload for analytics calculation
+                const currentIndex = allUserUploadsMetadata.findIndex(upload => upload.id === uploadId);
+                let unfollowedYou = 0;
+                let newFollowers = 0;
+                let unfollowedAccounts = [];
+
+                if (currentIndex > 0) {
+                    const previousUploadMetadata = allUserUploadsMetadata[currentIndex - 1];
+                    const previousUploadDocRef = doc(dbInstance, `artifacts/${appId}/users/${currentUserId}/userUploads`, previousUploadMetadata.id);
+                    const prevDocSnap = await getDoc(previousUploadDocRef);
+
+                    if (prevDocSnap.exists()) {
+                        const prevData = prevDocSnap.data();
+                        const currentFollowersSet = new Set(currentFileData.followersList);
+                        const previousFollowersSet = new Set(prevData.followersList);
+
+                        // Calculate unfollowed
+                        unfollowedAccounts = Array.from(previousFollowersSet).filter(
+                            follower => !currentFollowersSet.has(follower)
+                        );
+                        unfollowedYou = unfollowedAccounts.length;
+
+                        // Calculate new followers
+                        newFollowers = Array.from(currentFollowersSet).filter(
+                            follower => !previousFollowersSet.has(follower)
+                        ).length;
+                    }
+                }
+                console.log(`Analytics for upload ${uploadId}: Unfollowed: ${unfollowedYou}, New Followers: ${newFollowers}`);
+                updateDashboardMetrics(
+                    currentFileData.totalFollowing,
+                    currentFileData.totalFollowers,
+                    allNonFollowers.length,
+                    originalNotFollowingBack.length,
+                    currentFileData.youDontFollowBackCount
+                );
+                updateAnalyticsMetrics(unfollowedYou, newFollowers, unfollowedAccounts);
+                renderAccounts(allNonFollowers);
+            } else {
+                console.log('No data found for the selected upload ID:', uploadId);
+                showAlert('No data found for the selected upload. Please try another or upload new data.', 'info');
+                currentFileData = null;
+                allNonFollowers = [];
+                originalNotFollowingBack = [];
+                safeUsers = [];
+                updateDashboardMetrics(0, 0, 0, 0, 0);
+                updateAnalyticsMetrics(0, 0, []);
+                renderAccounts([]);
+            }
+        } catch (error) {
+            console.error('Error loading data for upload:', error);
+            showAlert('Failed to load data for the selected upload. Error: ' + error.message, 'error');
+        }
+    }
+
+    // Load the latest data by default when user logs in or app starts
+    async function loadLatestData() {
+        if (allUserUploadsMetadata.length > 0) {
+            const latestUploadId = allUserUploadsMetadata[0].id; // First item is latest due to orderBy('desc')
+            await loadDataForUpload(latestUploadId);
+            // Set the dropdowns to the latest upload
+            dataUploadSelectorDashboard.value = latestUploadId;
+            dataUploadSelectorAnalytics.value = latestUploadId;
+        } else {
+            console.log('No uploads found for the user.');
+            currentFileData = null;
+            allNonFollowers = [];
+            originalNotFollowingBack = [];
+            safeUsers = [];
+            updateDashboardMetrics(0, 0, 0, 0, 0);
+            updateAnalyticsMetrics(0, 0, []);
+            renderAccounts([]);
+        }
+    }
+
 
     // Function to render accounts (non-followers)
     function renderAccounts(accountsToRender) {
@@ -964,6 +1130,25 @@
                 <span class="time-col ${timeInfo.color}">${timeInfo.text}</span>
             `;
             nonFollowersList.appendChild(div);
+        });
+    }
+
+    // Function to render unfollowed accounts list
+    function renderUnfollowedAccountsList(accounts) {
+        unfollowedListElem.innerHTML = '';
+        if (accounts.length === 0) {
+            unfollowedListElem.innerHTML = '<p class="text-gray-500 text-center">No unfollow data available for this period.</p>';
+            return;
+        }
+        accounts.forEach(username => {
+            const div = document.createElement('div');
+            div.className = 'account-list-item';
+            div.innerHTML = `
+                <a href="https://www.instagram.com/${username}/" target="_blank" rel="noopener noreferrer" class="font-medium text-red-400 hover:underline">
+                    ${username}
+                </a>
+            `;
+            unfollowedListElem.appendChild(div);
         });
     }
 
@@ -1033,17 +1218,11 @@
     }
 
     // Function to update analytics metrics
-    function updateAnalyticsMetrics(unfollowedYou, newFollowers) {
+    function updateAnalyticsMetrics(unfollowedYou, newFollowers, unfollowedAccounts) {
         unfollowedYouCountElem.textContent = unfollowedYou;
         newFollowersCountElem.textContent = newFollowers;
-        // Placeholder for graph rendering logic
-        // const chartCanvas = document.getElementById('follower-trend-chart');
-        // if (chartCanvas) {
-        //     // Initialize Chart.js or D3.js here with relevant data
-        //     // Example: new Chart(chartCanvas, { ... });
-        // }
+        renderUnfollowedAccountsList(unfollowedAccounts);
     }
-
 
     // Function to show dashboard and hide other sections
     function showDashboard() {
@@ -1053,8 +1232,6 @@
         pricingSection.classList.add('hidden');
         analyticsSection.classList.add('hidden'); // Hide analytics section
         dashboardSection.classList.remove('hidden');
-        dashboardNavLink.classList.remove('hidden');
-        dashboardNavLinkMobile.classList.remove('hidden');
         
         // Ensure the dashboard displays the current data if available
         if (currentFileData) {
@@ -1076,6 +1253,26 @@
         dashboardSection.scrollIntoView({ behavior: 'smooth' });
     }
 
+    // Function to show analytics and hide other sections
+    function showAnalytics() {
+        heroSection.classList.add('hidden');
+        featuresSection.classList.add('hidden');
+        uploadSection.classList.add('hidden');
+        pricingSection.classList.add('hidden');
+        dashboardSection.classList.add('hidden'); // Hide dashboard section
+        analyticsSection.classList.remove('hidden'); // Show analytics section
+
+        // Ensure analytics displays current data
+        if (currentFileData) {
+            // Analytics metrics are updated when data is loaded via loadDataForUpload
+            // No need to re-calculate here, just ensure they are displayed
+            // renderUnfollowedAccountsList is also called by updateAnalyticsMetrics
+        } else {
+            updateAnalyticsMetrics(0, 0, []);
+        }
+        analyticsSection.scrollIntoView({ behavior: 'smooth' });
+    }
+
     // Function to show landing page and hide dashboard
     function showLandingPage() {
         heroSection.classList.remove('hidden');
@@ -1084,8 +1281,6 @@
         pricingSection.classList.remove('hidden');
         dashboardSection.classList.add('hidden');
         analyticsSection.classList.add('hidden'); // Hide analytics section
-        dashboardNavLink.classList.remove('hidden'); // Dashboard link always visible on home
-        dashboardNavLinkMobile.classList.remove('hidden'); // Dashboard link always visible on home
         // Scroll to top
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
@@ -1126,8 +1321,10 @@
         allNonFollowers = [];
         originalNotFollowingBack = [];
         safeUsers = [];
+        allUserUploadsMetadata = []; // Clear upload metadata
         updateDashboardMetrics(0, 0, 0, 0, 0);
-        updateAnalyticsMetrics(0, 0); // Reset analytics metrics
+        updateAnalyticsMetrics(0, 0, []); // Reset analytics metrics
+        populateUploadSelectors(); // Clear selectors
         showLandingPage(); // Go back to landing page after logout
       } catch (error) {
         showAlert('Error during logout: ' + error.message, 'error');
@@ -1181,16 +1378,21 @@
     // Handle "Remove File" button click
     // This event listener will be set up in window.onload
     const removeFileButtonClickHandler = async () => {
-        if (currentUserId && authInstance.currentUser) {
+        if (currentUserId && authInstance.currentUser && currentFileData) {
             try {
                 // Delete data from Firestore
-                const userDocRef = doc(dbInstance, `artifacts/${appId}/users/${currentUserId}/instagramData/latest`);
+                const userDocRef = doc(dbInstance, `artifacts/${appId}/users/${currentUserId}/userUploads`, currentFileData.id);
                 await setDoc(userDocRef, {}); // Clear the document by setting it to an empty object
-                console.log('User data cleared from Firestore.');
+                console.log('Current user data cleared from Firestore.');
+                await loadAllUserUploads(); // Reload metadata to update dropdowns
+                await loadLatestData(); // Load the new latest data or reset if no more uploads
+                showAlert('Current file removed. You can upload a new one.', 'info');
             } catch (error) {
                 console.error('Error clearing data from Firestore:', error);
                 showAlert('Failed to clear data from storage.', 'error');
             }
+        } else {
+             showAlert('No file selected to remove or not logged in.', 'info');
         }
 
         currentFileData = null; // Clear processed data
@@ -1198,11 +1400,10 @@
         originalNotFollowingBack = []; // Clear original list
         safeUsers = []; // Clear safe users
         updateDashboardMetrics(0, 0, 0, 0, 0); // Reset dashboard metrics
-        updateAnalyticsMetrics(0, 0); // Reset analytics metrics
+        updateAnalyticsMetrics(0, 0, []); // Reset analytics metrics
         fileInput.value = ''; // Clear the file input on landing page
         modalFileInput.value = ''; // Clear the file input in modal
         showUploadSection(false); // Show initial upload state on landing page
-        showAlert('File removed. You can upload a new one.', 'info');
     };
 
 
@@ -1218,10 +1419,7 @@
         return;
       }
 
-      // Allow larger files, but still show the 50MB message in UI.
-      // The actual limit is constrained by browser memory for JSZip.
-      // For very large files (e.g., >200-300MB), consider server-side processing.
-      const MAX_FILE_SIZE_MB = 200; // Increased internal limit
+      const MAX_FILE_SIZE_MB = 200;
       if (file.size > MAX_FILE_SIZE_MB * 1024 * 1024) { 
         showAlert(`File size exceeds ${MAX_FILE_SIZE_MB}MB. Please choose a smaller file.`, 'error');
         return;
@@ -1230,7 +1428,6 @@
       try {
         const zip = await JSZip.loadAsync(file);
 
-        // Define the paths to the JSON files within the ZIP
         const followingPath = 'connections/followers_and_following/following.json';
         const followersPath = 'connections/followers_and_following/followers_1.json';
 
@@ -1248,19 +1445,17 @@
         const followingData = JSON.parse(followingContent);
         const followersData = JSON.parse(followersContent);
 
-        // Extract usernames and timestamps for "following"
-        const followingMap = new Map(); // Map<username, timestamp>
+        const followingMap = new Map();
         const followingUsernames = new Set();
         followingData.relationships_following.forEach(item => {
             if (item.string_list_data && item.string_list_data.length > 0) {
                 const username = item.string_list_data[0].value;
-                const timestamp = item.string_list_data[0].timestamp; // This is in seconds (UTC)
+                const timestamp = item.string_list_data[0].timestamp;
                 followingMap.set(username, timestamp);
                 followingUsernames.add(username);
             }
         });
 
-        // Extract usernames for "followers"
         const followersUsernames = new Set();
         followersData.forEach(item => {
             if (item.string_list_data && item.string_list_data.length > 0) {
@@ -1268,22 +1463,19 @@
             }
         });
 
-        // Calculate metrics
         const totalFollowing = followingUsernames.size;
         const totalFollowers = followersUsernames.size;
         
-        const calculatedNotFollowingBack = []; // This is the original, unfiltered list of {username, timestamp}
+        const calculatedNotFollowingBack = [];
         followingUsernames.forEach(username => {
             if (!followersUsernames.has(username)) {
-                const timestamp = followingMap.get(username); // Get timestamp
-                calculatedNotFollowingBack.push({ username: username, timestamp: timestamp || null }); // Store object
+                const timestamp = followingMap.get(username);
+                calculatedNotFollowingBack.push({ username: username, timestamp: timestamp || null });
             }
         });
 
-        // Store the original unfiltered list
         originalNotFollowingBack = calculatedNotFollowingBack;
 
-        // Calculate mutuals (users you follow AND who follow you back)
         let mutualsCount = 0;
         followingUsernames.forEach(username => {
             if (followersUsernames.has(username)) {
@@ -1291,66 +1483,59 @@
             }
         });
 
-        // Calculate "You Don't Follow Back" (users who follow you but you don't follow back)
         const youDontFollowBackCount = totalFollowers - mutualsCount;
 
-        // Placeholder for unfollowedYouCount and newFollowersCount
-        // These would require comparing current data with previously saved data.
-        // For now, they remain 0 as per the initial implementation.
-        const unfollowedYouCount = 0;
-        const newFollowersCount = 0;
-
-
         // Filter notFollowingBack based on current safeUsers
-        allNonFollowers = originalNotFollowingBack.filter(account => !safeUsers.includes(account.username)); // Filter by username
+        allNonFollowers = originalNotFollowingBack.filter(account => !safeUsers.includes(account.username));
 
+        // Prepare data for saving
+        const uploadTimestamp = Math.floor(Date.now() / 1000); // Current timestamp in seconds
+        const uploadId = `upload_${uploadTimestamp}`; // Unique ID for this upload
 
-        // Store processed data
-        currentFileData = {
+        const dataToSave = {
+            timestamp: uploadTimestamp,
+            fileName: file.name,
             totalFollowing,
             totalFollowers,
-            originalNotFollowingBack, // This is now array of {username, timestamp}
-            mutualsCount, // Keep mutualsCount for calculation, but display youDontFollowBackCount
-            youDontFollowBackCount, // New stat
-            unfollowedYouCount, // Placeholder for now
-            newFollowersCount, // Placeholder for now
-            safeUsers, // Current safe users
-            fileName: file.name,
-            fileSize: `${(file.size / 1024 / 1024).toFixed(2)} MB`
+            followingList: Array.from(followingUsernames), // Save as array for Firestore
+            followersList: Array.from(followersUsernames), // Save as array for Firestore
+            originalNotFollowingBack,
+            youDontFollowBackCount,
+            safeUsers: safeUsers // Save current safe users with the upload
         };
-        console.log('Processed allNonFollowers (filtered for display):', allNonFollowers);
-        console.log('Original Not Following Back:', originalNotFollowingBack);
-
 
         // Save data to Firestore
-        if (currentUserId && authInstance.currentUser) { // Only save if a user is truly authenticated
-            const userDocRef = doc(dbInstance, `artifacts/${appId}/users/${currentUserId}/instagramData/latest`);
-            await setDoc(userDocRef, currentFileData);
-            console.log('User data saved to Firestore.');
-        } else {
-            console.warn('Not saving data to Firestore: User not authenticated.');
-        }
-
-        // Show the success state in the upload section or close modal
-        if (isModalUpload) {
-            closeUploadDataModalFunc(); // Close the modal
+        if (currentUserId && authInstance.currentUser) {
+            const userUploadsRef = collection(dbInstance, `artifacts/${appId}/users/${currentUserId}/userUploads`);
+            await setDoc(doc(userUploadsRef, uploadId), dataToSave);
+            console.log('User data saved to Firestore with ID:', uploadId);
+            await loadAllUserUploads(); // Reload all uploads to update dropdowns
+            await loadDataForUpload(uploadId); // Load the newly uploaded data
             showAlert('Instagram data uploaded successfully!', 'success');
-            showDashboard(); // Go to dashboard after modal upload
+            showDashboard(); // Go to dashboard after successful upload
         } else {
-            showUploadSection(true, file.name, `${(file.size / 1024 / 1024).toFixed(2)} MB`);
-            // If on landing page and uploaded, automatically go to dashboard
+            console.warn('Not saving data to Firestore: User not authenticated. Data will be temporary.');
+            currentFileData = { id: uploadId, ...dataToSave }; // Use temporary ID
+            // For unauthenticated users, we can't save/load historical data, so analytics will be limited
+            updateDashboardMetrics(
+                currentFileData.totalFollowing,
+                currentFileData.totalFollowers,
+                allNonFollowers.length,
+                originalNotFollowingBack.length,
+                currentFileData.youDontFollowBackCount
+            );
+            updateAnalyticsMetrics(0, 0, []); // Can't calculate historical unfollows/new followers without previous data
+            renderAccounts(allNonFollowers);
             showDashboard();
+            showAlert('Instagram data processed. Log in to save your data and access full analytics!', 'info');
         }
-
+        fileInput.value = ''; // Clear file input
+        modalFileInput.value = ''; // Clear modal file input
+        closeUploadDataModalFunc(); // Close the upload modal after successful upload
       } catch (error) {
         console.error('Error processing ZIP file:', error);
         showAlert('Failed to process Instagram data. Please ensure it\'s a valid Instagram data export ZIP and contains the correct files. Error: ' + error.message, 'error');
-        // If error during modal upload, keep modal open for retry, or close and show main upload
-        if (isModalUpload) {
-            // Optionally, you could show an error message within the modal itself
-        } else {
-            showUploadSection(false); // Revert to initial upload state on error
-        }
+        showUploadSection(false);
       }
     }
 
@@ -1503,20 +1688,12 @@
     async function saveSafeUsersToFirestore() {
         if (currentUserId && authInstance.currentUser && dbInstance && currentFileData) {
             try {
-                const userDocRef = doc(dbInstance, `artifacts/${appId}/users/${currentUserId}/instagramData/latest`);
-                // Update only the safeUsers array and other relevant fields
+                const userDocRef = doc(dbInstance, `artifacts/${appId}/users/${currentUserId}/userUploads`, currentFileData.id);
+                // Update only the safeUsers array
                 await setDoc(userDocRef, { 
                     safeUsers: currentFileData.safeUsers,
-                    originalNotFollowingBack: currentFileData.originalNotFollowingBack,
-                    totalFollowing: currentFileData.totalFollowing, 
-                    totalFollowers: currentFileData.totalFollowers,
-                    youDontFollowBackCount: currentFileData.youDontFollowBackCount,
-                    unfollowedYouCount: currentFileData.unfollowedYouCount,
-                    newFollowersCount: currentFileData.newFollowersCount,
-                    fileName: currentFileData.fileName,
-                    fileSize: currentFileData.fileSize
-                }, { merge: false }); // Use merge: false to overwrite the whole document
-                console.log('Safe users and other data saved to Firestore.');
+                }, { merge: true }); // Use merge: true to only update the safeUsers field
+                console.log('Safe users saved to Firestore for current upload.');
             } catch (error) {
                 console.error('Error saving safe users to Firestore:', error);
                 showAlert('Failed to save safe users to storage.', 'error');
@@ -1595,52 +1772,16 @@
                 // Handle section visibility based on navigation
                 if (targetId === '#dashboard-section') {
                     if (authInstance.currentUser) {
-                        // If logged in, check for data before showing dashboard
-                        const userDocRef = doc(dbInstance, `artifacts/${appId}/users/${currentUserId}/instagramData/latest`);
-                        try {
-                            const docSnap = await getDoc(userDocRef);
-                            if (docSnap.exists() && docSnap.data().fileName) { // Check if fileName exists as a proxy for data
-                                currentFileData = docSnap.data(); // Ensure currentFileData is updated
-                                originalNotFollowingBack = currentFileData.originalNotFollowingBack || [];
-                                safeUsers = currentFileData.safeUsers || [];
-                                showDashboard();
-                            } else {
-                                showUploadSection(false); // Go to upload if no data
-                                showAlert('Please upload your Instagram data to see the dashboard.', 'info');
-                            }
-                        } catch (error) {
-                            console.error('Error fetching data for dashboard link:', error);
-                            showAlert('Failed to load dashboard data. Please try again.', 'error');
-                            showUploadSection(false); // Show upload section on error
-                        }
+                        await loadLatestData(); // Ensure latest data is loaded
+                        showDashboard();
                     } else {
                         showAlert('Please log in to access the dashboard.', 'info');
-                        openAuthModal(); // Open auth modal if not logged in
+                        openAuthModal();
                     }
-                } else if (targetId === '#analytics-section') { // New logic for analytics
+                } else if (targetId === '#analytics-section') {
                     if (authInstance.currentUser) {
-                        const userDocRef = doc(dbInstance, `artifacts/${appId}/users/${currentUserId}/instagramData/latest`);
-                        try {
-                            const docSnap = await getDoc(userDocRef); // Await here
-                            if (docSnap.exists() && docSnap.data().fileName) {
-                                currentFileData = docSnap.data();
-                                updateAnalyticsMetrics(currentFileData.unfollowedYouCount || 0, currentFileData.newFollowersCount || 0);
-                                heroSection.classList.add('hidden');
-                                featuresSection.classList.add('hidden');
-                                uploadSection.classList.add('hidden');
-                                pricingSection.classList.add('hidden');
-                                dashboardSection.classList.add('hidden');
-                                analyticsSection.classList.remove('hidden'); // Show analytics
-                                analyticsSection.scrollIntoView({ behavior: 'smooth' });
-                            } else {
-                                showUploadSection(false);
-                                showAlert('Please upload your Instagram data to see the analytics.', 'info');
-                            }
-                        } catch (error) {
-                            console.error('Error fetching data for analytics link:', error);
-                            showAlert('Failed to load analytics data. Please try again.', 'error');
-                            showUploadSection(false);
-                        }
+                        await loadLatestData(); // Ensure latest data is loaded
+                        showAnalytics();
                     } else {
                         showAlert('Please log in to access the analytics.', 'info');
                         openAuthModal();
@@ -1656,43 +1797,17 @@
                 });
             }
         } else if (targetId === '#dashboard-link' || targetId === '#') { // Special handling for dashboard sidebar link and # for home
-            // The user clarified "home button needs to take me to the landing page"
             showLandingPage();
         }
     };
 
 
-    // Event listener for Analytics link in sidebar
-    const analyticsLinkClickHandler = (e) => {
+    // Event listener for Analytics link (main nav and dashboard sidebar)
+    const analyticsLinkClickHandler = async (e) => {
         e.preventDefault();
         if (authInstance.currentUser) {
-            const userDocRef = doc(dbInstance, `artifacts/${appId}/users/${currentUserId}/instagramData/latest`);
-            try {
-                // Await here to ensure docSnap is a DocumentSnapshot
-                getDoc(userDocRef).then(docSnap => {
-                    if (docSnap.exists() && docSnap.data().fileName) {
-                        currentFileData = docSnap.data();
-                        updateAnalyticsMetrics(currentFileData.unfollowedYouCount || 0, currentFileData.newFollowersCount || 0);
-                        heroSection.classList.add('hidden');
-                        featuresSection.classList.add('hidden');
-                        uploadSection.classList.add('hidden');
-                        pricingSection.classList.add('hidden');
-                        dashboardSection.classList.add('hidden');
-                        analyticsSection.classList.remove('hidden'); // Show analytics
-                        analyticsSection.scrollIntoView({ behavior: 'smooth' });
-                    } else {
-                        showUploadSection(false);
-                        showAlert('Please upload your Instagram data to see the analytics.', 'info');
-                    }
-                }).catch(error => {
-                    console.error('Error fetching data for analytics link:', error);
-                    showAlert('Failed to load analytics data. Please try again.', 'error');
-                    showUploadSection(false);
-                });
-            } catch (error) {
-                console.error('Error in analyticsLinkClickHandler try block:', error);
-                showAlert('An unexpected error occurred while trying to access analytics. Please try again.', 'error');
-            }
+            await loadLatestData(); // Ensure latest data is loaded
+            showAnalytics();
         } else {
             showAlert('Please log in to access the analytics.', 'info');
             openAuthModal();
@@ -1712,7 +1827,6 @@
     };
 
     // Event listener for Dashboard link in sidebar (This is the "Home" link in sidebar)
-    // Renamed from dashboardLinkClickHandler to better reflect its new function
     const sidebarHomeLinkClickHandler = (e) => {
         e.preventDefault();
         showLandingPage(); // Direct to landing page as per request
@@ -1752,7 +1866,7 @@
         uploadSection = document.getElementById('upload');
         featuresSection = document.getElementById('features');
         pricingSection = document.getElementById('pricing');
-        analyticsSection = document.getElementById('analytics-section'); // Assign new analytics section
+        analyticsSection = document.getElementById('analytics-section');
         dashboardNavLink = document.getElementById('dashboard-nav-link');
         dashboardNavLinkMobile = document.getElementById('dashboard-nav-link-mobile');
         nonFollowersList = document.getElementById('non-followers-list');
@@ -1768,12 +1882,20 @@
         uploadNewDataBtn = document.getElementById('upload-new-data-btn');
         searchInput = document.getElementById('search-input');
         timeFilterSelect = document.getElementById('time-filter-select');
-        sortSelect = document.getElementById('sort-select'); // Assign new sort selector
+        sortSelect = document.getElementById('sort-select');
         userIdDisplay = document.getElementById('user-id-display');
-        analyticsLink = document.getElementById('analytics-link');
-        dashboardLink = document.getElementById('dashboard-link'); // This is the sidebar "Home" link
-        accountsLink = document.getElementById('accounts-link');
-        settingsLink = document.getElementById('settings-link');
+
+        // Sidebar links (dashboard and analytics)
+        analyticsLinkDashboard = document.getElementById('analytics-link-sidebar-dashboard');
+        dashboardLinkSidebar = document.getElementById('dashboard-link');
+        accountsLinkDashboard = document.getElementById('accounts-link-sidebar-dashboard');
+        settingsLinkDashboard = document.getElementById('settings-link-sidebar-dashboard');
+
+        analyticsLinkAnalytics = document.getElementById('analytics-link-sidebar-analytics');
+        dashboardLinkSidebarAnalytics = document.getElementById('dashboard-link-sidebar-analytics');
+        accountsLinkAnalytics = document.getElementById('accounts-link-sidebar-analytics');
+        settingsLinkAnalytics = document.getElementById('settings-link-sidebar-analytics');
+
         safeUsersBtn = document.getElementById('safe-users-btn');
         safeUsersModal = document.getElementById('safe-users-modal');
         closeSafeUsersModal = document.getElementById('close-safe-users-modal');
@@ -1783,6 +1905,7 @@
         bulkSafeUserInput = document.getElementById('bulk-safe-user-input');
         addBulkSafeUserBtn = document.getElementById('add-bulk-safe-user-btn');
         safeUsersListElem = document.getElementById('safe-users-list');
+        unfollowedListElem = document.getElementById('unfollowed-list'); // Assign unfollowed list element
 
         authModal = document.getElementById('auth-modal');
         closeAuthModal = document.getElementById('close-auth-modal');
@@ -1790,6 +1913,9 @@
         authPasswordInput = document.getElementById('auth-password-input');
         authLoginBtn = document.getElementById('auth-login-btn');
         authSignupBtn = document.getElementById('auth-signup-btn');
+
+        dataUploadSelectorDashboard = document.getElementById('data-upload-selector-dashboard');
+        dataUploadSelectorAnalytics = document.getElementById('data-upload-selector-analytics');
 
         // Now that elements are assigned, proceed with Firebase init and event listeners
         const firebaseInitialized = await initializeFirebaseApp();
@@ -1876,25 +2002,42 @@
         // Event listeners for Dashboard filters/search/sort
         searchInput.addEventListener('input', applyFiltersAndRenderAccounts);
         timeFilterSelect.addEventListener('change', applyFiltersAndRenderAccounts);
-        sortSelect.addEventListener('change', applyFiltersAndRenderAccounts); // New event listener for sort
+        sortSelect.addEventListener('change', applyFiltersAndRenderAccounts);
+
+        // Data upload selectors
+        dataUploadSelectorDashboard.addEventListener('change', async (e) => {
+            await loadDataForUpload(e.target.value);
+            // Keep the other selector in sync
+            dataUploadSelectorAnalytics.value = e.target.value;
+        });
+        dataUploadSelectorAnalytics.addEventListener('change', async (e) => {
+            await loadDataForUpload(e.target.value);
+            // Keep the other selector in sync
+            dataUploadSelectorDashboard.value = e.target.value;
+        });
+
 
         // Mobile Menu Toggle
         mobileMenuButton.addEventListener('click', mobileMenuButtonClickHandler);
         closeMobileMenu.addEventListener('click', closeMobileMenuClickHandler);
 
         // Event listener for Analytics link (top nav and sidebar)
-        document.getElementById('analytics-link').addEventListener('click', analyticsLinkClickHandler);
-        // The dashboard-nav-link and dashboard-nav-link-mobile are for the main nav bar dashboard link.
-        // The dashboard-link is the sidebar "Home" link.
         document.getElementById('dashboard-nav-link').addEventListener('click', navLinkClickHandler);
         document.getElementById('dashboard-nav-link-mobile').addEventListener('click', navLinkClickHandler);
         document.getElementById('dashboard-link').addEventListener('click', sidebarHomeLinkClickHandler); // Sidebar "Home" now goes to landing page
 
-        // Event listener for Accounts link
-        accountsLink.addEventListener('click', accountsLinkClickHandler);
+        // Analytics links
+        document.getElementById('analytics-link-sidebar-dashboard').addEventListener('click', analyticsLinkClickHandler);
+        document.getElementById('analytics-link-sidebar-analytics').addEventListener('click', analyticsLinkClickHandler);
 
-        // Event listener for Settings link
-        settingsLink.addEventListener('click', settingsLinkClickHandler);
+
+        // Accounts links
+        accountsLinkDashboard.addEventListener('click', accountsLinkClickHandler);
+        accountsLinkAnalytics.addEventListener('click', accountsLinkClickHandler);
+
+        // Settings links
+        settingsLinkDashboard.addEventListener('click', settingsLinkClickHandler);
+        settingsLinkAnalytics.addEventListener('click', settingsLinkClickHandler);
 
         // Event listeners for Safe Users modal
         safeUsersBtn.addEventListener('click', openSafeUsersModal);
