@@ -71,7 +71,7 @@
     }
     /* Adjusted for Safe Users modal */
     #safe-users-modal .modal-content,
-    #banned-users-modal .modal-content { /* Apply to banned users modal too */
+    #banned-users-add-modal .modal-content { /* Apply to banned users add modal too */
         max-width: 600px; /* Wider for bulk input */
     }
     /* Modal content themes */
@@ -381,6 +381,10 @@
       <a href="#dashboard-section" id="dashboard-nav-link" class="text-gray-300 hover:text-blue-400 transition-colors duration-200 flex items-center">
         <i class="fas fa-tachometer-alt mr-2"></i><span>Dashboard</span>
       </a>
+      <!-- New Banned Users Page Link in Header -->
+      <a href="#banned-users-page-section" id="banned-users-nav-link" class="text-gray-300 hover:text-blue-400 transition-colors duration-200 flex items-center">
+        <i class="fas fa-ban mr-2"></i><span>Banned Users</span>
+      </a>
     </nav>
     <div class="flex items-center space-x-4">
       <button id="login-btn-nav" class="hidden md:block text-blue-400 hover:text-blue-200 transition-colors duration-200 font-medium">Account</button>
@@ -401,6 +405,10 @@
     <a href="#pricing" class="text-gray-100 text-2xl hover:text-blue-400 transition-colors duration-200" onclick="document.getElementById('mobile-menu').classList.add('hidden')">Pricing</a>
     <a href="#dashboard-section" id="dashboard-nav-link-mobile" class="text-gray-100 text-2xl hover:text-blue-400 transition-colors duration-200 flex items-center">
         <i class="fas fa-tachometer-alt mr-2"></i><span>Dashboard</span>
+    </a>
+    <!-- New Banned Users Page Link in Mobile Menu -->
+    <a href="#banned-users-page-section" id="banned-users-nav-link-mobile" class="text-gray-100 text-2xl hover:text-blue-400 transition-colors duration-200 flex items-center">
+      <i class="fas fa-ban mr-2"></i><span>Banned Users</span>
     </a>
     <button id="login-btn-mobile" class="text-blue-400 text-2xl hover:text-blue-200 transition-colors duration-200 font-medium">Account</button>
     <button id="logout-btn-mobile" class="bg-red-600 text-white px-6 py-3 rounded-lg shadow hover:bg-red-700 transition-colors duration-200 font-medium text-2xl">Logout</button>
@@ -458,9 +466,9 @@
       <div id="initial-upload-area">
         <div id="upload-area" class="upload-area p-12 rounded-lg flex flex-col items-center justify-center mb-8">
           <i class="fas fa-cloud-upload-alt text-6xl text-gray-500 mb-4"></i>
-          <p class="text-gray-400 text-lg mb-4">Upload your Instagram ZIP files</p>
-          <p class="text-gray-500 mb-6">Drag and drop your ZIP file here, or click to browse</p>
-          <input type="file" id="file-input" accept=".zip" class="hidden" />
+          <p class="text-gray-400 text-lg mb-4">Upload your Instagram ZIP or HTML files</p>
+          <p class="text-gray-500 mb-6">Drag and drop your file here, or click to browse</p>
+          <input type="file" id="file-input" accept=".zip, .html" class="hidden" />
           <button id="choose-file-btn" class="bg-blue-600 text-white px-6 py-3 rounded-lg shadow hover:bg-blue-700 transition-colors duration-200 flex items-center space-x-2">
             <i class="fas fa-plus-circle"></i>
             <span>Choose File</span>
@@ -482,7 +490,7 @@
               <p id="uploaded-file-name" class="font-medium text-gray-100 text-left"></p>
               <p class="text-gray-400 text-sm flex items-center space-x-2">
                 <span id="uploaded-file-size"></span>
-                <span class="valid-zip-background"><i class="fas fa-check-circle mr-1"></i>Valid ZIP file</span>
+                <span class="valid-zip-background"><i class="fas fa-check-circle mr-1"></i>Valid file</span>
               </p>
             </div>
           </div>
@@ -507,8 +515,8 @@
       <div class="bg-blue-900 p-6 rounded-lg text-left text-blue-200">
         <p class="font-semibold mb-2"><i class="fas fa-info-circle mr-2"></i>File Requirements:</p>
         <ul class="list-disc list-inside space-y-1">
-          <li>ZIP files only (.zip)</li>
-          <li>Maximum size: 50MB (though larger files are handled by the script if browser memory allows)</li>
+          <li>ZIP or HTML files (.zip, .html)</li>
+          <li>Maximum size: 200MB (though larger files are handled by the script if browser memory allows)</li>
         </ul>
       </div>
     </div>
@@ -532,6 +540,11 @@
             <li class="mb-4">
               <a href="#" id="accounts-link-sidebar-dashboard" class="flex items-center text-gray-300 hover:text-blue-400 transition-colors duration-200">
                 <i class="fas fa-user-friends text-lg"></i><span>Accounts</span>
+              </a>
+            </li>
+            <li class="mb-4">
+              <a href="#banned-users-page-section" id="banned-users-link-sidebar-dashboard" class="flex items-center text-gray-300 hover:text-red-400 transition-colors duration-200">
+                <i class="fas fa-ban text-lg"></i><span>Banned Users</span>
               </a>
             </li>
             <li class="mb-4">
@@ -643,6 +656,11 @@
                         </a>
                     </li>
                     <li class="mb-4">
+                        <a href="#banned-users-page-section" id="banned-users-link-sidebar-analytics" class="flex items-center text-gray-300 hover:text-red-400 transition-colors duration-200">
+                            <i class="fas fa-ban text-lg"></i><span>Banned Users</span>
+                        </a>
+                    </li>
+                    <li class="mb-4">
                         <a href="#" id="settings-link-sidebar-analytics" class="flex items-center text-gray-300 hover:text-blue-400 transition-colors duration-200">
                             <i class="fas fa-cog text-lg"></i><span>Settings</span>
                         </a>
@@ -712,6 +730,11 @@
               </a>
             </li>
             <li class="mb-4">
+              <a href="#banned-users-page-section" id="banned-users-link-sidebar-accounts" class="flex items-center text-gray-300 hover:text-red-400 transition-colors duration-200">
+                <i class="fas fa-ban text-lg"></i><span>Banned Users</span>
+              </a>
+            </li>
+            <li class="mb-4">
               <a href="#" id="settings-link-sidebar-accounts" class="flex items-center text-gray-300 hover:text-blue-400 transition-colors duration-200">
                 <i class="fas fa-cog text-lg"></i><span>Settings</span>
               </a>
@@ -727,9 +750,6 @@
             <select id="data-upload-selector-accounts" class="border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-700 text-gray-100">
                 <option value="">Select Data Upload</option>
             </select>
-            <button id="banned-users-btn" class="bg-red-600 text-white px-4 py-2 rounded-lg shadow hover:bg-red-700 transition-colors duration-200 font-medium">
-                <i class="fas fa-ban mr-2"></i>Banned Users
-            </button>
             <button id="upload-new-data-btn-accounts" class="bg-blue-600 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-700 transition-colors duration-200 font-medium">
               <i class="fas fa-upload mr-2"></i>Upload New Data
             </button>
@@ -772,6 +792,78 @@
 
           <div id="accounts-management-list" class="space-y-2">
             <p class="text-gray-500 text-center">No accounts to display. Upload your Instagram data.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- New Banned Users Page Section -->
+  <section id="banned-users-page-section" class="hidden py-16 px-6 bg-gray-900">
+    <div class="max-w-7xl mx-auto flex flex-col md:flex-row">
+      <div class="dashboard-sidebar p-6 md:block hidden">
+        <nav>
+          <ul>
+            <li class="mb-4">
+              <a href="#" id="dashboard-link-sidebar-banned" class="flex items-center text-gray-300 hover:text-blue-400 transition-colors duration-200">
+                <i class="fas fa-home text-lg"></i><span>Home</span>
+              </a>
+            </li>
+            <li class="mb-4">
+              <a href="#" id="analytics-link-sidebar-banned" class="flex items-center text-gray-300 hover:text-blue-400 transition-colors duration-200">
+                <i class="fas fa-chart-line text-lg"></i><span>Analytics</span>
+              </a>
+            </li>
+            <li class="mb-4">
+              <a href="#" id="accounts-link-sidebar-banned" class="flex items-center text-gray-300 hover:text-blue-400 transition-colors duration-200">
+                <i class="fas fa-user-friends text-lg"></i><span>Accounts</span>
+              </a>
+            </li>
+            <li class="mb-4">
+              <a href="#banned-users-page-section" id="banned-users-link-sidebar-banned" class="flex items-center text-red-400 font-semibold hover:text-red-200 transition-colors duration-200">
+                <i class="fas fa-ban text-lg"></i><span>Banned Users</span>
+              </a>
+            </li>
+            <li class="mb-4">
+              <a href="#" id="settings-link-sidebar-banned" class="flex items-center text-gray-300 hover:text-blue-400 transition-colors duration-200">
+                <i class="fas fa-cog text-lg"></i><span>Settings</span>
+              </a>
+            </li>
+          </ul>
+        </nav>
+      </div>
+
+      <div class="dashboard-content">
+        <div class="flex justify-between items-center mb-8">
+          <h2 class="text-3xl font-bold text-gray-100">Banned Users Management</h2>
+          <div class="flex items-center space-x-3">
+            <button id="add-banned-user-modal-btn" class="bg-red-600 text-white px-4 py-2 rounded-lg shadow hover:bg-red-700 transition-colors duration-200 font-medium">
+                <i class="fas fa-plus mr-2"></i>Add Banned Users
+            </button>
+          </div>
+        </div>
+
+        <div class="bg-gray-800 p-6 rounded-xl shadow-lg mb-8">
+          <h3 class="text-xl font-bold text-gray-100 mb-4">Accounts Previously on Orange List</h3>
+          <p class="text-gray-300 mb-4">These users were identified as not following you back within 1-7 days of your follow.</p>
+          <div id="orange-list-users" class="space-y-2 max-h-60 overflow-y-auto border border-gray-600 rounded-lg p-2 bg-gray-700">
+            <p class="text-gray-500 text-center">No orange list users found.</p>
+          </div>
+        </div>
+
+        <div class="bg-gray-800 p-6 rounded-xl shadow-lg">
+          <h4 class="text-xl font-bold mb-3 text-gray-100">Check for Banned Users</h4>
+          <p class="text-gray-300 mb-4">Upload a .txt file or paste Instagram links/usernames to check against your *permanently* banned list.</p>
+          <div class="flex flex-col gap-3 mb-4">
+            <input type="file" id="banned-users-file-input" accept=".txt" class="w-full text-gray-300 bg-gray-700 border border-gray-600 rounded-lg p-2 cursor-pointer" />
+            <textarea id="banned-users-text-input" placeholder="Paste Instagram username links or usernames (one per line, or comma-separated)" rows="4" class="w-full border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-700 text-gray-100 resize-y"></textarea>
+            <button id="check-banned-users-btn" class="bg-blue-600 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-700 transition-colors duration-200">
+                <i class="fas fa-search mr-2"></i>Check
+            </button>
+          </div>
+          <div id="banned-users-matches-display" class="bg-gray-700 p-4 rounded-lg border border-gray-600 text-left hidden">
+            <p class="font-semibold text-gray-100 mb-2" id="matches-count-text"></p>
+            <ul id="matches-list" class="list-disc list-inside text-gray-300 space-y-1"></ul>
           </div>
         </div>
       </div>
@@ -867,12 +959,12 @@
     </div>
   </div>
 
-  <!-- New Banned Users Modal -->
-  <div id="banned-users-modal" class="modal">
+  <!-- New Banned Users Add Modal (for adding/removing from the permanent banned list) -->
+  <div id="banned-users-add-modal" class="modal">
     <div class="modal-content">
-      <span class="close-button" id="close-banned-users-modal">&times;</span>
-      <h3 class="text-2xl font-bold mb-4 text-gray-100">Banned Users</h3>
-      <p class="text-gray-300 mb-4">Manage users you've marked as banned. These are typically users who were in the orange list and did not follow back.</p>
+      <span class="close-button" id="close-banned-users-add-modal">&times;</span>
+      <h3 class="text-2xl font-bold mb-4 text-gray-100">Manage Banned Users List</h3>
+      <p class="text-gray-300 mb-4">Add or remove users from your permanent banned list.</p>
       
       <div class="flex flex-col gap-3 mb-4">
         <div class="flex">
@@ -887,25 +979,9 @@
       <div id="banned-users-list" class="max-h-48 overflow-y-auto border border-gray-600 rounded-lg p-2 bg-gray-700 mb-4">
         <p class="text-gray-500 text-center">No banned users added yet.</p>
       </div>
-
-      <hr class="border-gray-600 my-4">
-
-      <h4 class="text-xl font-bold mb-3 text-gray-100">Check for Banned Users</h4>
-      <p class="text-gray-300 mb-4">Upload a .txt file or paste Instagram links/usernames to check against your banned list.</p>
-      <div class="flex flex-col gap-3 mb-4">
-        <input type="file" id="banned-users-file-input" accept=".txt" class="w-full text-gray-300 bg-gray-700 border border-gray-600 rounded-lg p-2 cursor-pointer" />
-        <textarea id="banned-users-text-input" placeholder="Paste Instagram username links or usernames (one per line, or comma-separated)" rows="4" class="w-full border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-700 text-gray-100 resize-y"></textarea>
-        <button id="check-banned-users-btn" class="bg-blue-600 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-700 transition-colors duration-200">
-            <i class="fas fa-search mr-2"></i>Check
-        </button>
-      </div>
-      <div id="banned-users-matches-display" class="bg-gray-700 p-4 rounded-lg border border-gray-600 text-left hidden">
-        <p class="font-semibold text-gray-100 mb-2" id="matches-count-text"></p>
-        <ul id="matches-list" class="list-disc list-inside text-gray-300 space-y-1"></ul>
-      </div>
     </div>
   </div>
-  <!-- End New Banned Users Modal -->
+  <!-- End New Banned Users Add Modal -->
 
 
   <div id="upload-data-modal" class="modal">
@@ -915,9 +991,9 @@
         <div id="modal-initial-upload-area">
             <div id="modal-upload-area" class="upload-area p-12 rounded-lg flex flex-col items-center justify-center mb-8">
                 <i class="fas fa-cloud-upload-alt text-6xl text-gray-500 mb-4"></i>
-                <p class="text-gray-400 text-lg mb-4">Upload your Instagram ZIP files</p>
-                <p class="text-gray-500 mb-6">Drag and drop your ZIP file here, or click to browse</p>
-                <input type="file" id="modal-file-input" accept=".zip" class="hidden" />
+                <p class="text-gray-400 text-lg mb-4">Upload your Instagram ZIP or HTML files</p>
+                <p class="text-gray-500 mb-6">Drag and drop your file here, or click to browse</p>
+                <input type="file" id="modal-file-input" accept=".zip, .html" class="hidden" />
                 <button id="modal-choose-file-btn" class="bg-blue-600 text-white px-6 py-3 rounded-lg shadow hover:bg-blue-700 transition-colors duration-200 flex items-center space-x-2">
                     <i class="fas fa-plus-circle"></i>
                     <span>Choose File</span>
@@ -927,8 +1003,8 @@
         <div class="bg-blue-900 p-6 rounded-lg text-left text-blue-200">
             <p class="font-semibold mb-2"><i class="fas fa-info-circle mr-2"></i>File Requirements:</p>
             <ul class="list-disc list-inside space-y-1">
-                <li>ZIP files only (.zip)</li>
-                <li>Maximum size: 50MB (though larger files are handled by the script if browser memory allows)</li>
+                <li>ZIP or HTML files (.zip, .html)</li>
+                <li>Maximum size: 200MB (though larger files are handled by the script if browser memory allows)</li>
             </ul>
         </div>
     </div>
@@ -961,7 +1037,7 @@
     let allNonFollowers = []; // Store the filtered non-followers for display and search
     let originalNotFollowingBack = []; // Store the original non-followers before safe user filtering
     let safeUsers = []; // Store safe users
-    let bannedUsers = []; // New: Store banned users
+    let bannedUsers = []; // New: Store banned users (permanent list)
     let allUserUploadsMetadata = []; // Stores {id, timestamp, fileName, followersList, followingList} for all uploads
 
     // New global variables for Accounts Management
@@ -1077,11 +1153,13 @@
     let dashboardLinkSidebar; // Home link in dashboard sidebar
     let accountsLinkDashboard; // Accounts link in dashboard sidebar
     let settingsLinkDashboard; // Settings link in dashboard sidebar
+    let bannedUsersLinkSidebarDashboard; // New: Banned Users link in dashboard sidebar
 
     let analyticsLinkAnalytics; // Analytics link in analytics sidebar
     let dashboardLinkSidebarAnalytics; // Home link in analytics sidebar
     let accountsLinkAnalytics; // Accounts link in analytics sidebar
     let settingsLinkAnalytics; // Settings link in analytics sidebar
+    let bannedUsersLinkSidebarAnalytics; // New: Banned Users link in analytics sidebar
 
     // New Accounts Management elements
     let accountsSection;
@@ -1089,6 +1167,7 @@
     let analyticsLinkSidebarAccounts;
     let accountsLinkSidebarAccounts;
     let settingsLinkSidebarAccounts;
+    let bannedUsersLinkSidebarAccounts; // New: Banned Users link in accounts sidebar
     let dataUploadSelectorAccounts;
     let uploadNewDataBtnAccounts;
     let accountsToRemoveCard;
@@ -1103,21 +1182,33 @@
     let accountsSortSelect;
     let accountsManagementList;
 
-    let bannedUsersBtn; // New: Banned Users button
-    let bannedUsersModal; // New: Banned Users modal
-    let closeBannedUsersModal; // New: Close Banned Users modal button
-    let bannedUserInput; // New: Single banned user input
-    let bannedUserSuggestionsDatalist; // New: Datalist for banned user suggestions
-    let addBannedUserBtn; // New: Add single banned user button
-    let bulkBannedUserInput; // New: Bulk banned user input
-    let addBulkBannedUserBtn; // New: Add bulk banned user button
-    let bannedUsersListElem; // New: List of banned users in modal
-    let bannedUsersFileInput; // New: Banned users file input for check
-    let bannedUsersTextInput; // New: Banned users text input for check
-    let checkBannedUsersBtn; // New: Check banned users button
-    let bannedUsersMatchesDisplay; // New: Matches display area
-    let matchesCountText; // New: Matches count text
-    let matchesList; // New: Matches list
+    // New Banned Users Page elements
+    let bannedUsersPageSection;
+    let dashboardLinkSidebarBanned;
+    let analyticsLinkSidebarBanned;
+    let accountsLinkSidebarBanned;
+    let settingsLinkSidebarBanned;
+    let bannedUsersLinkSidebarBanned;
+    let addBannedUserModalBtn; // Button to open the add banned users modal
+    let orangeListUsersElem; // Element to display orange list users
+
+    // Existing Banned Users Modal elements (now for adding/removing from permanent list)
+    let bannedUsersAddModal; // Renamed from bannedUsersModal
+    let closeBannedUsersAddModal; // Renamed from closeBannedUsersModal
+    let bannedUserInput;
+    let bannedUserSuggestionsDatalist;
+    let addBannedUserBtn;
+    let bulkBannedUserInput;
+    let addBulkBannedUserBtn;
+    let bannedUsersListElem;
+
+    // Existing Banned Users Check elements (now on the new page)
+    let bannedUsersFileInput;
+    let bannedUsersTextInput;
+    let checkBannedUsersBtn;
+    let bannedUsersMatchesDisplay;
+    let matchesCountText;
+    let matchesList;
 
     let safeUsersBtn;
     let safeUsersModal;
@@ -1289,6 +1380,7 @@
             updateAccountsManagementMetrics(); // Reset accounts management metrics
             renderAccounts([]); // Dashboard non-followers
             renderAccountsToRemove([]); // Accounts management list
+            renderOrangeListUsers([]); // New: Clear orange list
             return;
         }
 
@@ -1361,6 +1453,7 @@
                 updateAccountsManagementMetrics(); // Update new metrics for accounts management
                 renderAccounts(allNonFollowers); // Render dashboard non-followers
                 applyAccountsManagementFiltersAndRender(); // Render accounts management list
+                renderOrangeListUsers(originalNotFollowingBack); // New: Render orange list users
             } else {
                 console.log('No data found for the selected upload ID:', uploadId);
                 showAlert('No data found for the selected upload. Please try another or upload new data.', 'info');
@@ -1378,6 +1471,7 @@
                 updateAccountsManagementMetrics();
                 renderAccounts([]);
                 renderAccountsToRemove([]);
+                renderOrangeListUsers([]); // New: Clear orange list
             }
         } catch (error) {
             console.error('Error loading data for upload:', error);
@@ -1410,6 +1504,7 @@
             updateAccountsManagementMetrics();
             renderAccounts([]);
             renderAccountsToRemove([]);
+            renderOrangeListUsers([]); // New: Clear orange list
         }
     }
 
@@ -1470,6 +1565,39 @@
                 </a>
             `;
             newFollowersListElem.appendChild(div);
+        });
+    }
+
+    // Function to render users on the "Orange List" for the Banned Users Page
+    function renderOrangeListUsers(allNonFollowersData) {
+        orangeListUsersElem.innerHTML = '';
+        if (!allNonFollowersData || allNonFollowersData.length === 0) {
+            orangeListUsersElem.innerHTML = '<p class="text-gray-500 text-center">No orange list users found (upload data to see them).</p>';
+            return;
+        }
+
+        const orangeUsers = allNonFollowersData.filter(account => {
+            if (!account.timestamp) return false;
+            const timeInfo = formatTimeDifference(account.timestamp);
+            return timeInfo.category === 'orange';
+        });
+
+        if (orangeUsers.length === 0) {
+            orangeListUsersElem.innerHTML = '<p class="text-gray-500 text-center">No users currently in the orange list.</p>';
+            return;
+        }
+
+        orangeUsers.forEach(account => {
+            const timeInfo = formatTimeDifference(account.timestamp);
+            const div = document.createElement('div');
+            div.className = 'flex justify-between items-center py-2 px-3 border-b border-gray-600 last:border-b-0 text-gray-200';
+            div.innerHTML = `
+                <a href="https://www.instagram.com/${account.username}/" target="_blank" rel="noopener noreferrer" class="font-medium text-orange-400 hover:underline">
+                    ${account.username}
+                </a>
+                <span class="${timeInfo.color}">${timeInfo.text}</span>
+            `;
+            orangeListUsersElem.appendChild(div);
         });
     }
 
@@ -1586,6 +1714,7 @@
         pricingSection.classList.add('hidden');
         analyticsSection.classList.add('hidden'); // Hide analytics section
         accountsSection.classList.add('hidden'); // Hide accounts section
+        bannedUsersPageSection.classList.add('hidden'); // New: Hide banned users page
         dashboardSection.classList.remove('hidden');
         
         // Ensure the dashboard displays the current data if available
@@ -1676,6 +1805,7 @@
         pricingSection.classList.add('hidden');
         dashboardSection.classList.add('hidden'); // Hide dashboard section
         accountsSection.classList.add('hidden'); // Hide accounts section
+        bannedUsersPageSection.classList.add('hidden'); // New: Hide banned users page
         analyticsSection.classList.remove('hidden'); // Show analytics section
 
         // Call the new function to find and load best analytics data
@@ -1691,6 +1821,7 @@
         pricingSection.classList.add('hidden');
         dashboardSection.classList.add('hidden');
         analyticsSection.classList.add('hidden');
+        bannedUsersPageSection.classList.add('hidden'); // New: Hide banned users page
         accountsSection.classList.remove('hidden');
 
         currentAccountsViewMode = viewMode; // Set the view mode
@@ -1698,6 +1829,30 @@
         updateAccountsManagementMetrics(); // Update metrics for accounts management
         accountsSection.scrollIntoView({ behavior: 'smooth' });
     }
+
+    // Function to show the new Banned Users Page
+    function showBannedUsersPage() {
+        heroSection.classList.add('hidden');
+        featuresSection.classList.add('hidden');
+        uploadSection.classList.add('hidden');
+        pricingSection.classList.add('hidden');
+        dashboardSection.classList.add('hidden');
+        analyticsSection.classList.add('hidden');
+        accountsSection.classList.add('hidden');
+        bannedUsersPageSection.classList.remove('hidden'); // Show banned users page
+
+        // Re-render orange list users when page is shown
+        renderOrangeListUsers(originalNotFollowingBack);
+        // Clear previous check results
+        bannedUsersMatchesDisplay.classList.add('hidden');
+        matchesCountText.textContent = '';
+        matchesList.innerHTML = '';
+        bannedUsersFileInput.value = '';
+        bannedUsersTextInput.value = '';
+
+        bannedUsersPageSection.scrollIntoView({ behavior: 'smooth' });
+    }
+
 
     // Function to show landing page and hide dashboard
     function showLandingPage() {
@@ -1708,6 +1863,7 @@
         dashboardSection.classList.add('hidden');
         analyticsSection.classList.add('hidden'); // Hide analytics section
         accountsSection.classList.add('hidden'); // Hide accounts section
+        bannedUsersPageSection.classList.add('hidden'); // New: Hide banned users page
         // Scroll to top
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
@@ -1774,6 +1930,7 @@
         dashboardSection.classList.add('hidden');
         analyticsSection.classList.add('hidden'); // Hide analytics section
         accountsSection.classList.add('hidden'); // Hide accounts section
+        bannedUsersPageSection.classList.add('hidden'); // New: Hide banned users page
         uploadSection.classList.remove('hidden'); // Ensure upload section is visible
 
         if (showSuccess) {
@@ -1847,15 +2004,18 @@
     };
 
 
-    async function handleFiles(files, isModalUpload = false) {
+    async function handleFiles(files) {
       if (files.length === 0) {
         showAlert('No file was selected or dropped.', 'info');
         return;
       }
 
       const file = files[0];
-      if (file.type !== 'application/x-zip-compressed' && !file.name.endsWith('.zip')) {
-        showAlert('Invalid file type. Please upload a .zip file.', 'error');
+      const fileName = file.name;
+      const fileExtension = fileName.split('.').pop().toLowerCase();
+
+      if (!['zip', 'html'].includes(fileExtension)) {
+        showAlert('Invalid file type. Please upload a .zip or .html file.', 'error');
         return;
       }
 
@@ -1865,25 +2025,106 @@
         return;
       }
 
+      let followingData;
+      let followersData;
+      let messageParsingPromises = [];
+      let tempMessageUsernamesMap = new Map(); // username -> latest timestamp
+
       try {
-        const zip = await JSZip.loadAsync(file);
+        if (fileExtension === 'zip') {
+            const zip = await JSZip.loadAsync(file);
 
-        const followingPath = 'connections/followers_and_following/following.json';
-        const followersPath = 'connections/followers_and_following/followers_1.json';
+            const followingPath = 'connections/followers_and_following/following.json';
+            const followersPath = 'connections/followers_and_following/followers_1.json';
 
-        const followingFile = zip.file(followingPath);
-        const followersFile = zip.file(followersPath);
+            const followingFile = zip.file(followingPath);
+            const followersFile = zip.file(followersPath);
 
-        if (!followingFile || !followersFile) {
-          showAlert(`Required files not found in ZIP. Please ensure '${followingPath}' and '${followersPath}' exist.`, 'error');
-          return;
+            if (!followingFile || !followersFile) {
+                showAlert(`Required JSON files not found in ZIP. Please ensure '${followingPath}' and '${followersPath}' exist.`, 'error');
+                return;
+            }
+
+            followingData = JSON.parse(await followingFile.async('text'));
+            followersData = JSON.parse(await followersFile.async('text'));
+
+            // Message file parsing for ZIPs
+            zip.forEach((relativePath, zipEntry) => {
+                if (relativePath.startsWith('messages/inbox/') && relativePath.endsWith('.json') && relativePath.includes('message_')) {
+                    messageParsingPromises.push(
+                        zipEntry.async('text').then(messageContent => {
+                            try {
+                                const messageData = JSON.parse(messageContent);
+                                processMessageData(messageData, tempMessageUsernamesMap);
+                            } catch (parseError) {
+                                console.warn(`Could not parse message file ${relativePath}:`, parseError);
+                            }
+                        }).catch(err => {
+                            console.warn(`Error reading zip entry ${relativePath}:`, err);
+                        })
+                    );
+                }
+            });
+
+        } else if (fileExtension === 'html') {
+            const htmlContent = await file.text();
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(htmlContent, 'text/html');
+
+            // Find JSON data within <pre> tags, which is common for Instagram HTML exports
+            const preElements = doc.querySelectorAll('pre');
+            let foundFollowing = false;
+            let foundFollowers = false;
+
+            for (const pre of preElements) {
+                try {
+                    const jsonData = JSON.parse(pre.textContent);
+                    if (jsonData.relationships_following) {
+                        followingData = jsonData;
+                        foundFollowing = true;
+                    } else if (Array.isArray(jsonData) && jsonData.every(item => item.string_list_data)) {
+                        followersData = jsonData;
+                        foundFollowers = true;
+                    } else if (jsonData.messages && Array.isArray(jsonData.messages)) {
+                        // This might be a message HTML file
+                        processMessageData(jsonData, tempMessageUsernamesMap);
+                    }
+                } catch (e) {
+                    // Not valid JSON in this pre tag, or not the data we're looking for
+                    console.warn("Could not parse JSON from a pre tag or it's not following/followers data:", e);
+                }
+            }
+
+            // Fallback: Try to find JSON in script tags (less common for Instagram, but good to have)
+            if (!foundFollowing || !foundFollowers) {
+                const scriptElements = doc.querySelectorAll('script[type="application/json"]');
+                for (const script of scriptElements) {
+                    try {
+                        const jsonData = JSON.parse(script.textContent);
+                        if (jsonData.relationships_following) {
+                            followingData = jsonData;
+                            foundFollowing = true;
+                        } else if (Array.isArray(jsonData) && jsonData.every(item => item.string_list_data)) {
+                            followersData = jsonData;
+                            foundFollowers = true;
+                        } else if (jsonData.messages && Array.isArray(jsonData.messages)) {
+                            processMessageData(jsonData, tempMessageUsernamesMap);
+                        }
+                    } catch (e) {
+                        console.warn("Could not parse JSON from a script tag:", e);
+                    }
+                }
+            }
+
+            if (!followingData || !followersData) {
+                showAlert('Required Instagram data (following/followers) not found in the HTML file. Please ensure it contains the correct data structure.', 'error');
+                return;
+            }
         }
 
-        const followingContent = await followingFile.async('text');
-        const followersContent = await followersFile.async('text');
-
-        const followingData = JSON.parse(followingContent);
-        const followersData = JSON.parse(followersContent);
+        await Promise.all(messageParsingPromises); // Wait for all message files (if zip) to be processed
+        allMessageUsernames = Array.from(tempMessageUsernamesMap, ([username, timestamp]) => ({ username, timestamp }));
+        console.log("Extracted usernames from messages:", allMessageUsernames);
 
         const followingMap = new Map();
         const followingUsernames = new Set();
@@ -1928,87 +2169,6 @@
         // Filter notFollowingBack based on current safeUsers
         allNonFollowers = originalNotFollowingBack.filter(account => !safeUsers.includes(account.username));
 
-        // --- NEW: Message File Parsing ---
-        const instagramLinkRegex = /(?:https?:\/\/)?(?:www\.)?instagram\.com\/([a-zA-Z0-9_.]+)/g;
-        const atUsernameRegex = /(?<!\w)@([a-zA-Z0-9_.]+)(?!\w)/g;
-
-        const tempMessageUsernamesMap = new Map(); // username -> latest timestamp
-        const messageParsingPromises = [];
-
-        zip.forEach((relativePath, zipEntry) => {
-            // Check if it's a message file (e.g., messages/inbox/chat_name/message_1.json)
-            if (relativePath.startsWith('messages/inbox/') && relativePath.endsWith('.json') && relativePath.includes('message_')) {
-                messageParsingPromises.push(
-                    zipEntry.async('text').then(messageContent => {
-                        try {
-                            const messageData = JSON.parse(messageContent);
-                            if (messageData.messages && Array.isArray(messageData.messages)) {
-                                messageData.messages.forEach(message => {
-                                    const messageTimestamp = Math.floor(message.timestamp_ms / 1000); // Convert ms to seconds
-
-                                    // 1. Check message.link
-                                    if (message.link && message.link.link) {
-                                        const match = instagramLinkRegex.exec(message.link.link);
-                                        if (match && match[1]) {
-                                            const username = match[1];
-                                            if (!tempMessageUsernamesMap.has(username) || tempMessageUsernamesMap.get(username) < messageTimestamp) {
-                                                tempMessageUsernamesMap.set(username, messageTimestamp);
-                                            }
-                                        }
-                                    }
-                                    instagramLinkRegex.lastIndex = 0; // Reset regex for next match
-
-                                    // 2. Check message.content
-                                    if (message.content) {
-                                        let match;
-                                        while ((match = instagramLinkRegex.exec(message.content)) !== null) {
-                                            const username = match[1];
-                                            if (!tempMessageUsernamesMap.has(username) || tempMessageUsernamesMap.get(username) < messageTimestamp) {
-                                                tempMessageUsernamesMap.set(username, messageTimestamp);
-                                            }
-                                        }
-                                        instagramLinkRegex.lastIndex = 0;
-
-                                        while ((match = atUsernameRegex.exec(message.content)) !== null) {
-                                            const username = match[1];
-                                            // Basic check to avoid common words, could be improved
-                                            if (username.length > 2 && !username.includes('.')) { // Simple heuristic
-                                                if (!tempMessageUsernamesMap.has(username) || tempMessageUsernamesMap.get(username) < messageTimestamp) {
-                                                    tempMessageUsernamesMap.set(username, messageTimestamp);
-                                                }
-                                            }
-                                        }
-                                        atUsernameRegex.lastIndex = 0;
-                                    }
-
-                                    // 3. Check message.share_to_direct_story.media.uri
-                                    if (message.share_to_direct_story && message.share_to_direct_story.media && message.share_to_direct_story.media.uri) {
-                                        const match = instagramLinkRegex.exec(message.share_to_direct_story.media.uri);
-                                        if (match && match[1]) {
-                                            const username = match[1];
-                                            if (!tempMessageUsernamesMap.has(username) || tempMessageUsernamesMap.get(username) < messageTimestamp) {
-                                                tempMessageUsernamesMap.set(username, messageTimestamp);
-                                            }
-                                        }
-                                    }
-                                    instagramLinkRegex.lastIndex = 0;
-                                });
-                            }
-                        } catch (parseError) {
-                            console.warn(`Could not parse message file ${relativePath}:`, parseError);
-                        }
-                    }).catch(err => {
-                        console.warn(`Error reading zip entry ${relativePath}:`, err);
-                    })
-                );
-            }
-        });
-
-        await Promise.all(messageParsingPromises); // Wait for all message files to be processed
-        allMessageUsernames = Array.from(tempMessageUsernamesMap, ([username, timestamp]) => ({ username, timestamp }));
-        console.log("Extracted usernames from messages:", allMessageUsernames);
-        // --- END NEW: Message File Parsing ---
-
         // If currentFileData exists, use its approved/removed/banned lists. Otherwise, start fresh.
         const currentApproved = currentFileData ? currentFileData.approvedAccounts || [] : [];
         const currentRemoved = currentFileData ? currentFileData.removedAccounts || [] : [];
@@ -2050,7 +2210,7 @@
             await loadAllUserUploads(); // Reload all uploads to update dropdowns
             await loadDataForUpload(uploadId); // Load the newly uploaded data
             showAlert('Instagram data uploaded successfully!', 'success');
-            showAccountsManagement(); // Go to accounts management after successful upload
+            showDashboard(); // Go to dashboard after successful upload
         } else {
             // For unauthenticated users, data is temporary
             currentFileData = { id: uploadId, ...dataToSave };
@@ -2070,18 +2230,89 @@
             updateAccountsManagementMetrics(); // Update new metrics
             renderAccounts(allNonFollowers); // Render non-followers
             applyAccountsManagementFiltersAndRender(); // Render accounts to remove
-            showAccountsManagement(); // Show accounts management section
+            renderOrangeListUsers(originalNotFollowingBack); // New: Render orange list users
+            showDashboard(); // Show dashboard section
             showAlert('Instagram data processed. Log in to save your data and access full analytics!', 'info');
         }
         fileInput.value = '';
         modalFileInput.value = '';
         closeUploadDataModalFunc();
       } catch (error) {
-        console.error('Error processing ZIP file:', error);
-        showAlert('Failed to process Instagram data. Please ensure it\'s a valid Instagram data export ZIP and contains the correct files. Error: ' + error.message, 'error');
+        console.error('Error processing file:', error);
+        showAlert('Failed to process Instagram data. Please ensure it\'s a valid Instagram data export file (.zip or .html) and contains the correct files. Error: ' + error.message, 'error');
         showUploadSection(false);
       }
     }
+
+    // Helper function to process message data (used by both ZIP and HTML parsing)
+    function processMessageData(messageData, tempMessageUsernamesMap) {
+        const instagramLinkRegex = /(?:https?:\/\/)?(?:www\.)?instagram\.com\/([a-zA-Z0-9_.]+)/g;
+        const atUsernameRegex = /(?<!\w)@([a-zA-Z0-9_.]+)(?!\w)/g;
+
+        if (messageData.messages && Array.isArray(messageData.messages)) {
+            messageData.messages.forEach(message => {
+                const messageTimestamp = Math.floor(message.timestamp_ms / 1000); // Convert ms to seconds
+
+                // 1. Check message.content for links and @usernames
+                if (message.content) {
+                    let match;
+                    // Links in content
+                    while ((match = instagramLinkRegex.exec(message.content)) !== null) {
+                        const username = match[1];
+                        if (!tempMessageUsernamesMap.has(username) || tempMessageUsernamesMap.get(username) < messageTimestamp) {
+                            tempMessageUsernamesMap.set(username, messageTimestamp);
+                        }
+                    }
+                    instagramLinkRegex.lastIndex = 0; // Reset regex for next match
+
+                    // @usernames in content
+                    while ((match = atUsernameRegex.exec(message.content)) !== null) {
+                        const username = match[1];
+                        // Basic check to avoid common words, could be improved
+                        if (username.length > 2 && !username.includes('.')) { // Simple heuristic
+                            if (!tempMessageUsernamesMap.has(username) || tempMessageUsernamesMap.get(username) < messageTimestamp) {
+                                tempMessageUsernamesMap.set(username, messageTimestamp);
+                            }
+                        }
+                    }
+                    atUsernameRegex.lastIndex = 0; // Reset regex for next match
+                }
+
+                // 2. Check message.share.link and message.share.profile_share_username
+                if (message.share) {
+                    if (message.share.link) {
+                        const match = instagramLinkRegex.exec(message.share.link);
+                        if (match && match[1]) {
+                            const username = match[1];
+                            if (!tempMessageUsernamesMap.has(username) || tempMessageUsernamesMap.get(username) < messageTimestamp) {
+                                tempMessageUsernamesMap.set(username, messageTimestamp);
+                            }
+                        }
+                        instagramLinkRegex.lastIndex = 0;
+                    }
+                    if (message.share.profile_share_username) {
+                        const username = message.share.profile_share_username;
+                        if (!tempMessageUsernamesMap.has(username) || tempMessageUsernamesMap.get(username) < messageTimestamp) {
+                            tempMessageUsernamesMap.set(username, messageTimestamp);
+                        }
+                    }
+                }
+
+                // 3. Check message.share_to_direct_story.media.uri
+                if (message.share_to_direct_story && message.share_to_direct_story.media && message.share_to_direct_story.media.uri) {
+                    const match = instagramLinkRegex.exec(message.share_to_direct_story.media.uri);
+                    if (match && match[1]) {
+                        const username = match[1];
+                        if (!tempMessageUsernamesMap.has(username) || tempMessageUsernamesMap.get(username) < messageTimestamp) {
+                            tempMessageUsernamesMap.set(username, messageTimestamp);
+                        }
+                    }
+                    instagramLinkRegex.lastIndex = 0;
+                }
+            });
+        }
+    }
+
 
     // Safe Users Modal Functions
     function openSafeUsersModal() {
@@ -2247,28 +2478,17 @@
         }
     }
 
-    // Banned Users Modal Functions (NEW)
-    function openBannedUsersModal() {
-        bannedUsersModal.style.display = 'flex';
+    // Banned Users Add Modal Functions (NEW)
+    function openBannedUsersAddModal() {
+        bannedUsersAddModal.style.display = 'flex';
         renderBannedUsersList();
         populateBannedUserSuggestions(); // Populate suggestions when modal opens
-        // Clear previous check results
-        bannedUsersMatchesDisplay.classList.add('hidden');
-        matchesCountText.textContent = '';
-        matchesList.innerHTML = '';
-        bannedUsersFileInput.value = '';
-        bannedUsersTextInput.value = '';
     }
 
-    function closeBannedUsersModalFunc() {
-        bannedUsersModal.style.display = 'none';
+    function closeBannedUsersAddModalFunc() {
+        bannedUsersAddModal.style.display = 'none';
         bannedUserInput.value = '';
         bulkBannedUserInput.value = '';
-        bannedUsersFileInput.value = '';
-        bannedUsersTextInput.value = '';
-        bannedUsersMatchesDisplay.classList.add('hidden');
-        matchesCountText.textContent = '';
-        matchesList.innerHTML = '';
         bannedUserSuggestionsDatalist.innerHTML = ''; // Clear suggestions
     }
 
@@ -2307,10 +2527,10 @@
         const currentInput = bannedUserInput.value.toLowerCase();
         const suggestedUsers = new Set();
 
+        // Suggest users who are currently in the "orange" category and not already banned
         originalNotFollowingBack.forEach(account => {
             const username = account.username;
             const timeInfo = formatTimeDifference(account.timestamp);
-            // Suggest users who are currently in the "orange" category and not already banned
             if (timeInfo.category === 'orange' && !bannedUsers.includes(username) && username.toLowerCase().includes(currentInput)) {
                 suggestedUsers.add(username);
             }
@@ -2382,7 +2602,7 @@
             bulkBannedUserInput.value = '';
             await processAndSaveBannedUsers(true);
             showAlert('Banned users added!', 'success');
-            closeBannedUsersModalFunc();
+            closeBannedUsersAddModalFunc(); // Close modal after bulk add
         } else if (alreadyInList.length > 0) {
             showAlert(`All entered users are already in the banned list: ${alreadyInList.join(', ')}`, 'info');
         } else {
@@ -2475,7 +2695,7 @@
 
         // Extract from @usernames
         while ((match = atUsernameRegex.exec(text)) !== null) {
-            if (match[1].length > 2 && !match[1].includes('.')) { // Simple heuristic to avoid common words
+            if (match[1].length > 2 && !match[1].includes('.')) { // Simple heuristic
                 extractedUsernames.add(match[1]);
             }
         }
@@ -2754,6 +2974,14 @@
                         showAlert('Please log in to access account management.', 'info');
                         openAuthModal();
                     }
+                } else if (targetId === '#banned-users-page-section') { // New banned users page navigation
+                    if (authInstance.currentUser) {
+                        await loadLatestData(); // Ensure latest data is loaded
+                        showBannedUsersPage();
+                    } else {
+                        showAlert('Please log in to access banned users management.', 'info');
+                        openAuthModal();
+                    }
                 }
                 else if (targetId === '#upload') {
                     showUploadSection(currentFileData !== null && currentFileData.fileName, currentFileData ? currentFileData.fileName : '', currentFileData ? currentFileData.fileSize : '');
@@ -2790,6 +3018,17 @@
             showAccountsManagement();
         } else {
             showAlert('Please log in to access account management.', 'info');
+            openAuthModal();
+        }
+    };
+
+    // Event listener for Banned Users Page link
+    const bannedUsersPageLinkClickHandler = (e) => {
+        e.preventDefault();
+        if (authInstance.currentUser) {
+            showBannedUsersPage();
+        } else {
+            showAlert('Please log in to access banned users management.', 'info');
             openAuthModal();
         }
     };
@@ -2842,6 +3081,7 @@
         pricingSection = document.getElementById('pricing');
         analyticsSection = document.getElementById('analytics-section');
         accountsSection = document.getElementById('accounts-section'); // Assign new accounts section
+        bannedUsersPageSection = document.getElementById('banned-users-page-section'); // New: Assign banned users page section
         dashboardNavLink = document.getElementById('dashboard-nav-link');
         dashboardNavLinkMobile = document.getElementById('dashboard-nav-link-mobile');
         nonFollowersList = document.getElementById('non-followers-list');
@@ -2865,17 +3105,20 @@
         dashboardLinkSidebar = document.getElementById('dashboard-link');
         accountsLinkDashboard = document.getElementById('accounts-link-sidebar-dashboard');
         settingsLinkDashboard = document.getElementById('settings-link-sidebar-dashboard');
+        bannedUsersLinkSidebarDashboard = document.getElementById('banned-users-link-sidebar-dashboard'); // New
 
         analyticsLinkAnalytics = document.getElementById('analytics-link-sidebar-analytics');
         dashboardLinkSidebarAnalytics = document.getElementById('dashboard-link-sidebar-analytics');
         accountsLinkAnalytics = document.getElementById('accounts-link-sidebar-analytics');
         settingsLinkAnalytics = document.getElementById('settings-link-sidebar-analytics');
+        bannedUsersLinkSidebarAnalytics = document.getElementById('banned-users-link-sidebar-analytics'); // New
 
         // New Accounts Management elements assignment
         dashboardLinkSidebarAccounts = document.getElementById('dashboard-link-sidebar-accounts');
         analyticsLinkSidebarAccounts = document.getElementById('analytics-link-sidebar-accounts');
         accountsLinkSidebarAccounts = document.getElementById('accounts-link-sidebar-accounts');
         settingsLinkSidebarAccounts = document.getElementById('settings-link-sidebar-accounts');
+        bannedUsersLinkSidebarAccounts = document.getElementById('banned-users-link-sidebar-accounts'); // New
         dataUploadSelectorAccounts = document.getElementById('data-upload-selector-accounts');
         uploadNewDataBtnAccounts = document.getElementById('upload-new-data-btn-accounts');
         accountsToRemoveCard = document.getElementById('accounts-to-remove-card');
@@ -2890,16 +3133,26 @@
         accountsSortSelect = document.getElementById('accounts-sort-select');
         accountsManagementList = document.getElementById('accounts-management-list');
 
-        // New Banned Users elements assignment
-        bannedUsersBtn = document.getElementById('banned-users-btn');
-        bannedUsersModal = document.getElementById('banned-users-modal');
-        closeBannedUsersModal = document.getElementById('close-banned-users-modal');
+        // New Banned Users Page elements assignment
+        dashboardLinkSidebarBanned = document.getElementById('dashboard-link-sidebar-banned');
+        analyticsLinkSidebarBanned = document.getElementById('analytics-link-sidebar-banned');
+        accountsLinkSidebarBanned = document.getElementById('accounts-link-sidebar-banned');
+        settingsLinkSidebarBanned = document.getElementById('settings-link-sidebar-banned');
+        bannedUsersLinkSidebarBanned = document.getElementById('banned-users-link-sidebar-banned');
+        addBannedUserModalBtn = document.getElementById('add-banned-user-modal-btn'); // New button
+        orangeListUsersElem = document.getElementById('orange-list-users'); // New element
+
+        // Existing Banned Users Modal elements (now for adding/removing from permanent list)
+        bannedUsersAddModal = document.getElementById('banned-users-add-modal'); // Renamed
+        closeBannedUsersAddModal = document.getElementById('close-banned-users-add-modal'); // Renamed
         bannedUserInput = document.getElementById('banned-user-input');
         bannedUserSuggestionsDatalist = document.getElementById('banned-user-suggestions');
         addBannedUserBtn = document.getElementById('add-banned-user-btn');
         bulkBannedUserInput = document.getElementById('bulk-banned-user-input');
         addBulkBannedUserBtn = document.getElementById('add-bulk-banned-user-btn');
         bannedUsersListElem = document.getElementById('banned-users-list');
+
+        // Existing Banned Users Check elements (now on the new page)
         bannedUsersFileInput = document.getElementById('banned-users-file-input');
         bannedUsersTextInput = document.getElementById('banned-users-text-input');
         checkBannedUsersBtn = document.getElementById('check-banned-users-btn');
@@ -2956,7 +3209,7 @@
             e.preventDefault(); // Prevent default file open
             uploadArea.classList.remove('drag-over');
             const files = e.dataTransfer.files;
-            handleFiles(files, false); // Pass false for isModalUpload
+            handleFiles(files);
         });
 
         // Trigger file input when "Choose File" button is clicked
@@ -2966,7 +3219,7 @@
 
         // Handle file input change (when user clicks "Choose File" and selects)
         fileInput.addEventListener('change', (event) => {
-            handleFiles(event.target.files, false); // Pass false for isModalUpload
+            handleFiles(event.target.files);
         });
 
         // Handle "Find My Non-Followers" button click (on landing page upload success state)
@@ -2987,13 +3240,13 @@
         modalUploadArea.addEventListener('drop', (e) => {
             e.preventDefault();
             modalUploadArea.classList.remove('drag-over');
-            handleFiles(e.dataTransfer.files, true); // Pass true for isModalUpload
+            handleFiles(e.dataTransfer.files);
         });
         modalChooseFileBtn.addEventListener('click', () => {
             modalFileInput.click();
         });
         modalFileInput.addEventListener('change', (event) => {
-            handleFiles(event.target.files, true); // Pass true for isModalUpload
+            handleFiles(event.target.files);
         });
 
         // Event listeners for Authentication Modal
@@ -3061,19 +3314,31 @@
         document.getElementById('analytics-link-sidebar-dashboard').addEventListener('click', analyticsLinkClickHandler);
         document.getElementById('analytics-link-sidebar-analytics').addEventListener('click', analyticsLinkClickHandler);
         document.getElementById('analytics-link-sidebar-accounts').addEventListener('click', analyticsLinkClickHandler); // New sidebar link
+        document.getElementById('analytics-link-sidebar-banned').addEventListener('click', analyticsLinkClickHandler); // New sidebar link
 
         // Accounts links
         accountsLinkDashboard.addEventListener('click', accountsLinkClickHandler);
         accountsLinkAnalytics.addEventListener('click', accountsLinkClickHandler);
         accountsLinkSidebarAccounts.addEventListener('click', accountsLinkClickHandler); // New sidebar link
+        accountsLinkSidebarBanned.addEventListener('click', accountsLinkClickHandler); // New sidebar link
+
+        // Banned Users Page links
+        document.getElementById('banned-users-nav-link').addEventListener('click', bannedUsersPageLinkClickHandler);
+        document.getElementById('banned-users-nav-link-mobile').addEventListener('click', bannedUsersPageLinkClickHandler);
+        bannedUsersLinkSidebarDashboard.addEventListener('click', bannedUsersPageLinkClickHandler);
+        bannedUsersLinkSidebarAnalytics.addEventListener('click', bannedUsersPageLinkClickHandler);
+        bannedUsersLinkSidebarAccounts.addEventListener('click', bannedUsersPageLinkClickHandler);
+        bannedUsersLinkSidebarBanned.addEventListener('click', bannedUsersPageLinkClickHandler);
 
         // Settings links
         settingsLinkDashboard.addEventListener('click', settingsLinkClickHandler);
         settingsLinkAnalytics.addEventListener('click', settingsLinkClickHandler);
         settingsLinkSidebarAccounts.addEventListener('click', settingsLinkClickHandler); // New sidebar link
+        settingsLinkSidebarBanned.addEventListener('click', settingsLinkClickHandler); // New sidebar link
 
-        // Sidebar Home link for Accounts section
+        // Sidebar Home link for Accounts and Banned sections
         dashboardLinkSidebarAccounts.addEventListener('click', sidebarHomeLinkClickHandler);
+        dashboardLinkSidebarBanned.addEventListener('click', sidebarHomeLinkClickHandler);
 
 
         // Event listeners for Safe Users modal
@@ -3088,9 +3353,9 @@
         addSafeUserBtn.addEventListener('click', addSafeUserButtonClickHandler);
         addBulkSafeUserBtn.addEventListener('click', addBulkSafeUserButtonClickHandler);
 
-        // Event listeners for Banned Users modal (NEW)
-        bannedUsersBtn.addEventListener('click', openBannedUsersModal);
-        closeBannedUsersModal.addEventListener('click', closeBannedUsersModalFunc);
+        // Event listeners for Banned Users Add modal (NEW)
+        addBannedUserModalBtn.addEventListener('click', openBannedUsersAddModal); // Button on the new page
+        closeBannedUsersAddModal.addEventListener('click', closeBannedUsersAddModalFunc);
         bannedUserInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter') {
                 addBannedUserBtn.click();
@@ -3099,6 +3364,8 @@
         bannedUserInput.addEventListener('input', bannedUserInputHandler); // Add listener for suggestions
         addBannedUserBtn.addEventListener('click', addBannedUserButtonClickHandler);
         addBulkBannedUserBtn.addEventListener('click', addBulkBannedUserButtonClickHandler);
+        
+        // Event listeners for Banned Users Check functionality (on the new page)
         bannedUsersFileInput.addEventListener('change', handleCheckBannedUsers); // Auto-check on file upload
         checkBannedUsersBtn.addEventListener('click', handleCheckBannedUsers); // Manual check button
 
@@ -3120,6 +3387,7 @@
         // Initial render of accounts (will show "No data" message)
         renderAccounts([]);
         renderAccountsToRemove([]); // Initial render for accounts management list
+        renderOrangeListUsers([]); // Initial render for orange list users
     };
 
   </script>
