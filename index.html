@@ -70,7 +70,8 @@
         color: #e2e8f0; /* Default light text color */
     }
     /* Adjusted for Safe Users modal */
-    #safe-users-modal .modal-content {
+    #safe-users-modal .modal-content,
+    #banned-users-modal .modal-content { /* Apply to banned users modal too */
         max-width: 600px; /* Wider for bulk input */
     }
     /* Modal content themes */
@@ -276,6 +277,12 @@
       padding: 20px;
       text-align: center;
       color: #e2e8f0; /* Light text color */
+      cursor: pointer; /* Indicate clickable */
+      transition: transform 0.2s ease-in-out, box-shadow 0.2s ease-in-out;
+    }
+    .metric-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
     }
     .metric-card .value {
       font-size: 2.5rem;
@@ -325,6 +332,38 @@
         text-align: right; /* Align to the right */
         margin-left: auto; /* Pushes to the right */
         padding-right: 5px; /* Add some padding from the edge */
+    }
+
+    /* Accounts Management specific styles */
+    .accounts-to-remove-green { color: #2fa351; }
+    .accounts-to-remove-orange { color: #aa5728; }
+    .accounts-to-remove-red { color: #ef4444; } /* Reusing existing red for consistency */
+
+    .btn-remove {
+        background-color: #ef4444; /* Red-500 */
+        color: white;
+        padding: 8px 16px;
+        border-radius: 9999px; /* Full rounded */
+        font-weight: bold;
+        transition: background-color 0.2s ease-in-out, transform 0.1s ease-in-out;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    .btn-remove:hover {
+        background-color: #dc2626; /* Red-600 */
+        transform: translateY(-1px);
+    }
+    .btn-approve {
+        background-color: #22c55e; /* Green-500 */
+        color: white;
+        padding: 8px 16px;
+        border-radius: 9999px; /* Full rounded */
+        font-weight: bold;
+        transition: background-color 0.2s ease-in-out, transform 0.1s ease-in-out;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    }
+    .btn-approve:hover {
+        background-color: #16a34a; /* Green-600 */
+        transform: translateY(-1px);
     }
   </style>
 </head>
@@ -651,6 +690,94 @@
     </div>
   </section>
 
+  <!-- New Accounts Management Section -->
+  <section id="accounts-section" class="hidden py-16 px-6 bg-gray-900">
+    <div class="max-w-7xl mx-auto flex flex-col md:flex-row">
+      <div class="dashboard-sidebar p-6 md:block hidden">
+        <nav>
+          <ul>
+            <li class="mb-4">
+              <a href="#" id="dashboard-link-sidebar-accounts" class="flex items-center text-gray-300 hover:text-blue-400 transition-colors duration-200">
+                <i class="fas fa-home text-lg"></i><span>Home</span>
+              </a>
+            </li>
+            <li class="mb-4">
+              <a href="#" id="analytics-link-sidebar-accounts" class="flex items-center text-gray-300 hover:text-blue-400 transition-colors duration-200">
+                <i class="fas fa-chart-line text-lg"></i><span>Analytics</span>
+              </a>
+            </li>
+            <li class="mb-4">
+              <a href="#" id="accounts-link-sidebar-accounts" class="flex items-center text-blue-400 font-semibold hover:text-blue-200 transition-colors duration-200">
+                <i class="fas fa-user-friends text-lg"></i><span>Accounts</span>
+              </a>
+            </li>
+            <li class="mb-4">
+              <a href="#" id="settings-link-sidebar-accounts" class="flex items-center text-gray-300 hover:text-blue-400 transition-colors duration-200">
+                <i class="fas fa-cog text-lg"></i><span>Settings</span>
+              </a>
+            </li>
+          </ul>
+        </nav>
+      </div>
+
+      <div class="dashboard-content">
+        <div class="flex justify-between items-center mb-8">
+          <h2 class="text-3xl font-bold text-gray-100">Accounts Management</h2>
+          <div class="flex items-center space-x-3">
+            <select id="data-upload-selector-accounts" class="border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-700 text-gray-100">
+                <option value="">Select Data Upload</option>
+            </select>
+            <button id="banned-users-btn" class="bg-red-600 text-white px-4 py-2 rounded-lg shadow hover:bg-red-700 transition-colors duration-200 font-medium">
+                <i class="fas fa-ban mr-2"></i>Banned Users
+            </button>
+            <button id="upload-new-data-btn-accounts" class="bg-blue-600 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-700 transition-colors duration-200 font-medium">
+              <i class="fas fa-upload mr-2"></i>Upload New Data
+            </button>
+          </div>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          <div class="metric-card" id="accounts-to-remove-card">
+            <p class="label">Accounts to Remove</p>
+            <p class="value" id="accounts-to-remove-count">0</p>
+          </div>
+          <div class="metric-card" id="total-accounts-removed-card">
+            <p class="label">Total Accounts Removed</p>
+            <p class="value" id="total-accounts-removed-count">0</p>
+          </div>
+          <div class="metric-card" id="approved-accounts-card">
+            <p class="label">Approved Accounts</p>
+            <p class="value" id="approved-accounts-count">0</p>
+          </div>
+          <div class="metric-card">
+            <p class="label">Oldest Account to Remove</p>
+            <p class="value" id="oldest-account-to-remove-age">N/A</p>
+          </div>
+        </div>
+
+        <div class="bg-gray-800 p-6 rounded-xl shadow-lg">
+          <div class="flex justify-between items-center mb-6">
+            <h3 id="accounts-list-title" class="text-xl font-bold text-gray-100">Accounts to Remove</h3>
+            <div class="flex items-center space-x-4">
+              <input type="text" id="accounts-search-input" placeholder="Search for a specific account..." class="border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-700 text-gray-100" />
+              <select id="accounts-sort-select" class="border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-700 text-gray-100">
+                <option value="oldest">Oldest</option>
+                <option value="newest">Newest</option>
+                <option value="alpha-asc">Alphabetical (A-Z)</option>
+                <option value="alpha-desc">Alphabetical (Z-A)</option>
+              </select>
+              <button class="text-gray-300 hover:text-blue-400"><i class="fas fa-download mr-2"></i>Download CSV</button>
+            </div>
+          </div>
+
+          <div id="accounts-management-list" class="space-y-2">
+            <p class="text-gray-500 text-center">No accounts to display. Upload your Instagram data.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
 
   <section id="pricing" class="py-16 px-6 bg-gray-800 text-center">
     <h2 class="text-4xl font-bold text-gray-100 mb-12">Simple & Transparent Pricing</h2>
@@ -740,6 +867,47 @@
     </div>
   </div>
 
+  <!-- New Banned Users Modal -->
+  <div id="banned-users-modal" class="modal">
+    <div class="modal-content">
+      <span class="close-button" id="close-banned-users-modal">&times;</span>
+      <h3 class="text-2xl font-bold mb-4 text-gray-100">Banned Users</h3>
+      <p class="text-gray-300 mb-4">Manage users you've marked as banned. These are typically users who were in the orange list and did not follow back.</p>
+      
+      <div class="flex flex-col gap-3 mb-4">
+        <div class="flex">
+            <input type="text" id="banned-user-input" placeholder="Enter single username to ban" class="flex-grow border border-gray-600 rounded-l-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 bg-gray-700 text-gray-100" list="banned-user-suggestions" />
+            <datalist id="banned-user-suggestions"></datalist>
+            <button id="add-banned-user-btn" class="bg-red-600 text-white px-4 py-2 rounded-r-lg shadow hover:bg-red-700 transition-colors duration-200">Add</button>
+        </div>
+        <textarea id="bulk-banned-user-input" placeholder="Enter multiple usernames to ban, separated by commas or new lines" rows="4" class="w-full border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-red-500 bg-gray-700 text-gray-100 resize-y"></textarea>
+        <button id="add-bulk-banned-user-btn" class="bg-red-800 text-white px-4 py-2 rounded-lg shadow hover:bg-red-900 transition-colors duration-200">Add All</button>
+      </div>
+
+      <div id="banned-users-list" class="max-h-48 overflow-y-auto border border-gray-600 rounded-lg p-2 bg-gray-700 mb-4">
+        <p class="text-gray-500 text-center">No banned users added yet.</p>
+      </div>
+
+      <hr class="border-gray-600 my-4">
+
+      <h4 class="text-xl font-bold mb-3 text-gray-100">Check for Banned Users</h4>
+      <p class="text-gray-300 mb-4">Upload a .txt file or paste Instagram links/usernames to check against your banned list.</p>
+      <div class="flex flex-col gap-3 mb-4">
+        <input type="file" id="banned-users-file-input" accept=".txt" class="w-full text-gray-300 bg-gray-700 border border-gray-600 rounded-lg p-2 cursor-pointer" />
+        <textarea id="banned-users-text-input" placeholder="Paste Instagram username links or usernames (one per line, or comma-separated)" rows="4" class="w-full border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-700 text-gray-100 resize-y"></textarea>
+        <button id="check-banned-users-btn" class="bg-blue-600 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-700 transition-colors duration-200">
+            <i class="fas fa-search mr-2"></i>Check
+        </button>
+      </div>
+      <div id="banned-users-matches-display" class="bg-gray-700 p-4 rounded-lg border border-gray-600 text-left hidden">
+        <p class="font-semibold text-gray-100 mb-2" id="matches-count-text"></p>
+        <ul id="matches-list" class="list-disc list-inside text-gray-300 space-y-1"></ul>
+      </div>
+    </div>
+  </div>
+  <!-- End New Banned Users Modal -->
+
+
   <div id="upload-data-modal" class="modal">
     <div class="modal-content">
         <span class="close-button" id="close-upload-data-modal">&times;</span>
@@ -793,7 +961,16 @@
     let allNonFollowers = []; // Store the filtered non-followers for display and search
     let originalNotFollowingBack = []; // Store the original non-followers before safe user filtering
     let safeUsers = []; // Store safe users
+    let bannedUsers = []; // New: Store banned users
     let allUserUploadsMetadata = []; // Stores {id, timestamp, fileName, followersList, followingList} for all uploads
+
+    // New global variables for Accounts Management
+    let accountsToRemoveList = []; // List of accounts to remove with timestamps
+    let approvedAccountsList = []; // List of approved usernames
+    let removedAccountsList = []; // List of removed usernames
+    let allMessageUsernames = []; // All unique usernames found in message files with their latest timestamp
+
+    let currentAccountsViewMode = 'toRemove'; // 'toRemove', 'approved', 'removed'
 
     const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
 
@@ -906,6 +1083,42 @@
     let accountsLinkAnalytics; // Accounts link in analytics sidebar
     let settingsLinkAnalytics; // Settings link in analytics sidebar
 
+    // New Accounts Management elements
+    let accountsSection;
+    let dashboardLinkSidebarAccounts;
+    let analyticsLinkSidebarAccounts;
+    let accountsLinkSidebarAccounts;
+    let settingsLinkSidebarAccounts;
+    let dataUploadSelectorAccounts;
+    let uploadNewDataBtnAccounts;
+    let accountsToRemoveCard;
+    let accountsToRemoveCount;
+    let totalAccountsRemovedCard;
+    let totalAccountsRemovedCount;
+    let approvedAccountsCard;
+    let approvedAccountsCount;
+    let oldestAccountToRemoveAge;
+    let accountsListTitle;
+    let accountsSearchInput;
+    let accountsSortSelect;
+    let accountsManagementList;
+
+    let bannedUsersBtn; // New: Banned Users button
+    let bannedUsersModal; // New: Banned Users modal
+    let closeBannedUsersModal; // New: Close Banned Users modal button
+    let bannedUserInput; // New: Single banned user input
+    let bannedUserSuggestionsDatalist; // New: Datalist for banned user suggestions
+    let addBannedUserBtn; // New: Add single banned user button
+    let bulkBannedUserInput; // New: Bulk banned user input
+    let addBulkBannedUserBtn; // New: Add bulk banned user button
+    let bannedUsersListElem; // New: List of banned users in modal
+    let bannedUsersFileInput; // New: Banned users file input for check
+    let bannedUsersTextInput; // New: Banned users text input for check
+    let checkBannedUsersBtn; // New: Check banned users button
+    let bannedUsersMatchesDisplay; // New: Matches display area
+    let matchesCountText; // New: Matches count text
+    let matchesList; // New: Matches list
+
     let safeUsersBtn;
     let safeUsersModal;
     let closeSafeUsersModal;
@@ -992,10 +1205,16 @@
                     allNonFollowers = [];
                     originalNotFollowingBack = [];
                     safeUsers = [];
+                    bannedUsers = []; // Reset banned users on logout
                     allUserUploadsMetadata = [];
+                    accountsToRemoveList = [];
+                    approvedAccountsList = [];
+                    removedAccountsList = [];
+                    allMessageUsernames = [];
                     updateDashboardMetrics(0, 0, 0, 0, 0);
                     // Reset analytics metrics and unfollowed/new followers lists
                     updateAnalyticsMetrics(0, 0, [], []); 
+                    updateAccountsManagementMetrics(); // Reset accounts management metrics
                     populateUploadSelectors(); // Clear selectors
                 }
             });
@@ -1032,7 +1251,7 @@
 
     // Populate the data upload selectors
     function populateUploadSelectors() {
-        const selectors = [dataUploadSelectorDashboard, dataUploadSelectorAnalytics];
+        const selectors = [dataUploadSelectorDashboard, dataUploadSelectorAnalytics, dataUploadSelectorAccounts];
         selectors.forEach(selector => {
             selector.innerHTML = '<option value="">Select Data Upload</option>'; // Clear and add default
             allUserUploadsMetadata.forEach(upload => {
@@ -1060,9 +1279,16 @@
             allNonFollowers = [];
             originalNotFollowingBack = [];
             safeUsers = [];
+            bannedUsers = []; // Reset banned users on data load
+            accountsToRemoveList = [];
+            approvedAccountsList = [];
+            removedAccountsList = [];
+            allMessageUsernames = [];
             updateDashboardMetrics(0, 0, 0, 0, 0);
             updateAnalyticsMetrics(0, 0, [], []); // Reset analytics metrics and lists
-            renderAccounts([]);
+            updateAccountsManagementMetrics(); // Reset accounts management metrics
+            renderAccounts([]); // Dashboard non-followers
+            renderAccountsToRemove([]); // Accounts management list
             return;
         }
 
@@ -1075,7 +1301,21 @@
                 currentFileData = { id: docSnap.id, ...data }; // Store the ID
                 originalNotFollowingBack = currentFileData.originalNotFollowingBack || [];
                 safeUsers = currentFileData.safeUsers || []; // Ensure safeUsers is loaded
+                bannedUsers = currentFileData.bannedUsers || []; // New: Load banned users
                 allNonFollowers = originalNotFollowingBack.filter(account => !safeUsers.includes(account.username));
+
+                // Load Accounts Management data
+                allMessageUsernames = currentFileData.allMessageUsernames || [];
+                approvedAccountsList = currentFileData.approvedAccounts || [];
+                removedAccountsList = currentFileData.removedAccounts || [];
+                
+                // Filter accountsToRemoveList based on loaded approved/removed lists
+                accountsToRemoveList = allMessageUsernames.filter(account =>
+                    !approvedAccountsList.includes(account.username) && !removedAccountsList.includes(account.username)
+                );
+                // Sort by oldest to newest by default for this list
+                accountsToRemoveList.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+
 
                 // Find the previous upload for analytics calculation
                 const currentIndex = allUserUploadsMetadata.findIndex(upload => upload.id === uploadId);
@@ -1118,7 +1358,9 @@
                 );
                 // Correctly pass newFollowers and unfollowedYou to their respective elements
                 updateAnalyticsMetrics(newFollowers, unfollowedYou, newFollowerAccounts, unfollowedAccounts);
-                renderAccounts(allNonFollowers);
+                updateAccountsManagementMetrics(); // Update new metrics for accounts management
+                renderAccounts(allNonFollowers); // Render dashboard non-followers
+                applyAccountsManagementFiltersAndRender(); // Render accounts management list
             } else {
                 console.log('No data found for the selected upload ID:', uploadId);
                 showAlert('No data found for the selected upload. Please try another or upload new data.', 'info');
@@ -1126,9 +1368,16 @@
                 allNonFollowers = [];
                 originalNotFollowingBack = [];
                 safeUsers = [];
+                bannedUsers = []; // Reset banned users
+                accountsToRemoveList = [];
+                approvedAccountsList = [];
+                removedAccountsList = [];
+                allMessageUsernames = [];
                 updateDashboardMetrics(0, 0, 0, 0, 0);
                 updateAnalyticsMetrics(0, 0, [], []);
+                updateAccountsManagementMetrics();
                 renderAccounts([]);
+                renderAccountsToRemove([]);
             }
         } catch (error) {
             console.error('Error loading data for upload:', error);
@@ -1144,15 +1393,23 @@
             // Set the dropdowns to the latest upload
             dataUploadSelectorDashboard.value = latestUploadId;
             dataUploadSelectorAnalytics.value = latestUploadId;
+            dataUploadSelectorAccounts.value = latestUploadId;
         } else {
             console.log('No uploads found for the user.');
             currentFileData = null;
             allNonFollowers = [];
             originalNotFollowingBack = [];
             safeUsers = [];
+            bannedUsers = []; // Reset banned users
+            accountsToRemoveList = [];
+            approvedAccountsList = [];
+            removedAccountsList = [];
+            allMessageUsernames = [];
             updateDashboardMetrics(0, 0, 0, 0, 0);
             updateAnalyticsMetrics(0, 0, [], []);
+            updateAccountsManagementMetrics();
             renderAccounts([]);
+            renderAccountsToRemove([]);
         }
     }
 
@@ -1161,7 +1418,7 @@
     function renderAccounts(accountsToRender) {
         nonFollowersList.innerHTML = ''; // Clear existing list
         if (accountsToRender.length === 0) {
-            nonFollowersList.innerHTML = '<p id="no-data-message" class="text-gray-500 text-center">No accounts to display or no data uploaded yet.</p>';
+            nonFollowersList.innerHTML = '<p id="no-data-message" class="text-gray-500 text-center">Upload your Instagram data to see who isn\'t following you back!</p>';
             return;
         }
         accountsToRender.forEach(account => {
@@ -1289,6 +1546,38 @@
         renderUnfollowedAccountsList(unfollowedAccounts);
     }
 
+    // Function to update Accounts Management metrics
+    function updateAccountsManagementMetrics() {
+        // Accounts to Remove
+        const accountsToRemoveCountValue = accountsToRemoveList.length;
+        accountsToRemoveCount.textContent = accountsToRemoveCountValue;
+        accountsToRemoveCount.classList.remove('accounts-to-remove-green', 'accounts-to-remove-orange', 'accounts-to-remove-red');
+        if (accountsToRemoveCountValue >= 0 && accountsToRemoveCountValue <= 15) {
+            accountsToRemoveCount.classList.add('accounts-to-remove-green');
+        } else if (accountsToRemoveCountValue > 15 && accountsToRemoveCountValue <= 30) {
+            accountsToRemoveCount.classList.add('accounts-to-remove-orange');
+        } else {
+            accountsToRemoveCount.classList.add('accounts-to-remove-red');
+        }
+
+        // Total Accounts Removed
+        totalAccountsRemovedCount.textContent = removedAccountsList.length;
+
+        // Approved Accounts
+        approvedAccountsCount.textContent = approvedAccountsList.length;
+
+        // Oldest Account to Remove
+        if (accountsToRemoveList.length > 0) {
+            const oldestAccount = accountsToRemoveList.reduce((prev, curr) => {
+                return (prev.timestamp || Infinity) < (curr.timestamp || Infinity) ? prev : curr;
+            });
+            const timeInfo = formatTimeDifference(oldestAccount.timestamp);
+            oldestAccountToRemoveAge.textContent = timeInfo.text;
+        } else {
+            oldestAccountToRemoveAge.textContent = 'N/A';
+        }
+    }
+
     // Function to show dashboard and hide other sections
     function showDashboard() {
         heroSection.classList.add('hidden');
@@ -1296,6 +1585,7 @@
         uploadSection.classList.add('hidden');
         pricingSection.classList.add('hidden');
         analyticsSection.classList.add('hidden'); // Hide analytics section
+        accountsSection.classList.add('hidden'); // Hide accounts section
         dashboardSection.classList.remove('hidden');
         
         // Ensure the dashboard displays the current data if available
@@ -1375,6 +1665,7 @@
         // Ensure the selector reflects the chosen upload
         dataUploadSelectorAnalytics.value = bestUploadIdForAnalytics;
         dataUploadSelectorDashboard.value = bestUploadIdForAnalytics;
+        dataUploadSelectorAccounts.value = bestUploadIdForAnalytics;
     }
 
     // Function to show analytics and hide other sections
@@ -1384,11 +1675,28 @@
         uploadSection.classList.add('hidden');
         pricingSection.classList.add('hidden');
         dashboardSection.classList.add('hidden'); // Hide dashboard section
+        accountsSection.classList.add('hidden'); // Hide accounts section
         analyticsSection.classList.remove('hidden'); // Show analytics section
 
         // Call the new function to find and load best analytics data
         findAndLoadBestAnalyticsData();
         analyticsSection.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    // Function to show Accounts Management section
+    function showAccountsManagement(viewMode = 'toRemove') {
+        heroSection.classList.add('hidden');
+        featuresSection.classList.add('hidden');
+        uploadSection.classList.add('hidden');
+        pricingSection.classList.add('hidden');
+        dashboardSection.classList.add('hidden');
+        analyticsSection.classList.add('hidden');
+        accountsSection.classList.remove('hidden');
+
+        currentAccountsViewMode = viewMode; // Set the view mode
+        applyAccountsManagementFiltersAndRender(); // Apply filters and render
+        updateAccountsManagementMetrics(); // Update metrics for accounts management
+        accountsSection.scrollIntoView({ behavior: 'smooth' });
     }
 
     // Function to show landing page and hide dashboard
@@ -1399,6 +1707,7 @@
         pricingSection.classList.remove('hidden');
         dashboardSection.classList.add('hidden');
         analyticsSection.classList.add('hidden'); // Hide analytics section
+        accountsSection.classList.add('hidden'); // Hide accounts section
         // Scroll to top
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
@@ -1439,9 +1748,15 @@
         allNonFollowers = [];
         originalNotFollowingBack = [];
         safeUsers = [];
+        bannedUsers = []; // Clear banned users on logout
         allUserUploadsMetadata = []; // Clear upload metadata
+        accountsToRemoveList = [];
+        approvedAccountsList = [];
+        removedAccountsList = [];
+        allMessageUsernames = [];
         updateDashboardMetrics(0, 0, 0, 0, 0);
         updateAnalyticsMetrics(0, 0, [], []); // Reset analytics metrics
+        updateAccountsManagementMetrics(); // Reset accounts management metrics
         populateUploadSelectors(); // Clear selectors
         showLandingPage(); // Go back to landing page after logout
       } catch (error) {
@@ -1458,6 +1773,7 @@
         pricingSection.classList.remove('hidden'); // Keep pricing visible
         dashboardSection.classList.add('hidden');
         analyticsSection.classList.add('hidden'); // Hide analytics section
+        accountsSection.classList.add('hidden'); // Hide accounts section
         uploadSection.classList.remove('hidden'); // Ensure upload section is visible
 
         if (showSuccess) {
@@ -1517,8 +1833,14 @@
         allNonFollowers = []; // Clear non-followers list
         originalNotFollowingBack = []; // Clear original list
         safeUsers = []; // Clear safe users
+        bannedUsers = []; // Clear banned users
+        accountsToRemoveList = [];
+        approvedAccountsList = [];
+        removedAccountsList = [];
+        allMessageUsernames = [];
         updateDashboardMetrics(0, 0, 0, 0, 0); // Reset dashboard metrics
         updateAnalyticsMetrics(0, 0, [], []); // Reset analytics metrics
+        updateAccountsManagementMetrics(); // Reset accounts management metrics
         fileInput.value = ''; // Clear the file input on landing page
         modalFileInput.value = ''; // Clear the file input in modal
         showUploadSection(false); // Show initial upload state on landing page
@@ -1606,6 +1928,100 @@
         // Filter notFollowingBack based on current safeUsers
         allNonFollowers = originalNotFollowingBack.filter(account => !safeUsers.includes(account.username));
 
+        // --- NEW: Message File Parsing ---
+        const instagramLinkRegex = /(?:https?:\/\/)?(?:www\.)?instagram\.com\/([a-zA-Z0-9_.]+)/g;
+        const atUsernameRegex = /(?<!\w)@([a-zA-Z0-9_.]+)(?!\w)/g;
+
+        const tempMessageUsernamesMap = new Map(); // username -> latest timestamp
+        const messageParsingPromises = [];
+
+        zip.forEach((relativePath, zipEntry) => {
+            // Check if it's a message file (e.g., messages/inbox/chat_name/message_1.json)
+            if (relativePath.startsWith('messages/inbox/') && relativePath.endsWith('.json') && relativePath.includes('message_')) {
+                messageParsingPromises.push(
+                    zipEntry.async('text').then(messageContent => {
+                        try {
+                            const messageData = JSON.parse(messageContent);
+                            if (messageData.messages && Array.isArray(messageData.messages)) {
+                                messageData.messages.forEach(message => {
+                                    const messageTimestamp = Math.floor(message.timestamp_ms / 1000); // Convert ms to seconds
+
+                                    // 1. Check message.link
+                                    if (message.link && message.link.link) {
+                                        const match = instagramLinkRegex.exec(message.link.link);
+                                        if (match && match[1]) {
+                                            const username = match[1];
+                                            if (!tempMessageUsernamesMap.has(username) || tempMessageUsernamesMap.get(username) < messageTimestamp) {
+                                                tempMessageUsernamesMap.set(username, messageTimestamp);
+                                            }
+                                        }
+                                    }
+                                    instagramLinkRegex.lastIndex = 0; // Reset regex for next match
+
+                                    // 2. Check message.content
+                                    if (message.content) {
+                                        let match;
+                                        while ((match = instagramLinkRegex.exec(message.content)) !== null) {
+                                            const username = match[1];
+                                            if (!tempMessageUsernamesMap.has(username) || tempMessageUsernamesMap.get(username) < messageTimestamp) {
+                                                tempMessageUsernamesMap.set(username, messageTimestamp);
+                                            }
+                                        }
+                                        instagramLinkRegex.lastIndex = 0;
+
+                                        while ((match = atUsernameRegex.exec(message.content)) !== null) {
+                                            const username = match[1];
+                                            // Basic check to avoid common words, could be improved
+                                            if (username.length > 2 && !username.includes('.')) { // Simple heuristic
+                                                if (!tempMessageUsernamesMap.has(username) || tempMessageUsernamesMap.get(username) < messageTimestamp) {
+                                                    tempMessageUsernamesMap.set(username, messageTimestamp);
+                                                }
+                                            }
+                                        }
+                                        atUsernameRegex.lastIndex = 0;
+                                    }
+
+                                    // 3. Check message.share_to_direct_story.media.uri
+                                    if (message.share_to_direct_story && message.share_to_direct_story.media && message.share_to_direct_story.media.uri) {
+                                        const match = instagramLinkRegex.exec(message.share_to_direct_story.media.uri);
+                                        if (match && match[1]) {
+                                            const username = match[1];
+                                            if (!tempMessageUsernamesMap.has(username) || tempMessageUsernamesMap.get(username) < messageTimestamp) {
+                                                tempMessageUsernamesMap.set(username, messageTimestamp);
+                                            }
+                                        }
+                                    }
+                                    instagramLinkRegex.lastIndex = 0;
+                                });
+                            }
+                        } catch (parseError) {
+                            console.warn(`Could not parse message file ${relativePath}:`, parseError);
+                        }
+                    }).catch(err => {
+                        console.warn(`Error reading zip entry ${relativePath}:`, err);
+                    })
+                );
+            }
+        });
+
+        await Promise.all(messageParsingPromises); // Wait for all message files to be processed
+        allMessageUsernames = Array.from(tempMessageUsernamesMap, ([username, timestamp]) => ({ username, timestamp }));
+        console.log("Extracted usernames from messages:", allMessageUsernames);
+        // --- END NEW: Message File Parsing ---
+
+        // If currentFileData exists, use its approved/removed/banned lists. Otherwise, start fresh.
+        const currentApproved = currentFileData ? currentFileData.approvedAccounts || [] : [];
+        const currentRemoved = currentFileData ? currentFileData.removedAccounts || [] : [];
+        const currentBanned = currentFileData ? currentFileData.bannedUsers || [] : []; // New: Load existing banned users
+
+        // Filter accountsToRemoveList based on loaded approved/removed lists
+        accountsToRemoveList = allMessageUsernames.filter(account =>
+            !currentApproved.includes(account.username) && !currentRemoved.includes(account.username)
+        );
+        // Sort by oldest to newest by default for this list
+        accountsToRemoveList.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+
+
         // Prepare data for saving
         const uploadTimestamp = Math.floor(Date.now() / 1000); // Current timestamp in seconds
         const uploadId = `upload_${uploadTimestamp}`; // Unique ID for this upload
@@ -1619,7 +2035,11 @@
             followersList: Array.from(followersUsernames), // Save as array for Firestore
             originalNotFollowingBack,
             youDontFollowBackCount,
-            safeUsers: safeUsers // Save current safe users with the upload
+            safeUsers: safeUsers, // Current safe users
+            bannedUsers: currentBanned, // New: Save current banned users
+            allMessageUsernames: allMessageUsernames, // Save all extracted message usernames
+            approvedAccounts: currentApproved, // Save current approved accounts
+            removedAccounts: currentRemoved // Save current removed accounts
         };
 
         // Save data to Firestore
@@ -1630,11 +2050,15 @@
             await loadAllUserUploads(); // Reload all uploads to update dropdowns
             await loadDataForUpload(uploadId); // Load the newly uploaded data
             showAlert('Instagram data uploaded successfully!', 'success');
-            showDashboard(); // Go to dashboard after successful upload
+            showAccountsManagement(); // Go to accounts management after successful upload
         } else {
-            console.warn('Not saving data to Firestore: User not authenticated. Data will be temporary.');
-            currentFileData = { id: uploadId, ...dataToSave }; // Use temporary ID
-            // For unauthenticated users, we can't save/load historical data, so analytics will be limited
+            // For unauthenticated users, data is temporary
+            currentFileData = { id: uploadId, ...dataToSave };
+            // Update global lists for unauthenticated users
+            approvedAccountsList = currentApproved;
+            removedAccountsList = currentRemoved;
+            bannedUsers = currentBanned; // New: Update global banned users for unauthenticated users
+            
             updateDashboardMetrics(
                 currentFileData.totalFollowing,
                 currentFileData.totalFollowers,
@@ -1642,14 +2066,16 @@
                 originalNotFollowingBack.length,
                 currentFileData.youDontFollowBackCount
             );
-            updateAnalyticsMetrics(0, 0, [], []); 
-            renderAccounts(allNonFollowers);
-            showDashboard();
+            updateAnalyticsMetrics(0, 0, [], []);
+            updateAccountsManagementMetrics(); // Update new metrics
+            renderAccounts(allNonFollowers); // Render non-followers
+            applyAccountsManagementFiltersAndRender(); // Render accounts to remove
+            showAccountsManagement(); // Show accounts management section
             showAlert('Instagram data processed. Log in to save your data and access full analytics!', 'info');
         }
-        fileInput.value = ''; // Clear file input
-        modalFileInput.value = ''; // Clear modal file input
-        closeUploadDataModalFunc(); // Close the upload modal after successful upload
+        fileInput.value = '';
+        modalFileInput.value = '';
+        closeUploadDataModalFunc();
       } catch (error) {
         console.error('Error processing ZIP file:', error);
         showAlert('Failed to process Instagram data. Please ensure it\'s a valid Instagram data export ZIP and contains the correct files. Error: ' + error.message, 'error');
@@ -1821,6 +2247,248 @@
         }
     }
 
+    // Banned Users Modal Functions (NEW)
+    function openBannedUsersModal() {
+        bannedUsersModal.style.display = 'flex';
+        renderBannedUsersList();
+        populateBannedUserSuggestions(); // Populate suggestions when modal opens
+        // Clear previous check results
+        bannedUsersMatchesDisplay.classList.add('hidden');
+        matchesCountText.textContent = '';
+        matchesList.innerHTML = '';
+        bannedUsersFileInput.value = '';
+        bannedUsersTextInput.value = '';
+    }
+
+    function closeBannedUsersModalFunc() {
+        bannedUsersModal.style.display = 'none';
+        bannedUserInput.value = '';
+        bulkBannedUserInput.value = '';
+        bannedUsersFileInput.value = '';
+        bannedUsersTextInput.value = '';
+        bannedUsersMatchesDisplay.classList.add('hidden');
+        matchesCountText.textContent = '';
+        matchesList.innerHTML = '';
+        bannedUserSuggestionsDatalist.innerHTML = ''; // Clear suggestions
+    }
+
+    function renderBannedUsersList() {
+        bannedUsersListElem.innerHTML = '';
+        if (bannedUsers.length === 0) {
+            bannedUsersListElem.innerHTML = '<p class="text-gray-500 text-center">No banned users added yet.</p>';
+            return;
+        }
+        bannedUsers.forEach(user => {
+            const div = document.createElement('div');
+            div.className = 'flex justify-between items-center py-2 px-3 border-b border-gray-600 last:border-b-0 text-gray-200';
+            div.innerHTML = `
+                <span>${user}</span>
+                <button data-user="${user}" class="remove-banned-user-btn text-red-400 hover:text-red-500 transition-colors">
+                    <i class="fas fa-times-circle"></i>
+                </button>
+            `;
+            bannedUsersListElem.appendChild(div);
+        });
+
+        document.querySelectorAll('.remove-banned-user-btn').forEach(button => {
+            button.addEventListener('click', (e) => {
+                const userToRemove = e.currentTarget.dataset.user;
+                removeBannedUser(userToRemove);
+            });
+        });
+    }
+
+    function populateBannedUserSuggestions() {
+        bannedUserSuggestionsDatalist.innerHTML = '';
+        if (!originalNotFollowingBack || originalNotFollowingBack.length === 0) {
+            return;
+        }
+
+        const currentInput = bannedUserInput.value.toLowerCase();
+        const suggestedUsers = new Set();
+
+        originalNotFollowingBack.forEach(account => {
+            const username = account.username;
+            const timeInfo = formatTimeDifference(account.timestamp);
+            // Suggest users who are currently in the "orange" category and not already banned
+            if (timeInfo.category === 'orange' && !bannedUsers.includes(username) && username.toLowerCase().includes(currentInput)) {
+                suggestedUsers.add(username);
+            }
+        });
+
+        Array.from(suggestedUsers).sort().forEach(username => {
+            const option = document.createElement('option');
+            option.value = username;
+            bannedUserSuggestionsDatalist.appendChild(option);
+        });
+    }
+
+    const bannedUserInputHandler = () => {
+        populateBannedUserSuggestions();
+    };
+
+    async function addBannedUser(username) {
+        if (username && !bannedUsers.includes(username)) {
+            bannedUsers.push(username);
+            return true;
+        }
+        return false;
+    }
+
+    async function processAndSaveBannedUsers(newUsersAdded = false) {
+        if (newUsersAdded && currentFileData) {
+            bannedUsers.sort();
+            currentFileData.bannedUsers = bannedUsers;
+            await saveBannedUsersToFirestore();
+        }
+        renderBannedUsersList();
+    }
+
+    const addBannedUserButtonClickHandler = async () => {
+        const username = bannedUserInput.value.trim();
+        if (username) {
+            const added = await addBannedUser(username);
+            if (added) {
+                bannedUserInput.value = '';
+                await processAndSaveBannedUsers(true);
+                showAlert('Banned user added!', 'success');
+            } else {
+                showAlert('User is already in the banned list.', 'info');
+            }
+        }
+    };
+
+    const addBulkBannedUserButtonClickHandler = async () => {
+        const text = bulkBannedUserInput.value.trim();
+        if (!text) {
+            showAlert('Please enter usernames in the bulk input area.', 'info');
+            return;
+        }
+
+        const usernames = text.split(/[\n,]+/).map(name => name.trim()).filter(name => name.length > 0);
+        let anyAdded = false;
+        const alreadyInList = [];
+
+        for (const username of usernames) {
+            const added = await addBannedUser(username);
+            if (added) {
+                anyAdded = true;
+            } else {
+                alreadyInList.push(username);
+            }
+        }
+
+        if (anyAdded) {
+            bulkBannedUserInput.value = '';
+            await processAndSaveBannedUsers(true);
+            showAlert('Banned users added!', 'success');
+            closeBannedUsersModalFunc();
+        } else if (alreadyInList.length > 0) {
+            showAlert(`All entered users are already in the banned list: ${alreadyInList.join(', ')}`, 'info');
+        } else {
+            showAlert('No valid users were entered.', 'info');
+        }
+    };
+
+    async function removeBannedUser(username) {
+        bannedUsers = bannedUsers.filter(user => user !== username);
+        await processAndSaveBannedUsers(true);
+        showAlert('Banned user removed!', 'info');
+    }
+
+    async function saveBannedUsersToFirestore() {
+        if (currentUserId && authInstance.currentUser && dbInstance && currentFileData) {
+            try {
+                const userDocRef = doc(dbInstance, `artifacts/${appId}/users/${currentUserId}/userUploads`, currentFileData.id);
+                await setDoc(userDocRef, { 
+                    bannedUsers: currentFileData.bannedUsers,
+                }, { merge: true });
+                console.log('Banned users saved to Firestore for current upload.');
+            } catch (error) {
+                console.error('Error saving banned users to Firestore:', error);
+                showAlert('Failed to save banned users to storage.', 'error');
+            }
+        } else {
+            console.warn('Cannot save banned users: User not authenticated or currentFileData not available.');
+        }
+    }
+
+    async function handleCheckBannedUsers() {
+        let inputUsernames = [];
+
+        // Handle file input
+        if (bannedUsersFileInput.files.length > 0) {
+            const file = bannedUsersFileInput.files[0];
+            if (file.type !== 'text/plain' && !file.name.endsWith('.txt')) {
+                showAlert('Invalid file type. Please upload a .txt file.', 'error');
+                return;
+            }
+            try {
+                const fileContent = await file.text();
+                inputUsernames = parseUsernamesFromText(fileContent);
+            } catch (error) {
+                showAlert('Error reading file: ' + error.message, 'error');
+                return;
+            }
+        } else if (bannedUsersTextInput.value.trim()) {
+            // Handle text area input
+            inputUsernames = parseUsernamesFromText(bannedUsersTextInput.value);
+        } else {
+            showAlert('Please upload a .txt file or enter usernames/links in the text area.', 'info');
+            return;
+        }
+
+        if (inputUsernames.length === 0) {
+            showAlert('No valid usernames or links found in the input.', 'info');
+            return;
+        }
+
+        const matchedUsers = inputUsernames.filter(username => bannedUsers.includes(username));
+
+        matchesCountText.textContent = `${matchedUsers.length} match${matchedUsers.length === 1 ? '' : 'es'} found:`;
+        matchesList.innerHTML = '';
+        if (matchedUsers.length > 0) {
+            matchedUsers.forEach(username => {
+                const li = document.createElement('li');
+                li.innerHTML = `<a href="https://www.instagram.com/${username}/" target="_blank" rel="noopener noreferrer" class="font-medium text-blue-400 hover:underline">${username}</a>`;
+                matchesList.appendChild(li);
+            });
+        } else {
+            const li = document.createElement('li');
+            li.textContent = 'No matches found.';
+            matchesList.appendChild(li);
+        }
+        bannedUsersMatchesDisplay.classList.remove('hidden');
+    }
+
+    function parseUsernamesFromText(text) {
+        const instagramLinkRegex = /(?:https?:\/\/)?(?:www\.)?instagram\.com\/([a-zA-Z0-9_.]+)/g;
+        const atUsernameRegex = /(?<!\w)@([a-zA-Z0-9_.]+)(?!\w)/g;
+        const extractedUsernames = new Set();
+
+        // Extract from links
+        let match;
+        while ((match = instagramLinkRegex.exec(text)) !== null) {
+            extractedUsernames.add(match[1]);
+        }
+        instagramLinkRegex.lastIndex = 0; // Reset regex for next use
+
+        // Extract from @usernames
+        while ((match = atUsernameRegex.exec(text)) !== null) {
+            if (match[1].length > 2 && !match[1].includes('.')) { // Simple heuristic to avoid common words
+                extractedUsernames.add(match[1]);
+            }
+        }
+        atUsernameRegex.lastIndex = 0; // Reset regex for next use
+
+        // Also consider lines/comma-separated values as direct usernames
+        const directUsernames = text.split(/[\n,]+/).map(name => name.trim()).filter(name => name.length > 0 && !name.startsWith('http') && !name.startsWith('@'));
+        directUsernames.forEach(username => extractedUsernames.add(username));
+
+        return Array.from(extractedUsernames);
+    }
+
+
     // Function to apply search and time filters and render accounts
     function applyFiltersAndRenderAccounts() {
         let filteredAccounts = [...allNonFollowers]; // Start with the list already filtered by safe users
@@ -1863,6 +2531,150 @@
 
         renderAccounts(filteredAccounts);
     }
+
+    // New function to apply search and sort filters for Accounts Management list
+    function applyAccountsManagementFiltersAndRender() {
+        let accountsToDisplay = [];
+        let listTitle = "";
+
+        if (currentAccountsViewMode === 'toRemove') {
+            accountsToDisplay = [...accountsToRemoveList];
+            listTitle = "Accounts to Remove";
+        } else if (currentAccountsViewMode === 'approved') {
+            accountsToDisplay = allMessageUsernames.filter(account => approvedAccountsList.includes(account.username));
+            listTitle = "Approved Accounts";
+        } else if (currentAccountsViewMode === 'removed') {
+            accountsToDisplay = allMessageUsernames.filter(account => removedAccountsList.includes(account.username));
+            listTitle = "Removed Accounts";
+        }
+
+        accountsListTitle.textContent = listTitle; // Update the title
+
+        const searchTerm = accountsSearchInput.value.toLowerCase();
+        if (searchTerm) {
+            accountsToDisplay = accountsToDisplay.filter(account =>
+                account.username.toLowerCase().includes(searchTerm)
+            );
+        }
+
+        const sortOrder = accountsSortSelect.value;
+        accountsToDisplay.sort((a, b) => {
+            if (sortOrder === 'newest') {
+                return (b.timestamp || 0) - (a.timestamp || 0);
+            } else if (sortOrder === 'oldest') {
+                return (a.timestamp || 0) - (b.timestamp || 0);
+            } else if (sortOrder === 'alpha-asc') {
+                return a.username.localeCompare(b.username);
+            } else if (sortOrder === 'alpha-desc') {
+                return b.username.localeCompare(a.username);
+            }
+            return 0;
+        });
+
+        renderAccountsToRemove(accountsToDisplay);
+    }
+
+
+    // New function to render accounts for Accounts Management list
+    function renderAccountsToRemove(accountsToRender) {
+        accountsManagementList.innerHTML = ''; // Clear existing list
+        if (accountsToRender.length === 0) {
+            accountsManagementList.innerHTML = '<p class="text-gray-500 text-center">No accounts to display for this view.</p>';
+            return;
+        }
+        accountsToRender.forEach(account => {
+            const timeInfo = account.timestamp ? formatTimeDifference(account.timestamp) : { text: 'N/A', color: 'text-gray-500' };
+            const div = document.createElement('div');
+            div.className = 'account-list-item';
+            div.innerHTML = `
+                <a href="https://www.instagram.com/${account.username}/" target="_blank" rel="noopener noreferrer" class="font-medium text-blue-400 hover:underline">
+                    ${account.username}
+                </a>
+                <span class="time-col ${timeInfo.color}">${timeInfo.text}</span>
+                <div class="flex space-x-2 ml-4">
+                    ${currentAccountsViewMode === 'toRemove' ? `
+                        <button data-username="${account.username}" class="btn-remove remove-account-btn">REMOVE</button>
+                        <button data-username="${account.username}" class="btn-approve approve-account-btn">APPROVE</button>
+                    ` : ''}
+                </div>
+            `;
+            accountsManagementList.appendChild(div);
+        });
+
+        // Add event listeners for new buttons
+        if (currentAccountsViewMode === 'toRemove') {
+            document.querySelectorAll('.remove-account-btn').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const username = e.currentTarget.dataset.username;
+                    handleRemoveAccount(username);
+                });
+            });
+            document.querySelectorAll('.approve-account-btn').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    const username = e.currentTarget.dataset.username;
+                    handleApproveAccount(username);
+                });
+            });
+        }
+    }
+
+    async function handleRemoveAccount(username) {
+        // Remove from accountsToRemoveList
+        accountsToRemoveList = accountsToRemoveList.filter(account => account.username !== username);
+        // Add to removedAccountsList
+        if (!removedAccountsList.includes(username)) {
+            removedAccountsList.push(username);
+            removedAccountsList.sort(); // Keep sorted
+        }
+
+        // Update Firestore
+        await saveAccountsManagementState();
+        
+        // Re-render and update metrics
+        applyAccountsManagementFiltersAndRender();
+        updateAccountsManagementMetrics();
+        showAlert(`Account ${username} removed! Opening Instagram profile...`, 'info');
+        window.open(`https://www.instagram.com/${username}/`, '_blank');
+    }
+
+    async function handleApproveAccount(username) {
+        // Remove from accountsToRemoveList
+        accountsToRemoveList = accountsToRemoveList.filter(account => account.username !== username);
+        // Add to approvedAccountsList
+        if (!approvedAccountsList.includes(username)) {
+            approvedAccountsList.push(username);
+            approvedAccountsList.sort(); // Keep sorted
+        }
+
+        // Update Firestore
+        await saveAccountsManagementState();
+
+        // Re-render and update metrics
+        applyAccountsManagementFiltersAndRender();
+        updateAccountsManagementMetrics();
+        showAlert(`Account ${username} approved!`, 'success');
+    }
+
+    async function saveAccountsManagementState() {
+        if (currentUserId && authInstance.currentUser && dbInstance && currentFileData) {
+            try {
+                const userDocRef = doc(dbInstance, `artifacts/${appId}/users/${currentUserId}/userUploads`, currentFileData.id);
+                // Update only the relevant arrays
+                await setDoc(userDocRef, { 
+                    approvedAccounts: approvedAccountsList,
+                    removedAccounts: removedAccountsList,
+                    // allMessageUsernames is already saved with the upload
+                }, { merge: true }); // Use merge: true to only update these fields
+                console.log('Accounts management state saved to Firestore for current upload.');
+            } catch (error) {
+                console.error('Error saving accounts management state to Firestore:', error);
+                showAlert('Failed to save accounts management state to storage.', 'error');
+            }
+        } else {
+            console.warn('Cannot save accounts management state: User not authenticated or currentFileData not available.');
+        }
+    }
+
 
     // New function to open users by color category
     function openUsersByColor(colorCategory) {
@@ -1934,7 +2746,16 @@
                         showAlert('Please log in to access the analytics.', 'info');
                         openAuthModal();
                     }
-                } else if (targetId === '#upload') {
+                } else if (targetId === '#accounts-section') { // New accounts section navigation
+                    if (authInstance.currentUser) {
+                        await loadLatestData(); // Ensure latest data is loaded
+                        showAccountsManagement();
+                    } else {
+                        showAlert('Please log in to access account management.', 'info');
+                        openAuthModal();
+                    }
+                }
+                else if (targetId === '#upload') {
                     showUploadSection(currentFileData !== null && currentFileData.fileName, currentFileData ? currentFileData.fileName : '', currentFileData ? currentFileData.fileSize : '');
                 }
                 else {
@@ -1965,7 +2786,12 @@
     // Event listener for Accounts link
     const accountsLinkClickHandler = (e) => {
         e.preventDefault();
-        showAlert('Account management features are coming soon!', 'info');
+        if (authInstance.currentUser) {
+            showAccountsManagement();
+        } else {
+            showAlert('Please log in to access account management.', 'info');
+            openAuthModal();
+        }
     };
 
     // Event listener for Settings link
@@ -2015,6 +2841,7 @@
         featuresSection = document.getElementById('features');
         pricingSection = document.getElementById('pricing');
         analyticsSection = document.getElementById('analytics-section');
+        accountsSection = document.getElementById('accounts-section'); // Assign new accounts section
         dashboardNavLink = document.getElementById('dashboard-nav-link');
         dashboardNavLinkMobile = document.getElementById('dashboard-nav-link-mobile');
         nonFollowersList = document.getElementById('non-followers-list');
@@ -2043,6 +2870,43 @@
         dashboardLinkSidebarAnalytics = document.getElementById('dashboard-link-sidebar-analytics');
         accountsLinkAnalytics = document.getElementById('accounts-link-sidebar-analytics');
         settingsLinkAnalytics = document.getElementById('settings-link-sidebar-analytics');
+
+        // New Accounts Management elements assignment
+        dashboardLinkSidebarAccounts = document.getElementById('dashboard-link-sidebar-accounts');
+        analyticsLinkSidebarAccounts = document.getElementById('analytics-link-sidebar-accounts');
+        accountsLinkSidebarAccounts = document.getElementById('accounts-link-sidebar-accounts');
+        settingsLinkSidebarAccounts = document.getElementById('settings-link-sidebar-accounts');
+        dataUploadSelectorAccounts = document.getElementById('data-upload-selector-accounts');
+        uploadNewDataBtnAccounts = document.getElementById('upload-new-data-btn-accounts');
+        accountsToRemoveCard = document.getElementById('accounts-to-remove-card');
+        accountsToRemoveCount = document.getElementById('accounts-to-remove-count');
+        totalAccountsRemovedCard = document.getElementById('total-accounts-removed-card');
+        totalAccountsRemovedCount = document.getElementById('total-accounts-removed-count');
+        approvedAccountsCard = document.getElementById('approved-accounts-card');
+        approvedAccountsCount = document.getElementById('approved-accounts-count');
+        oldestAccountToRemoveAge = document.getElementById('oldest-account-to-remove-age');
+        accountsListTitle = document.getElementById('accounts-list-title');
+        accountsSearchInput = document.getElementById('accounts-search-input');
+        accountsSortSelect = document.getElementById('accounts-sort-select');
+        accountsManagementList = document.getElementById('accounts-management-list');
+
+        // New Banned Users elements assignment
+        bannedUsersBtn = document.getElementById('banned-users-btn');
+        bannedUsersModal = document.getElementById('banned-users-modal');
+        closeBannedUsersModal = document.getElementById('close-banned-users-modal');
+        bannedUserInput = document.getElementById('banned-user-input');
+        bannedUserSuggestionsDatalist = document.getElementById('banned-user-suggestions');
+        addBannedUserBtn = document.getElementById('add-banned-user-btn');
+        bulkBannedUserInput = document.getElementById('bulk-banned-user-input');
+        addBulkBannedUserBtn = document.getElementById('add-bulk-banned-user-btn');
+        bannedUsersListElem = document.getElementById('banned-users-list');
+        bannedUsersFileInput = document.getElementById('banned-users-file-input');
+        bannedUsersTextInput = document.getElementById('banned-users-text-input');
+        checkBannedUsersBtn = document.getElementById('check-banned-users-btn');
+        bannedUsersMatchesDisplay = document.getElementById('banned-users-matches-display');
+        matchesCountText = document.getElementById('matches-count-text');
+        matchesList = document.getElementById('matches-list');
+
 
         safeUsersBtn = document.getElementById('safe-users-btn');
         safeUsersModal = document.getElementById('safe-users-modal');
@@ -2159,16 +3023,28 @@
         timeFilterSelect.addEventListener('change', applyFiltersAndRenderAccounts);
         sortSelect.addEventListener('change', applyFiltersAndRenderAccounts);
 
+        // Event listeners for Accounts Management filters/search/sort
+        accountsSearchInput.addEventListener('input', applyAccountsManagementFiltersAndRender);
+        accountsSortSelect.addEventListener('change', applyAccountsManagementFiltersAndRender);
+
         // Data upload selectors
         dataUploadSelectorDashboard.addEventListener('change', async (e) => {
             await loadDataForUpload(e.target.value);
-            // Keep the other selector in sync
+            // Keep other selectors in sync
             dataUploadSelectorAnalytics.value = e.target.value;
+            dataUploadSelectorAccounts.value = e.target.value;
         });
         dataUploadSelectorAnalytics.addEventListener('change', async (e) => {
             await loadDataForUpload(e.target.value);
-            // Keep the other selector in sync
+            // Keep other selectors in sync
             dataUploadSelectorDashboard.value = e.target.value;
+            dataUploadSelectorAccounts.value = e.target.value;
+        });
+        dataUploadSelectorAccounts.addEventListener('change', async (e) => {
+            await loadDataForUpload(e.target.value);
+            // Keep other selectors in sync
+            dataUploadSelectorDashboard.value = e.target.value;
+            dataUploadSelectorAnalytics.value = e.target.value;
         });
 
 
@@ -2176,7 +3052,7 @@
         mobileMenuButton.addEventListener('click', mobileMenuButtonClickHandler);
         closeMobileMenu.addEventListener('click', closeMobileMenuClickHandler);
 
-        // Event listener for Analytics link (top nav and sidebar)
+        // Event listener for Dashboard link (top nav and sidebar)
         document.getElementById('dashboard-nav-link').addEventListener('click', navLinkClickHandler);
         document.getElementById('dashboard-nav-link-mobile').addEventListener('click', navLinkClickHandler);
         document.getElementById('dashboard-link').addEventListener('click', sidebarHomeLinkClickHandler); // Sidebar "Home" now goes to landing page
@@ -2184,15 +3060,21 @@
         // Analytics links
         document.getElementById('analytics-link-sidebar-dashboard').addEventListener('click', analyticsLinkClickHandler);
         document.getElementById('analytics-link-sidebar-analytics').addEventListener('click', analyticsLinkClickHandler);
-
+        document.getElementById('analytics-link-sidebar-accounts').addEventListener('click', analyticsLinkClickHandler); // New sidebar link
 
         // Accounts links
         accountsLinkDashboard.addEventListener('click', accountsLinkClickHandler);
         accountsLinkAnalytics.addEventListener('click', accountsLinkClickHandler);
+        accountsLinkSidebarAccounts.addEventListener('click', accountsLinkClickHandler); // New sidebar link
 
         // Settings links
         settingsLinkDashboard.addEventListener('click', settingsLinkClickHandler);
         settingsLinkAnalytics.addEventListener('click', settingsLinkClickHandler);
+        settingsLinkSidebarAccounts.addEventListener('click', settingsLinkClickHandler); // New sidebar link
+
+        // Sidebar Home link for Accounts section
+        dashboardLinkSidebarAccounts.addEventListener('click', sidebarHomeLinkClickHandler);
+
 
         // Event listeners for Safe Users modal
         safeUsersBtn.addEventListener('click', openSafeUsersModal);
@@ -2206,16 +3088,38 @@
         addSafeUserBtn.addEventListener('click', addSafeUserButtonClickHandler);
         addBulkSafeUserBtn.addEventListener('click', addBulkSafeUserButtonClickHandler);
 
+        // Event listeners for Banned Users modal (NEW)
+        bannedUsersBtn.addEventListener('click', openBannedUsersModal);
+        closeBannedUsersModal.addEventListener('click', closeBannedUsersModalFunc);
+        bannedUserInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter') {
+                addBannedUserBtn.click();
+            }
+        });
+        bannedUserInput.addEventListener('input', bannedUserInputHandler); // Add listener for suggestions
+        addBannedUserBtn.addEventListener('click', addBannedUserButtonClickHandler);
+        addBulkBannedUserBtn.addEventListener('click', addBulkBannedUserButtonClickHandler);
+        bannedUsersFileInput.addEventListener('change', handleCheckBannedUsers); // Auto-check on file upload
+        checkBannedUsersBtn.addEventListener('click', handleCheckBannedUsers); // Manual check button
+
         // Handle "Upload New Data" button click in dashboard (opens modal)
         uploadNewDataBtn.addEventListener('click', openUploadDataModal);
+        uploadNewDataBtnAccounts.addEventListener('click', openUploadDataModal); // New button for accounts section
 
         // Add event listeners for new "Open Users by Color" buttons
         openGreenUsersBtn.addEventListener('click', () => openUsersByColor('green'));
         openOrangeUsersBtn.addEventListener('click', () => openUsersByColor('orange'));
         openRedUsersBtn.addEventListener('click', () => openUsersByColor('red'));
 
+        // Event listeners for Accounts Management stat cards to filter the list
+        accountsToRemoveCard.addEventListener('click', () => showAccountsManagement('toRemove'));
+        totalAccountsRemovedCard.addEventListener('click', () => showAccountsManagement('removed'));
+        approvedAccountsCard.addEventListener('click', () => showAccountsManagement('approved'));
+
+
         // Initial render of accounts (will show "No data" message)
         renderAccounts([]);
+        renderAccountsToRemove([]); // Initial render for accounts management list
     };
 
   </script>
