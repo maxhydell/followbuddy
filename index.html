@@ -71,7 +71,8 @@
     }
     /* Adjusted for Safe Users modal */
     #safe-users-modal .modal-content,
-    #banned-users-add-modal .modal-content { /* Apply to banned users add modal too */
+    #banned-users-add-modal .modal-content,
+    #add-account-modal .modal-content { /* Apply to banned users add modal and new add account modal too */
         max-width: 600px; /* Wider for bulk input */
     }
     /* Modal content themes */
@@ -385,6 +386,10 @@
       <a href="#banned-users-page-section" id="banned-users-nav-link" class="text-gray-300 hover:text-blue-400 transition-colors duration-200 flex items-center">
         <i class="fas fa-ban mr-2"></i><span>Banned Users</span>
       </a>
+      <!-- New Add Account Link -->
+      <a href="#" id="add-account-nav-link" class="text-gray-300 hover:text-blue-400 transition-colors duration-200 flex items-center">
+        <i class="fas fa-user-plus mr-2"></i><span>Add Account</span>
+      </a>
     </nav>
     <div class="flex items-center space-x-4">
       <button id="login-btn-nav" class="hidden md:block text-blue-400 hover:text-blue-200 transition-colors duration-200 font-medium">Account</button>
@@ -409,6 +414,10 @@
     <!-- New Banned Users Page Link in Mobile Menu -->
     <a href="#banned-users-page-section" id="banned-users-nav-link-mobile" class="text-gray-100 text-2xl hover:text-blue-400 transition-colors duration-200 flex items-center">
       <i class="fas fa-ban mr-2"></i><span>Banned Users</span>
+    </a>
+    <!-- New Add Account Link in Mobile Menu -->
+    <a href="#" id="add-account-nav-link-mobile" class="text-gray-100 text-2xl hover:text-blue-400 transition-colors duration-200 flex items-center">
+      <i class="fas fa-user-plus mr-2"></i><span>Add Account</span>
     </a>
     <button id="login-btn-mobile" class="text-blue-400 text-2xl hover:text-blue-200 transition-colors duration-200 font-medium">Account</button>
     <button id="logout-btn-mobile" class="bg-red-600 text-white px-6 py-3 rounded-lg shadow hover:bg-red-700 transition-colors duration-200 font-medium text-2xl">Logout</button>
@@ -853,9 +862,9 @@
 
         <div class="bg-gray-800 p-6 rounded-xl shadow-lg">
           <h4 class="text-xl font-bold mb-3 text-gray-100">Check for Banned Users</h4>
-          <p class="text-gray-300 mb-4">Upload a .txt file or paste Instagram links/usernames to check against your *permanently* banned list.</p>
+          <p class="text-gray-300 mb-4">Upload a .txt or .html file or paste Instagram links/usernames to check against your *permanently* banned list.</p>
           <div class="flex flex-col gap-3 mb-4">
-            <input type="file" id="banned-users-file-input" accept=".txt" class="w-full text-gray-300 bg-gray-700 border border-gray-600 rounded-lg p-2 cursor-pointer" />
+            <input type="file" id="banned-users-file-input" accept=".txt, .html" class="w-full text-gray-300 bg-gray-700 border border-gray-600 rounded-lg p-2 cursor-pointer" />
             <textarea id="banned-users-text-input" placeholder="Paste Instagram username links or usernames (one per line, or comma-separated)" rows="4" class="w-full border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-700 text-gray-100 resize-y"></textarea>
             <button id="check-banned-users-btn" class="bg-blue-600 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-700 transition-colors duration-200">
                 <i class="fas fa-search mr-2"></i>Check
@@ -983,6 +992,25 @@
   </div>
   <!-- End New Banned Users Add Modal -->
 
+  <!-- New Add Account Modal -->
+  <div id="add-account-modal" class="modal">
+    <div class="modal-content">
+      <span class="close-button" id="close-add-account-modal">&times;</span>
+      <h3 class="text-2xl font-bold mb-4 text-gray-100">Add Account(s) I Follow</h3>
+      <p class="text-gray-300 mb-4">Manually add Instagram usernames or links to your "Following" list.</p>
+      <div class="flex flex-col gap-3 mb-4">
+        <input type="text" id="single-add-account-input" placeholder="Enter single username or link" class="w-full border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-700 text-gray-100" />
+        <button id="add-single-account-btn" class="bg-blue-600 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-700 transition-colors duration-200">Add Single Account</button>
+        <textarea id="bulk-add-account-input" placeholder="Enter multiple usernames or links, separated by commas or new lines" rows="4" class="w-full border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-700 text-gray-100 resize-y"></textarea>
+        <button id="add-bulk-accounts-btn" class="bg-purple-600 text-white px-4 py-2 rounded-lg shadow hover:bg-purple-700 transition-colors duration-200">Add All Accounts</button>
+      </div>
+      <div id="added-accounts-preview" class="max-h-48 overflow-y-auto border border-gray-600 rounded-lg p-2 bg-gray-700">
+        <p class="text-gray-500 text-center">Accounts added will appear here.</p>
+      </div>
+    </div>
+  </div>
+  <!-- End New Add Account Modal -->
+
 
   <div id="upload-data-modal" class="modal">
     <div class="modal-content">
@@ -1047,6 +1075,9 @@
     let allMessageUsernames = []; // All unique usernames found in message files with their latest timestamp
 
     let currentAccountsViewMode = 'toRemove'; // 'toRemove', 'approved', 'removed'
+
+    // New global variable for manually added following accounts
+    let manuallyAddedFollowing = [];
 
     const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
 
@@ -1237,6 +1268,18 @@
     let openOrangeUsersBtn;
     let openRedUsersBtn;
 
+    // New Add Account elements
+    let addAccountNavLink;
+    let addAccountNavLinkMobile;
+    let addAccountModal;
+    let closeAddAccountModal;
+    let singleAddAccountInput;
+    let addSingleAccountBtn;
+    let bulkAddAccountInput;
+    let addBulkAccountsBtn;
+    let addedAccountsPreview;
+
+
     // Function to initialize Firebase
     async function initializeFirebaseApp() {
         // Hardcoded Firebase Config for Canvas environment
@@ -1302,6 +1345,7 @@
                     approvedAccountsList = [];
                     removedAccountsList = [];
                     allMessageUsernames = [];
+                    manuallyAddedFollowing = []; // Reset manually added following
                     updateDashboardMetrics(0, 0, 0, 0, 0);
                     // Reset analytics metrics and unfollowed/new followers lists
                     updateAnalyticsMetrics(0, 0, [], []); 
@@ -1375,6 +1419,7 @@
             approvedAccountsList = [];
             removedAccountsList = [];
             allMessageUsernames = [];
+            manuallyAddedFollowing = []; // Reset manually added following
             updateDashboardMetrics(0, 0, 0, 0, 0);
             updateAnalyticsMetrics(0, 0, [], []); // Reset analytics metrics and lists
             updateAccountsManagementMetrics(); // Reset accounts management metrics
@@ -1394,6 +1439,9 @@
                 originalNotFollowingBack = currentFileData.originalNotFollowingBack || [];
                 safeUsers = currentFileData.safeUsers || []; // Ensure safeUsers is loaded
                 bannedUsers = currentFileData.bannedUsers || []; // New: Load banned users
+                manuallyAddedFollowing = currentFileData.manuallyAddedFollowing || []; // Load manually added following
+                
+                // Filter notFollowingBack based on current safeUsers
                 allNonFollowers = originalNotFollowingBack.filter(account => !safeUsers.includes(account.username));
 
                 // Load Accounts Management data
@@ -1442,7 +1490,7 @@
                 }
                 console.log(`Analytics for upload ${uploadId}: Unfollowed: ${unfollowedYou}, New Followers: ${newFollowers}`);
                 updateDashboardMetrics(
-                    currentFileData.totalFollowing,
+                    currentFileData.totalFollowing + manuallyAddedFollowing.length, // Include manually added for total following
                     currentFileData.totalFollowers,
                     allNonFollowers.length,
                     originalNotFollowingBack.length,
@@ -1466,6 +1514,7 @@
                 approvedAccountsList = [];
                 removedAccountsList = [];
                 allMessageUsernames = [];
+                manuallyAddedFollowing = []; // Reset manually added following
                 updateDashboardMetrics(0, 0, 0, 0, 0);
                 updateAnalyticsMetrics(0, 0, [], []);
                 updateAccountsManagementMetrics();
@@ -1499,6 +1548,7 @@
             approvedAccountsList = [];
             removedAccountsList = [];
             allMessageUsernames = [];
+            manuallyAddedFollowing = []; // Reset manually added following
             updateDashboardMetrics(0, 0, 0, 0, 0);
             updateAnalyticsMetrics(0, 0, [], []);
             updateAccountsManagementMetrics();
@@ -1722,7 +1772,7 @@
             // Recalculate allNonFollowers based on current safeUsers
             allNonFollowers = originalNotFollowingBack.filter(account => !safeUsers.includes(account.username)); // Filter by username
             updateDashboardMetrics(
-                currentFileData.totalFollowing,
+                currentFileData.totalFollowing + manuallyAddedFollowing.length, // Include manually added for total following
                 currentFileData.totalFollowers,
                 allNonFollowers.length, // Filtered count
                 originalNotFollowingBack.length, // Total count
@@ -1768,16 +1818,16 @@
                 const olderData = olderDocSnap.data();
 
                 const currentFollowersSet = new Set(currentData.followersList);
-                const olderFollowersSet = new Set(olderData.followersList);
+                const previousFollowersSet = new Set(olderData.followersList);
 
                 // Calculate unfollowed (lost followers) from older to current
-                const unfollowedCount = Array.from(olderFollowersSet).filter(
+                const unfollowedCount = Array.from(previousFollowersSet).filter(
                     follower => !currentFollowersSet.has(follower)
                 ).length;
 
                 // Calculate new followers (gained followers) from older to current
                 const newFollowersCount = Array.from(currentFollowersSet).filter(
-                    follower => !olderFollowersSet.has(follower)
+                    follower => !previousFollowersSet.has(follower)
                 ).length;
 
                 const totalChange = unfollowedCount + newFollowersCount;
@@ -1910,6 +1960,7 @@
         approvedAccountsList = [];
         removedAccountsList = [];
         allMessageUsernames = [];
+        manuallyAddedFollowing = []; // Clear manually added following
         updateDashboardMetrics(0, 0, 0, 0, 0);
         updateAnalyticsMetrics(0, 0, [], []); // Reset analytics metrics
         updateAccountsManagementMetrics(); // Reset accounts management metrics
@@ -1953,7 +2004,7 @@
             // Ensure allNonFollowers is updated based on current safeUsers
             allNonFollowers = originalNotFollowingBack.filter(account => !safeUsers.includes(account.username)); // Filter by username
             updateDashboardMetrics(
-                currentFileData.totalFollowing,
+                currentFileData.totalFollowing + manuallyAddedFollowing.length, // Include manually added for total following
                 currentFileData.totalFollowers,
                 allNonFollowers.length, // Filtered count
                 originalNotFollowingBack.length, // Total count
@@ -1995,6 +2046,7 @@
         approvedAccountsList = [];
         removedAccountsList = [];
         allMessageUsernames = [];
+        manuallyAddedFollowing = []; // Clear manually added following
         updateDashboardMetrics(0, 0, 0, 0, 0); // Reset dashboard metrics
         updateAnalyticsMetrics(0, 0, [], []); // Reset analytics metrics
         updateAccountsManagementMetrics(); // Reset accounts management metrics
@@ -2027,6 +2079,7 @@
 
       let followingData;
       let followersData;
+      let recentlyUnfollowedData; // New variable for recently unfollowed
       let messageParsingPromises = [];
       let tempMessageUsernamesMap = new Map(); // username -> latest timestamp
 
@@ -2036,9 +2089,11 @@
 
             const followingPath = 'connections/followers_and_following/following.json';
             const followersPath = 'connections/followers_and_following/followers_1.json';
+            const recentlyUnfollowedPath = 'connections/followers_and_following/recently_unfollowed_profiles.json'; // New path
 
             const followingFile = zip.file(followingPath);
             const followersFile = zip.file(followersPath);
+            const recentlyUnfollowedFile = zip.file(recentlyUnfollowedPath); // New file
 
             if (!followingFile || !followersFile) {
                 showAlert(`Required JSON files not found in ZIP. Please ensure '${followingPath}' and '${followersPath}' exist.`, 'error');
@@ -2048,14 +2103,67 @@
             followingData = JSON.parse(await followingFile.async('text'));
             followersData = JSON.parse(await followersFile.async('text'));
 
+            if (recentlyUnfollowedFile) { // Check if the file exists in the zip
+                recentlyUnfollowedData = JSON.parse(await recentlyUnfollowedFile.async('text'));
+                // Check if recentlyUnfollowedData has the expected structure before iterating
+                if (recentlyUnfollowedData && Array.isArray(recentlyUnfollowedData.relationships_unfollowed_users)) {
+                    recentlyUnfollowedData.relationships_unfollowed_users.forEach(item => {
+                        if (item.string_list_data && item.string_list_data.length > 0) {
+                            const username = item.string_list_data[0].value;
+                            if (!bannedUsers.includes(username)) {
+                                bannedUsers.push(username);
+                            }
+                        }
+                    });
+                    bannedUsers.sort(); // Keep sorted
+                    console.log("Banned users updated from recently unfollowed:", bannedUsers);
+                } else {
+                    console.warn("recently_unfollowed_profiles.json found but did not contain 'relationships_unfollowed_users' array or was not an object.");
+                }
+            }
+
             // Message file parsing for ZIPs
             zip.forEach((relativePath, zipEntry) => {
-                if (relativePath.startsWith('messages/inbox/') && relativePath.endsWith('.json') && relativePath.includes('message_')) {
+                // Check for .json or .html message files
+                if (relativePath.startsWith('your_instagram_activity/messages/inbox/') && 
+                    (relativePath.endsWith('.json') || relativePath.endsWith('.html')) && 
+                    relativePath.includes('message_')) {
                     messageParsingPromises.push(
                         zipEntry.async('text').then(messageContent => {
                             try {
-                                const messageData = JSON.parse(messageContent);
-                                processMessageData(messageData, tempMessageUsernamesMap);
+                                if (relativePath.endsWith('.json')) {
+                                    const messageData = JSON.parse(messageContent);
+                                    processMessageData(messageData, tempMessageUsernamesMap);
+                                } else { // .html
+                                    const parser = new DOMParser();
+                                    const doc = parser.parseFromString(messageContent, 'text/html');
+                                    // Look for JSON within <pre> or <script> tags in HTML message files
+                                    const preElements = doc.querySelectorAll('pre');
+                                    let foundMessageData = false;
+                                    for (const pre of preElements) {
+                                        try {
+                                            const jsonData = JSON.parse(pre.textContent);
+                                            if (jsonData.messages && Array.isArray(jsonData.messages)) {
+                                                processMessageData(jsonData, tempMessageUsernamesMap);
+                                                foundMessageData = true;
+                                                break;
+                                            }
+                                        } catch (e) { /* not JSON or not message data */ }
+                                    }
+                                    if (!foundMessageData) {
+                                        const scriptElements = doc.querySelectorAll('script[type="application/json"]');
+                                        for (const script of scriptElements) {
+                                            try {
+                                                const jsonData = JSON.parse(script.textContent);
+                                                if (jsonData.messages && Array.isArray(jsonData.messages)) {
+                                                    processMessageData(jsonData, tempMessageUsernamesMap);
+                                                    foundMessageData = true;
+                                                    break;
+                                                }
+                                            } catch (e) { /* not JSON or not message data */ }
+                                        }
+                                    }
+                                }
                             } catch (parseError) {
                                 console.warn(`Could not parse message file ${relativePath}:`, parseError);
                             }
@@ -2075,6 +2183,8 @@
             const preElements = doc.querySelectorAll('pre');
             let foundFollowing = false;
             let foundFollowers = false;
+            let foundRecentlyUnfollowed = false;
+            let foundMessageContent = false;
 
             for (const pre of preElements) {
                 try {
@@ -2082,21 +2192,41 @@
                     if (jsonData.relationships_following) {
                         followingData = jsonData;
                         foundFollowing = true;
-                    } else if (Array.isArray(jsonData) && jsonData.every(item => item.string_list_data)) {
-                        followersData = jsonData;
-                        foundFollowers = true;
+                    } else if (jsonData.relationships_unfollowed_users && Array.isArray(jsonData.relationships_unfollowed_users)) {
+                        // This is the recently_unfollowed_profiles.json structure
+                        recentlyUnfollowedData = jsonData;
+                        foundRecentlyUnfollowed = true;
+                        recentlyUnfollowedData.relationships_unfollowed_users.forEach(item => {
+                            if (item.string_list_data && item.string_list_data.length > 0) {
+                                const username = item.string_list_data[0].value;
+                                if (!bannedUsers.includes(username)) {
+                                    bannedUsers.push(username);
+                                }
+                            }
+                        });
+                        bannedUsers.sort();
+                        console.log("Banned users updated from HTML recently unfollowed:", bannedUsers);
+                    }
+                    else if (Array.isArray(jsonData) && jsonData.every(item => item.string_list_data)) {
+                        // This could be followers_1.json. We need a heuristic to distinguish.
+                        // Assume it's followers if not already found and doesn't match unfollowed structure.
+                        if (!foundFollowers && !jsonData.some(item => item.title === "Recently Unfollowed")) { // Simple check to distinguish
+                            followersData = jsonData;
+                            foundFollowers = true;
+                        }
                     } else if (jsonData.messages && Array.isArray(jsonData.messages)) {
                         // This might be a message HTML file
                         processMessageData(jsonData, tempMessageUsernamesMap);
+                        foundMessageContent = true;
                     }
                 } catch (e) {
                     // Not valid JSON in this pre tag, or not the data we're looking for
-                    console.warn("Could not parse JSON from a pre tag or it's not following/followers data:", e);
+                    console.warn("Could not parse JSON from a pre tag or it's not expected data:", e);
                 }
             }
 
             // Fallback: Try to find JSON in script tags (less common for Instagram, but good to have)
-            if (!foundFollowing || !foundFollowers) {
+            if (!foundFollowing || !foundFollowers || !foundRecentlyUnfollowed || !foundMessageContent) {
                 const scriptElements = doc.querySelectorAll('script[type="application/json"]');
                 for (const script of scriptElements) {
                     try {
@@ -2104,11 +2234,27 @@
                         if (jsonData.relationships_following) {
                             followingData = jsonData;
                             foundFollowing = true;
+                        } else if (jsonData.relationships_unfollowed_users && Array.isArray(jsonData.relationships_unfollowed_users)) {
+                            recentlyUnfollowedData = jsonData;
+                            foundRecentlyUnfollowed = true;
+                            recentlyUnfollowedData.relationships_unfollowed_users.forEach(item => {
+                                if (item.string_list_data && item.string_list_data.length > 0) {
+                                    const username = item.string_list_data[0].value;
+                                    if (!bannedUsers.includes(username)) {
+                                        bannedUsers.push(username);
+                                    }
+                                }
+                            });
+                            bannedUsers.sort();
+                            console.log("Banned users updated from HTML script recently unfollowed:", bannedUsers);
                         } else if (Array.isArray(jsonData) && jsonData.every(item => item.string_list_data)) {
-                            followersData = jsonData;
-                            foundFollowers = true;
+                            if (!foundFollowers && !jsonData.some(item => item.title === "Recently Unfollowed")) {
+                                followersData = jsonData;
+                                foundFollowers = true;
+                            }
                         } else if (jsonData.messages && Array.isArray(jsonData.messages)) {
                             processMessageData(jsonData, tempMessageUsernamesMap);
+                            foundMessageContent = true;
                         }
                     } catch (e) {
                         console.warn("Could not parse JSON from a script tag:", e);
@@ -2136,6 +2282,16 @@
                 followingUsernames.add(username);
             }
         });
+
+        // Add manually added following accounts
+        manuallyAddedFollowing.forEach(username => {
+            if (!followingUsernames.has(username)) {
+                followingUsernames.add(username);
+                // For manually added, use current timestamp or a placeholder
+                followingMap.set(username, Math.floor(Date.now() / 1000)); 
+            }
+        });
+
 
         const followersUsernames = new Set();
         followersData.forEach(item => {
@@ -2172,7 +2328,8 @@
         // If currentFileData exists, use its approved/removed/banned lists. Otherwise, start fresh.
         const currentApproved = currentFileData ? currentFileData.approvedAccounts || [] : [];
         const currentRemoved = currentFileData ? currentFileData.removedAccounts || [] : [];
-        const currentBanned = currentFileData ? currentFileData.bannedUsers || [] : []; // New: Load existing banned users
+        // Banned users are already updated from recently_unfollowed_profiles.json/html and existing state
+        const currentBanned = bannedUsers; 
 
         // Filter accountsToRemoveList based on loaded approved/removed lists
         accountsToRemoveList = allMessageUsernames.filter(account =>
@@ -2199,7 +2356,8 @@
             bannedUsers: currentBanned, // New: Save current banned users
             allMessageUsernames: allMessageUsernames, // Save all extracted message usernames
             approvedAccounts: currentApproved, // Save current approved accounts
-            removedAccounts: currentRemoved // Save current removed accounts
+            removedAccounts: currentRemoved, // Save current removed accounts
+            manuallyAddedFollowing: manuallyAddedFollowing // Save manually added following
         };
 
         // Save data to Firestore
@@ -2218,9 +2376,10 @@
             approvedAccountsList = currentApproved;
             removedAccountsList = currentRemoved;
             bannedUsers = currentBanned; // New: Update global banned users for unauthenticated users
+            manuallyAddedFollowing = manuallyAddedFollowing; // Update global manually added following
             
             updateDashboardMetrics(
-                currentFileData.totalFollowing,
+                currentFileData.totalFollowing + manuallyAddedFollowing.length, // Include manually added for total following
                 currentFileData.totalFollowers,
                 allNonFollowers.length,
                 originalNotFollowingBack.length,
@@ -2421,8 +2580,8 @@
         }
     };
 
-    const addBulkSafeUserButtonClickHandler = async () => {
-        const text = bulkSafeUserInput.value.trim();
+    const addBulkBannedUserButtonClickHandler = async () => {
+        const text = bulkBannedUserInput.value.trim();
         if (!text) {
             showAlert('Please enter usernames in the bulk input area.', 'info');
             return;
@@ -2433,7 +2592,7 @@
         const alreadyInList = [];
 
         for (const username of usernames) {
-            const added = await addSafeUser(username);
+            const added = await addBannedUser(username);
             if (added) {
                 anyAdded = true;
             } else {
@@ -2442,12 +2601,12 @@
         }
 
         if (anyAdded) {
-            bulkSafeUserInput.value = ''; // Clear bulk input on success
-            await processAndSaveSafeUsers(true);
-            showAlert('Safe users added!', 'success'); // Green success popup
-            closeSafeUsersModalFunc(); // Close modal after bulk add
+            bulkBannedUserInput.value = '';
+            await processAndSaveBannedUsers(true);
+            showAlert('Banned users added!', 'success');
+            closeBannedUsersAddModalFunc(); // Close modal after bulk add
         } else if (alreadyInList.length > 0) {
-            showAlert(`All entered users are already in the safe list: ${alreadyInList.join(', ')}`, 'info');
+            showAlert(`All entered users are already in the banned list: ${alreadyInList.join(', ')}`, 'info');
         } else {
             showAlert('No valid users were entered.', 'info');
         }
@@ -2578,7 +2737,7 @@
         }
     };
 
-    const addBulkBannedUserButtonClickHandler = async () => {
+    const addBulkBannedUserButtonClickHandlerForBanned = async () => { // Renamed to avoid conflict
         const text = bulkBannedUserInput.value.trim();
         if (!text) {
             showAlert('Please enter usernames in the bulk input area.', 'info');
@@ -2639,13 +2798,50 @@
         // Handle file input
         if (bannedUsersFileInput.files.length > 0) {
             const file = bannedUsersFileInput.files[0];
-            if (file.type !== 'text/plain' && !file.name.endsWith('.txt')) {
-                showAlert('Invalid file type. Please upload a .txt file.', 'error');
+            const fileExtension = file.name.split('.').pop().toLowerCase();
+
+            if (!['txt', 'html'].includes(fileExtension)) {
+                showAlert('Invalid file type. Please upload a .txt or .html file.', 'error');
                 return;
             }
+
             try {
                 const fileContent = await file.text();
-                inputUsernames = parseUsernamesFromText(fileContent);
+                if (fileExtension === 'html') {
+                    const parser = new DOMParser();
+                    const doc = parser.parseFromString(fileContent, 'text/html');
+                    const preElements = doc.querySelectorAll('pre');
+                    let foundData = false;
+                    for (const pre of preElements) {
+                        try {
+                            const jsonData = JSON.parse(pre.textContent);
+                            if (Array.isArray(jsonData) && jsonData.every(item => item.string_list_data)) {
+                                inputUsernames = inputUsernames.concat(jsonData.map(item => item.string_list_data[0].value));
+                                foundData = true;
+                                break;
+                            }
+                        } catch (e) { /* not JSON or not the right structure */ }
+                    }
+                    if (!foundData) {
+                        const scriptElements = doc.querySelectorAll('script[type="application/json"]');
+                        for (const script of scriptElements) {
+                            try {
+                                const jsonData = JSON.parse(script.textContent);
+                                if (Array.isArray(jsonData) && jsonData.every(item => item.string_list_data)) {
+                                    inputUsernames = inputUsernames.concat(jsonData.map(item => item.string_list_data[0].value));
+                                    foundData = true;
+                                    break;
+                                }
+                            } catch (e) { /* not JSON or not the right structure */ }
+                        }
+                    }
+                    if (!foundData) {
+                        showAlert('Could not extract usernames from the HTML file. Ensure it contains Instagram data in expected JSON format within <pre> or <script> tags.', 'error');
+                        return;
+                    }
+                } else { // .txt file
+                    inputUsernames = parseUsernamesFromText(fileContent);
+                }
             } catch (error) {
                 showAlert('Error reading file: ' + error.message, 'error');
                 return;
@@ -2654,9 +2850,12 @@
             // Handle text area input
             inputUsernames = parseUsernamesFromText(bannedUsersTextInput.value);
         } else {
-            showAlert('Please upload a .txt file or enter usernames/links in the text area.', 'info');
+            showAlert('Please upload a .txt or .html file or enter usernames/links in the text area.', 'info');
             return;
         }
+
+        // Remove duplicates from inputUsernames
+        inputUsernames = Array.from(new Set(inputUsernames));
 
         if (inputUsernames.length === 0) {
             showAlert('No valid usernames or links found in the input.', 'info');
@@ -2682,7 +2881,7 @@
     }
 
     function parseUsernamesFromText(text) {
-        const instagramLinkRegex = /(?:https?:\/\/)?(?:www\.)?instagram\.com\/([a-zA-Z0-9_.]+)/g;
+        const instagramLinkRegex = /(?:https?:\/\/)?(?:www\.)?instagram\.com\/([a-zA-Z0-9_.]+)(?:\/)?/g; // Added optional trailing slash
         const atUsernameRegex = /(?<!\w)@([a-zA-Z0-9_.]+)(?!\w)/g;
         const extractedUsernames = new Set();
 
@@ -2926,6 +3125,184 @@
         showAlert(`Opening ${openedCount} ${colorCategory} users in new tabs. Please allow pop-ups.`, 'success');
     }
 
+    // New Add Account Modal Functions
+    function openAddAccountModal() {
+        addAccountModal.style.display = 'flex';
+        renderAddedAccountsPreview();
+    }
+
+    function closeAddAccountModalFunc() {
+        addAccountModal.style.display = 'none';
+        singleAddAccountInput.value = '';
+        bulkAddAccountInput.value = '';
+    }
+
+    function renderAddedAccountsPreview() {
+        addedAccountsPreview.innerHTML = '';
+        if (manuallyAddedFollowing.length === 0) {
+            addedAccountsPreview.innerHTML = '<p class="text-gray-500 text-center">Accounts added will appear here.</p>';
+            return;
+        }
+        manuallyAddedFollowing.forEach(username => {
+            const div = document.createElement('div');
+            div.className = 'flex justify-between items-center py-2 px-3 border-b border-gray-600 last:border-b-0 text-gray-200';
+            div.innerHTML = `
+                <span>${username}</span>
+                <button data-user="${username}" class="remove-added-account-btn text-red-400 hover:text-red-500 transition-colors">
+                    <i class="fas fa-times-circle"></i>
+                </button>
+            `;
+            addedAccountsPreview.appendChild(div);
+        });
+
+        document.querySelectorAll('.remove-added-account-btn').forEach(button => {
+            button.addEventListener('click', (e) => {
+                const userToRemove = e.currentTarget.dataset.user;
+                removeManuallyAddedAccount(userToRemove);
+            });
+        });
+    }
+
+    async function addManuallyAddedAccount(username) {
+        if (username && !manuallyAddedFollowing.includes(username)) {
+            manuallyAddedFollowing.push(username);
+            manuallyAddedFollowing.sort(); // Keep sorted
+            await saveManuallyAddedFollowing();
+            // Re-process data to update counts
+            if (currentFileData) {
+                // Simulate re-processing with updated manuallyAddedFollowing
+                const tempFollowingSet = new Set(currentFileData.followingList);
+                manuallyAddedFollowing.forEach(user => tempFollowingSet.add(user));
+
+                const tempCalculatedNotFollowingBack = [];
+                tempFollowingSet.forEach(user => {
+                    if (!new Set(currentFileData.followersList).has(user)) {
+                        const timestamp = currentFileData.followingList.includes(user) ? 
+                                         currentFileData.followingList.find(item => item.username === user)?.timestamp || Math.floor(Date.now() / 1000) :
+                                         Math.floor(Date.now() / 1000); // Manually added get current timestamp
+                        tempCalculatedNotFollowingBack.push({ username: user, timestamp: timestamp });
+                    }
+                });
+                originalNotFollowingBack = tempCalculatedNotFollowingBack;
+                allNonFollowers = originalNotFollowingBack.filter(account => !safeUsers.includes(account.username));
+                updateDashboardMetrics(
+                    tempFollowingSet.size, // Updated total following
+                    currentFileData.totalFollowers,
+                    allNonFollowers.length,
+                    originalNotFollowingBack.length,
+                    currentFileData.youDontFollowBackCount
+                );
+                applyFiltersAndRenderAccounts();
+            }
+            renderAddedAccountsPreview();
+            return true;
+        }
+        return false;
+    }
+
+    async function removeManuallyAddedAccount(username) {
+        manuallyAddedFollowing = manuallyAddedFollowing.filter(user => user !== username);
+        await saveManuallyAddedFollowing();
+        // Re-process data to update counts (similar to addManuallyAddedAccount)
+        if (currentFileData) {
+            const tempFollowingSet = new Set(currentFileData.followingList);
+            manuallyAddedFollowing.forEach(user => tempFollowingSet.add(user));
+
+            const tempCalculatedNotFollowingBack = [];
+            tempFollowingSet.forEach(user => {
+                if (!new Set(currentFileData.followersList).has(user)) {
+                    const timestamp = currentFileData.followingList.includes(user) ? 
+                                     currentFileData.followingList.find(item => item.username === user)?.timestamp || Math.floor(Date.now() / 1000) :
+                                     null; // No timestamp for removed manual
+                    tempCalculatedNotFollowingBack.push({ username: user, timestamp: timestamp });
+                }
+            });
+            originalNotFollowingBack = tempCalculatedNotFollowingBack;
+            allNonFollowers = originalNotFollowingBack.filter(account => !safeUsers.includes(account.username));
+            updateDashboardMetrics(
+                tempFollowingSet.size,
+                currentFileData.totalFollowers,
+                allNonFollowers.length,
+                originalNotFollowingBack.length,
+                currentFileData.youDontFollowBackCount
+            );
+            applyFiltersAndRenderAccounts();
+        }
+        renderAddedAccountsPreview();
+        showAlert(`Account ${username} removed from manually added list.`, 'info');
+    }
+
+    async function saveManuallyAddedFollowing() {
+        if (currentUserId && authInstance.currentUser && dbInstance && currentFileData) {
+            try {
+                const userDocRef = doc(dbInstance, `artifacts/${appId}/users/${currentUserId}/userUploads`, currentFileData.id);
+                await setDoc(userDocRef, { 
+                    manuallyAddedFollowing: manuallyAddedFollowing,
+                }, { merge: true });
+                console.log('Manually added following saved to Firestore.');
+            } catch (error) {
+                console.error('Error saving manually added following to Firestore:', error);
+                showAlert('Failed to save manually added accounts to storage.', 'error');
+            }
+        } else {
+            console.warn('Cannot save manually added following: User not authenticated or currentFileData not available.');
+        }
+    }
+
+    const handleAddSingleAccount = async () => {
+        const input = singleAddAccountInput.value.trim();
+        if (!input) {
+            showAlert('Please enter a username or link.', 'info');
+            return;
+        }
+        const username = parseUsernamesFromText(input)[0]; // Use existing parser
+        if (username) {
+            const added = await addManuallyAddedAccount(username);
+            if (added) {
+                singleAddAccountInput.value = '';
+                showAlert(`Account ${username} added!`, 'success');
+            } else {
+                showAlert(`Account ${username} is already in your following list or manually added list.`, 'info');
+            }
+        } else {
+            showAlert('Could not extract a valid username from the input.', 'error');
+        }
+    };
+
+    const handleAddBulkAccounts = async () => {
+        const text = bulkAddAccountInput.value.trim();
+        if (!text) {
+            showAlert('Please enter usernames or links in the bulk input area.', 'info');
+            return;
+        }
+        const usernames = parseUsernamesFromText(text);
+        if (usernames.length === 0) {
+            showAlert('No valid usernames or links found in the input.', 'info');
+            return;
+        }
+
+        let anyAdded = false;
+        const alreadyInList = [];
+        for (const username of usernames) {
+            const added = await addManuallyAddedAccount(username);
+            if (added) {
+                anyAdded = true;
+            } else {
+                alreadyInList.push(username);
+            }
+        }
+
+        if (anyAdded) {
+            bulkAddAccountInput.value = '';
+            showAlert('Accounts added successfully!', 'success');
+            closeAddAccountModalFunc();
+        } else if (alreadyInList.length > 0) {
+            showAlert(`All entered accounts are already in your following list or manually added list: ${alreadyInList.join(', ')}`, 'info');
+        } else {
+            showAlert('No new accounts were added.', 'info');
+        }
+    };
+
 
     // Mobile Menu Toggle
     // These event listeners will be set up in window.onload
@@ -2982,6 +3359,13 @@
                         showAlert('Please log in to access banned users management.', 'info');
                         openAuthModal();
                     }
+                } else if (targetId === '#add-account-modal') { // New add account modal navigation
+                    if (authInstance.currentUser) {
+                        openAddAccountModal();
+                    } else {
+                        showAlert('Please log in to manually add accounts.', 'info');
+                        openAuthModal();
+                    }
                 }
                 else if (targetId === '#upload') {
                     showUploadSection(currentFileData !== null && currentFileData.fileName, currentFileData ? currentFileData.fileName : '', currentFileData ? currentFileData.fileSize : '');
@@ -3029,6 +3413,17 @@
             showBannedUsersPage();
         } else {
             showAlert('Please log in to access banned users management.', 'info');
+            openAuthModal();
+        }
+    };
+
+    // Event listener for Add Account link
+    const addAccountLinkClickHandler = (e) => {
+        e.preventDefault();
+        if (authInstance.currentUser) {
+            openAddAccountModal();
+        } else {
+            showAlert('Please log in to manually add accounts.', 'info');
             openAuthModal();
         }
     };
@@ -3149,7 +3544,7 @@
         bannedUserSuggestionsDatalist = document.getElementById('banned-user-suggestions');
         addBannedUserBtn = document.getElementById('add-banned-user-btn');
         bulkBannedUserInput = document.getElementById('bulk-banned-user-input');
-        addBulkBannedUserBtn = document.getElementById('add-bulk-banned-user-btn');
+        addBulkBannedUserBtn = document.getElementById('add-bulk-banned-user-btn'); // Renamed
         bannedUsersListElem = document.getElementById('banned-users-list');
 
         // Existing Banned Users Check elements (now on the new page)
@@ -3187,6 +3582,17 @@
         openGreenUsersBtn = document.getElementById('open-green-users-btn');
         openOrangeUsersBtn = document.getElementById('open-orange-users-btn');
         openRedUsersBtn = document.getElementById('open-red-users-btn');
+
+        // Assign new Add Account elements
+        addAccountNavLink = document.getElementById('add-account-nav-link');
+        addAccountNavLinkMobile = document.getElementById('add-account-nav-link-mobile');
+        addAccountModal = document.getElementById('add-account-modal');
+        closeAddAccountModal = document.getElementById('close-add-account-modal');
+        singleAddAccountInput = document.getElementById('single-add-account-input');
+        addSingleAccountBtn = document.getElementById('add-single-account-btn');
+        bulkAddAccountInput = document.getElementById('bulk-add-account-input');
+        addBulkAccountsBtn = document.getElementById('add-bulk-accounts-btn');
+        addedAccountsPreview = document.getElementById('added-accounts-preview');
 
 
         // Now that elements are assigned, proceed with Firebase init and event listeners
@@ -3330,6 +3736,10 @@
         bannedUsersLinkSidebarAccounts.addEventListener('click', bannedUsersPageLinkClickHandler);
         bannedUsersLinkSidebarBanned.addEventListener('click', bannedUsersPageLinkClickHandler);
 
+        // Add Account links
+        addAccountNavLink.addEventListener('click', addAccountLinkClickHandler);
+        addAccountNavLinkMobile.addEventListener('click', addAccountLinkClickHandler);
+
         // Settings links
         settingsLinkDashboard.addEventListener('click', settingsLinkClickHandler);
         settingsLinkAnalytics.addEventListener('click', settingsLinkClickHandler);
@@ -3351,7 +3761,7 @@
         });
         safeUserInput.addEventListener('input', safeUserInputHandler); // Add listener for suggestions
         addSafeUserBtn.addEventListener('click', addSafeUserButtonClickHandler);
-        addBulkSafeUserBtn.addEventListener('click', addBulkSafeUserButtonClickHandler);
+        addBulkSafeUserBtn.addEventListener('click', addBulkBannedUserButtonClickHandler); // This was previously addBulkSafeUserButtonClickHandler, check if it's correct
 
         // Event listeners for Banned Users Add modal (NEW)
         addBannedUserModalBtn.addEventListener('click', openBannedUsersAddModal); // Button on the new page
@@ -3363,7 +3773,7 @@
         });
         bannedUserInput.addEventListener('input', bannedUserInputHandler); // Add listener for suggestions
         addBannedUserBtn.addEventListener('click', addBannedUserButtonClickHandler);
-        addBulkBannedUserBtn.addEventListener('click', addBulkBannedUserButtonClickHandler);
+        addBulkBannedUserBtn.addEventListener('click', addBulkBannedUserButtonClickHandlerForBanned); // Corrected to new function name
         
         // Event listeners for Banned Users Check functionality (on the new page)
         bannedUsersFileInput.addEventListener('change', handleCheckBannedUsers); // Auto-check on file upload
@@ -3382,6 +3792,19 @@
         accountsToRemoveCard.addEventListener('click', () => showAccountsManagement('toRemove'));
         totalAccountsRemovedCard.addEventListener('click', () => showAccountsManagement('removed'));
         approvedAccountsCard.addEventListener('click', () => showAccountsManagement('approved'));
+
+        // Event listeners for Add Account Modal
+        closeAddAccountModal.addEventListener('click', closeAddAccountModalFunc);
+        addSingleAccountBtn.addEventListener('click', handleAddSingleAccount);
+        bulkAddAccountInput.addEventListener('keypress', (e) => {
+            if (e.key === 'Enter' && e.shiftKey) { // Shift + Enter for new line, Enter alone to add
+                // Allow new line
+            } else if (e.key === 'Enter') {
+                e.preventDefault(); // Prevent default new line
+                handleAddBulkAccounts();
+            }
+        });
+        addBulkAccountsBtn.addEventListener('click', handleAddBulkAccounts);
 
 
         // Initial render of accounts (will show "No data" message)
