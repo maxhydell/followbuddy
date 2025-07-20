@@ -71,8 +71,7 @@
     }
     /* Adjusted for Safe Users modal */
     #safe-users-modal .modal-content,
-    #banned-users-add-modal .modal-content,
-    #add-account-modal .modal-content { /* Apply to banned users add modal and new add account modal too */
+    #banned-users-add-modal .modal-content { /* Apply to banned users add modal and new add account modal too */
         max-width: 600px; /* Wider for bulk input */
     }
     /* Modal content themes */
@@ -387,7 +386,7 @@
         <i class="fas fa-ban mr-2"></i><span>Banned Users</span>
       </a>
       <!-- New Add Account Link -->
-      <a href="#" id="add-account-nav-link" class="text-gray-300 hover:text-blue-400 transition-colors duration-200 flex items-center">
+      <a href="#add-account-page-section" id="add-account-nav-link" class="text-gray-300 hover:text-blue-400 transition-colors duration-200 flex items-center">
         <i class="fas fa-user-plus mr-2"></i><span>Add Account</span>
       </a>
     </nav>
@@ -416,7 +415,7 @@
       <i class="fas fa-ban mr-2"></i><span>Banned Users</span>
     </a>
     <!-- New Add Account Link in Mobile Menu -->
-    <a href="#" id="add-account-nav-link-mobile" class="text-gray-100 text-2xl hover:text-blue-400 transition-colors duration-200 flex items-center">
+    <a href="#add-account-page-section" id="add-account-nav-link-mobile" class="text-gray-100 text-2xl hover:text-blue-400 transition-colors duration-200 flex items-center">
       <i class="fas fa-user-plus mr-2"></i><span>Add Account</span>
     </a>
     <button id="login-btn-mobile" class="text-blue-400 text-2xl hover:text-blue-200 transition-colors duration-200 font-medium">Account</button>
@@ -992,24 +991,24 @@
   </div>
   <!-- End New Banned Users Add Modal -->
 
-  <!-- New Add Account Modal -->
-  <div id="add-account-modal" class="modal">
-    <div class="modal-content">
-      <span class="close-button" id="close-add-account-modal">&times;</span>
-      <h3 class="text-2xl font-bold mb-4 text-gray-100">Add Account(s) I Follow</h3>
-      <p class="text-gray-300 mb-4">Manually add Instagram usernames or links to your "Following" list.</p>
-      <div class="flex flex-col gap-3 mb-4">
-        <input type="text" id="single-add-account-input" placeholder="Enter single username or link" class="w-full border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-700 text-gray-100" />
-        <button id="add-single-account-btn" class="bg-blue-600 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-700 transition-colors duration-200">Add Single Account</button>
-        <textarea id="bulk-add-account-input" placeholder="Enter multiple usernames or links, separated by commas or new lines" rows="4" class="w-full border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-700 text-gray-100 resize-y"></textarea>
-        <button id="add-bulk-accounts-btn" class="bg-purple-600 text-white px-4 py-2 rounded-lg shadow hover:bg-purple-700 transition-colors duration-200">Add All Accounts</button>
+  <!-- New Add Account Page Section (formerly a modal) -->
+  <section id="add-account-page-section" class="hidden py-16 px-6 bg-gray-900">
+    <div class="max-w-xl mx-auto bg-gray-800 p-8 rounded-xl shadow-lg text-center">
+      <h3 class="text-3xl font-bold mb-4 text-gray-100">Add Account(s) I Follow</h3>
+      <p class="text-gray-300 mb-6">Manually add Instagram usernames or links to your "Following" list. This will update your dashboard metrics.</p>
+      <div class="flex flex-col gap-4 mb-6">
+        <input type="text" id="single-add-account-input" placeholder="Enter single username or link" class="w-full border border-gray-600 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-700 text-gray-100" />
+        <button id="add-single-account-btn" class="bg-blue-600 text-white px-6 py-3 rounded-lg shadow hover:bg-blue-700 transition-colors duration-200 font-medium">Add Single Account</button>
+        <div class="border-t border-gray-700 my-4"></div>
+        <textarea id="bulk-add-account-input" placeholder="Enter multiple usernames or links, separated by commas or new lines" rows="6" class="w-full border border-gray-600 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-700 text-gray-100 resize-y"></textarea>
+        <button id="add-bulk-accounts-btn" class="bg-purple-600 text-white px-6 py-3 rounded-lg shadow hover:bg-purple-700 transition-colors duration-200 font-medium">Add All Accounts</button>
       </div>
-      <div id="added-accounts-preview" class="max-h-48 overflow-y-auto border border-gray-600 rounded-lg p-2 bg-gray-700">
+      <div id="added-accounts-preview" class="max-h-60 overflow-y-auto border border-gray-600 rounded-lg p-4 bg-gray-700">
         <p class="text-gray-500 text-center">Accounts added will appear here.</p>
       </div>
     </div>
-  </div>
-  <!-- End New Add Account Modal -->
+  </section>
+  <!-- End New Add Account Page Section -->
 
 
   <div id="upload-data-modal" class="modal">
@@ -1271,8 +1270,8 @@
     // New Add Account elements
     let addAccountNavLink;
     let addAccountNavLinkMobile;
-    let addAccountModal;
-    let closeAddAccountModal;
+    let addAccountPageSection; // Renamed from addAccountModal
+    let closeAddAccountModal; // This will no longer close a modal, but can be repurposed if needed
     let singleAddAccountInput;
     let addSingleAccountBtn;
     let bulkAddAccountInput;
@@ -1765,6 +1764,7 @@
         analyticsSection.classList.add('hidden'); // Hide analytics section
         accountsSection.classList.add('hidden'); // Hide accounts section
         bannedUsersPageSection.classList.add('hidden'); // New: Hide banned users page
+        addAccountPageSection.classList.add('hidden'); // Hide add account page
         dashboardSection.classList.remove('hidden');
         
         // Ensure the dashboard displays the current data if available
@@ -1856,6 +1856,7 @@
         dashboardSection.classList.add('hidden'); // Hide dashboard section
         accountsSection.classList.add('hidden'); // Hide accounts section
         bannedUsersPageSection.classList.add('hidden'); // New: Hide banned users page
+        addAccountPageSection.classList.add('hidden'); // Hide add account page
         analyticsSection.classList.remove('hidden'); // Show analytics section
 
         // Call the new function to find and load best analytics data
@@ -1872,6 +1873,7 @@
         dashboardSection.classList.add('hidden');
         analyticsSection.classList.add('hidden');
         bannedUsersPageSection.classList.add('hidden'); // New: Hide banned users page
+        addAccountPageSection.classList.add('hidden'); // Hide add account page
         accountsSection.classList.remove('hidden');
 
         currentAccountsViewMode = viewMode; // Set the view mode
@@ -1889,6 +1891,7 @@
         dashboardSection.classList.add('hidden');
         analyticsSection.classList.add('hidden');
         accountsSection.classList.add('hidden');
+        addAccountPageSection.classList.add('hidden'); // Hide add account page
         bannedUsersPageSection.classList.remove('hidden'); // Show banned users page
 
         // Re-render orange list users when page is shown
@@ -1903,6 +1906,25 @@
         bannedUsersPageSection.scrollIntoView({ behavior: 'smooth' });
     }
 
+    // Function to show the new Add Account Page
+    function showAddAccountPage() {
+        heroSection.classList.add('hidden');
+        featuresSection.classList.add('hidden');
+        uploadSection.classList.add('hidden');
+        pricingSection.classList.add('hidden');
+        dashboardSection.classList.add('hidden');
+        analyticsSection.classList.add('hidden');
+        accountsSection.classList.add('hidden');
+        bannedUsersPageSection.classList.add('hidden');
+        addAccountPageSection.classList.remove('hidden'); // Show add account page
+
+        renderAddedAccountsPreview(); // Render the list of manually added accounts
+        singleAddAccountInput.value = ''; // Clear input fields
+        bulkAddAccountInput.value = '';
+
+        addAccountPageSection.scrollIntoView({ behavior: 'smooth' });
+    }
+
 
     // Function to show landing page and hide dashboard
     function showLandingPage() {
@@ -1914,6 +1936,7 @@
         analyticsSection.classList.add('hidden'); // Hide analytics section
         accountsSection.classList.add('hidden'); // Hide accounts section
         bannedUsersPageSection.classList.add('hidden'); // New: Hide banned users page
+        addAccountPageSection.classList.add('hidden'); // Hide add account page
         // Scroll to top
         window.scrollTo({ top: 0, behavior: 'smooth' });
     }
@@ -1982,6 +2005,7 @@
         analyticsSection.classList.add('hidden'); // Hide analytics section
         accountsSection.classList.add('hidden'); // Hide accounts section
         bannedUsersPageSection.classList.add('hidden'); // New: Hide banned users page
+        addAccountPageSection.classList.add('hidden'); // Hide add account page
         uploadSection.classList.remove('hidden'); // Ensure upload section is visible
 
         if (showSuccess) {
@@ -2040,7 +2064,7 @@
         currentFileData = null; // Clear processed data
         allNonFollowers = []; // Clear non-followers list
         originalNotFollowingBack = []; // Clear original list
-        safeUsers = []; // Clear safe users
+        safeUsers = [];
         bannedUsers = []; // Clear banned users
         accountsToRemoveList = [];
         approvedAccountsList = [];
@@ -2561,6 +2585,14 @@
             // Re-render dashboard metrics and non-followers list
             allNonFollowers = originalNotFollowingBack.filter(account => !safeUsers.includes(account.username)); // Filter by username
             applyFiltersAndRenderAccounts(); // Re-apply filters and render
+            // Update dashboard metrics to reflect the change in filtered non-followers count
+            updateDashboardMetrics(
+                currentFileData.totalFollowing + manuallyAddedFollowing.length,
+                currentFileData.totalFollowers,
+                allNonFollowers.length, // Updated filtered count
+                originalNotFollowingBack.length,
+                currentFileData.youDontFollowBackCount
+            );
         }
         renderSafeUsersList(); // Always re-render the modal list
     }
@@ -2580,8 +2612,9 @@
         }
     };
 
-    const addBulkBannedUserButtonClickHandler = async () => {
-        const text = bulkBannedUserInput.value.trim();
+    // Corrected function for bulk safe user add
+    const addBulkSafeUserButtonClickHandler = async () => {
+        const text = bulkSafeUserInput.value.trim();
         if (!text) {
             showAlert('Please enter usernames in the bulk input area.', 'info');
             return;
@@ -2592,7 +2625,7 @@
         const alreadyInList = [];
 
         for (const username of usernames) {
-            const added = await addBannedUser(username);
+            const added = await addSafeUser(username);
             if (added) {
                 anyAdded = true;
             } else {
@@ -2601,12 +2634,12 @@
         }
 
         if (anyAdded) {
-            bulkBannedUserInput.value = '';
-            await processAndSaveBannedUsers(true);
-            showAlert('Banned users added!', 'success');
-            closeBannedUsersAddModalFunc(); // Close modal after bulk add
+            bulkSafeUserInput.value = '';
+            await processAndSaveSafeUsers(true);
+            showAlert('Safe users added!', 'success');
+            closeSafeUsersModalFunc(); // Close modal after bulk add
         } else if (alreadyInList.length > 0) {
-            showAlert(`All entered users are already in the banned list: ${alreadyInList.join(', ')}`, 'info');
+            showAlert(`All entered users are already in the safe list: ${alreadyInList.join(', ')}`, 'info');
         } else {
             showAlert('No valid users were entered.', 'info');
         }
@@ -2854,13 +2887,10 @@
             return;
         }
 
-        // Remove duplicates from inputUsernames
-        inputUsernames = Array.from(new Set(inputUsernames));
-
-        if (inputUsernames.length === 0) {
-            showAlert('No valid usernames or links found in the input.', 'info');
-            return;
-        }
+        // Normalize input usernames (remove duplicates and ensure clean usernames)
+        inputUsernames = Array.from(new Set(inputUsernames.map(name => name.toLowerCase())));
+        console.log("Input Usernames for check:", inputUsernames);
+        console.log("Current Banned Users list:", bannedUsers);
 
         const matchedUsers = inputUsernames.filter(username => bannedUsers.includes(username));
 
@@ -2894,14 +2924,19 @@
 
         // Extract from @usernames
         while ((match = atUsernameRegex.exec(text)) !== null) {
-            if (match[1].length > 2 && !match[1].includes('.')) { // Simple heuristic
+            // Basic check to avoid common words, could be improved.
+            // Ensure it's not just a single character or common punctuation, and doesn't contain '.' which usually indicates a file extension or part of a URL.
+            if (match[1].length > 2 && !match[1].includes('.')) { 
                 extractedUsernames.add(match[1]);
             }
         }
         atUsernameRegex.lastIndex = 0; // Reset regex for next use
 
         // Also consider lines/comma-separated values as direct usernames
-        const directUsernames = text.split(/[\n,]+/).map(name => name.trim()).filter(name => name.length > 0 && !name.startsWith('http') && !name.startsWith('@'));
+        // Filter out anything that looks like a URL or an @mention already handled
+        const directUsernames = text.split(/[\n,]+/)
+                                    .map(name => name.trim())
+                                    .filter(name => name.length > 0 && !name.startsWith('http') && !name.startsWith('@'));
         directUsernames.forEach(username => extractedUsernames.add(username));
 
         return Array.from(extractedUsernames);
@@ -3052,8 +3087,7 @@
         // Re-render and update metrics
         applyAccountsManagementFiltersAndRender();
         updateAccountsManagementMetrics();
-        showAlert(`Account ${username} removed! Opening Instagram profile...`, 'info');
-        window.open(`https://www.instagram.com/${username}/`, '_blank');
+        // Removed showAlert and window.open as per user request
     }
 
     async function handleApproveAccount(username) {
@@ -3125,18 +3159,7 @@
         showAlert(`Opening ${openedCount} ${colorCategory} users in new tabs. Please allow pop-ups.`, 'success');
     }
 
-    // New Add Account Modal Functions
-    function openAddAccountModal() {
-        addAccountModal.style.display = 'flex';
-        renderAddedAccountsPreview();
-    }
-
-    function closeAddAccountModalFunc() {
-        addAccountModal.style.display = 'none';
-        singleAddAccountInput.value = '';
-        bulkAddAccountInput.value = '';
-    }
-
+    // New Add Account Page Functions
     function renderAddedAccountsPreview() {
         addedAccountsPreview.innerHTML = '';
         if (manuallyAddedFollowing.length === 0) {
@@ -3177,9 +3200,9 @@
                 const tempCalculatedNotFollowingBack = [];
                 tempFollowingSet.forEach(user => {
                     if (!new Set(currentFileData.followersList).has(user)) {
-                        const timestamp = currentFileData.followingList.includes(user) ? 
-                                         currentFileData.followingList.find(item => item.username === user)?.timestamp || Math.floor(Date.now() / 1000) :
-                                         Math.floor(Date.now() / 1000); // Manually added get current timestamp
+                        // Find original timestamp if available, otherwise use current
+                        const originalAccount = currentFileData.originalNotFollowingBack.find(acc => acc.username === user);
+                        const timestamp = originalAccount ? originalAccount.timestamp : Math.floor(Date.now() / 1000);
                         tempCalculatedNotFollowingBack.push({ username: user, timestamp: timestamp });
                     }
                 });
@@ -3211,9 +3234,8 @@
             const tempCalculatedNotFollowingBack = [];
             tempFollowingSet.forEach(user => {
                 if (!new Set(currentFileData.followersList).has(user)) {
-                    const timestamp = currentFileData.followingList.includes(user) ? 
-                                     currentFileData.followingList.find(item => item.username === user)?.timestamp || Math.floor(Date.now() / 1000) :
-                                     null; // No timestamp for removed manual
+                    const originalAccount = currentFileData.originalNotFollowingBack.find(acc => acc.username === user);
+                    const timestamp = originalAccount ? originalAccount.timestamp : null; // No timestamp for removed manual
                     tempCalculatedNotFollowingBack.push({ username: user, timestamp: timestamp });
                 }
             });
@@ -3295,7 +3317,7 @@
         if (anyAdded) {
             bulkAddAccountInput.value = '';
             showAlert('Accounts added successfully!', 'success');
-            closeAddAccountModalFunc();
+            // No longer closing a modal, just updating the page
         } else if (alreadyInList.length > 0) {
             showAlert(`All entered accounts are already in your following list or manually added list: ${alreadyInList.join(', ')}`, 'info');
         } else {
@@ -3359,9 +3381,9 @@
                         showAlert('Please log in to access banned users management.', 'info');
                         openAuthModal();
                     }
-                } else if (targetId === '#add-account-modal') { // New add account modal navigation
+                } else if (targetId === '#add-account-page-section') { // New add account page navigation
                     if (authInstance.currentUser) {
-                        openAddAccountModal();
+                        showAddAccountPage();
                     } else {
                         showAlert('Please log in to manually add accounts.', 'info');
                         openAuthModal();
@@ -3421,7 +3443,7 @@
     const addAccountLinkClickHandler = (e) => {
         e.preventDefault();
         if (authInstance.currentUser) {
-            openAddAccountModal();
+            showAddAccountPage(); // Now shows the page directly
         } else {
             showAlert('Please log in to manually add accounts.', 'info');
             openAuthModal();
@@ -3586,8 +3608,8 @@
         // Assign new Add Account elements
         addAccountNavLink = document.getElementById('add-account-nav-link');
         addAccountNavLinkMobile = document.getElementById('add-account-nav-link-mobile');
-        addAccountModal = document.getElementById('add-account-modal');
-        closeAddAccountModal = document.getElementById('close-add-account-modal');
+        addAccountPageSection = document.getElementById('add-account-page-section'); // Now a section
+        // closeAddAccountModal = document.getElementById('close-add-account-modal'); // No longer needed as it's a page
         singleAddAccountInput = document.getElementById('single-add-account-input');
         addSingleAccountBtn = document.getElementById('add-single-account-btn');
         bulkAddAccountInput = document.getElementById('bulk-add-account-input');
@@ -3761,7 +3783,7 @@
         });
         safeUserInput.addEventListener('input', safeUserInputHandler); // Add listener for suggestions
         addSafeUserBtn.addEventListener('click', addSafeUserButtonClickHandler);
-        addBulkSafeUserBtn.addEventListener('click', addBulkBannedUserButtonClickHandler); // This was previously addBulkSafeUserButtonClickHandler, check if it's correct
+        addBulkSafeUserBtn.addEventListener('click', addBulkSafeUserButtonClickHandler); // Corrected to new function name
 
         // Event listeners for Banned Users Add modal (NEW)
         addBannedUserModalBtn.addEventListener('click', openBannedUsersAddModal); // Button on the new page
@@ -3793,8 +3815,8 @@
         totalAccountsRemovedCard.addEventListener('click', () => showAccountsManagement('removed'));
         approvedAccountsCard.addEventListener('click', () => showAccountsManagement('approved'));
 
-        // Event listeners for Add Account Modal
-        closeAddAccountModal.addEventListener('click', closeAddAccountModalFunc);
+        // Event listeners for Add Account Page (formerly modal)
+        // No longer need closeAddAccountModal.addEventListener('click', closeAddAccountModalFunc);
         addSingleAccountBtn.addEventListener('click', handleAddSingleAccount);
         bulkAddAccountInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter' && e.shiftKey) { // Shift + Enter for new line, Enter alone to add
