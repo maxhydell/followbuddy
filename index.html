@@ -10,10 +10,10 @@
   <!-- Original .ico favicon (kept for reference, but SVG is recommended) -->
   <!-- <link rel="icon" href="faviconfollowbuddy.ico" type="image/x-icon"> -->
 
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+  <link href="[https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap](https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap)" rel="stylesheet" />
+  <link rel="stylesheet" href="[https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css](https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css)">
+  <script src="[https://cdn.tailwindcss.com](https://cdn.tailwindcss.com)"></script>
+  <script src="[https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js](https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js)"></script>
   <style>
     /* Custom CSS for Inter font and general body styles */
     body {
@@ -532,7 +532,7 @@
       </div>
 
       <!-- New "Download Your Info" Button -->
-      <a href="https://accountscenter.instagram.com/info_and_permissions/dyi/?entry_point=notification" target="_blank" rel="noopener noreferrer"
+      <a href="[https://accountscenter.instagram.com/info_and_permissions/dyi/?entry_point=notification](https://accountscenter.instagram.com/info_and_permissions/dyi/?entry_point=notification)" target="_blank" rel="noopener noreferrer"
          class="inline-flex items-center justify-center px-8 py-4 rounded-full text-lg font-bold shadow-2xl bg-gradient-to-r from-purple-600 to-indigo-600 text-white hover:from-purple-700 hover:to-indigo-700 transition-all duration-300 transform hover:scale-105 mb-8">
         <i class="fas fa-download mr-3"></i>
         <span>Download Your Info</span>
@@ -658,6 +658,16 @@
                 Open Red Users
             </button>
         </div>
+
+        <!-- Users Added From Email Section -->
+        <div id="email-followed-users" class="bg-gray-800 p-6 rounded-lg text-white mt-6">
+          <h3 class="text-xl font-bold mb-4">Users Added From Email</h3>
+          <ul id="email-users-list" class="space-y-2 text-gray-300">
+            <li>Loading...</li>
+          </ul>
+        </div>
+        <!-- End Users Added From Email Section -->
+
       </div>
     </div>
   </section>
@@ -710,30 +720,30 @@
             </div>
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
                 <div class="metric-card">
-                    <p class="label">Unfollowed You</p>
+                    <p class="label">New Followers</p>
                     <p class="value flex items-center justify-center text-green-500">
-                        <i class="fas fa-arrow-down mr-2"></i><span id="newFollowersCount">0</span>
+                        <i class="fas fa-arrow-up mr-2"></i><span id="newFollowersCount">0</span>
                     </p>
                 </div>
                 <div class="metric-card">
-                    <p class="label">New Followers</p>
+                    <p class="label">Unfollowed You</p>
                     <p class="value flex items-center justify-center text-red-500">
-                        <i class="fas fa-arrow-up mr-2"></i><span id="unfollowedYouCount">0</span>
+                        <i class="fas fa-arrow-down mr-2"></i><span id="unfollowedYouCount">0</span>
                     </p>
-                </div>
-            </div>
-            <!-- List of Unfollowed Accounts -->
-            <div class="bg-gray-800 p-6 rounded-xl shadow-lg mb-8">
-                <h3 class="text-xl font-bold text-gray-100 mb-4">Unfollowers</h3>
-                <div id="new-followers-list" class="space-y-2">
-                    <p class="text-gray-500 text-center">No unfollow data available for this period.</p>
                 </div>
             </div>
             <!-- List of New Followers -->
             <div class="bg-gray-800 p-6 rounded-xl shadow-lg mb-8">
                 <h3 class="text-xl font-bold text-gray-100 mb-4">New Followers</h3>
-                <div id="unfollowed-list" class="space-y-2">
+                <div id="new-followers-list" class="space-y-2">
                     <p class="text-gray-500 text-center">No new follower data available for this period.</p>
+                </div>
+            </div>
+            <!-- List of Unfollowed Accounts -->
+            <div class="bg-gray-800 p-6 rounded-xl shadow-lg">
+                <h3 class="text-xl font-bold text-gray-100 mb-4">Unfollowers</h3>
+                <div id="unfollowed-list" class="space-y-2">
+                    <p class="text-gray-500 text-center">No unfollow data available for this period.</p>
                 </div>
             </div>
         </div>
@@ -1048,9 +1058,9 @@
 
 
   <script type="module">
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
-    import { getAuth, onAuthStateChanged, signOut, createUserWithEmailAndPassword, signInWithEmailAndPassword, signInWithCustomToken, signInAnonymously } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
-    import { getFirestore, doc, setDoc, getDoc, collection, query, orderBy, getDocs } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+    import { initializeApp } from "[https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js](https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js)";
+    import { getAuth, onAuthStateChanged, signOut, createUserWithEmailAndPassword, signInWithEmailAndPassword, signInWithCustomToken, signInAnonymously } from "[https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js](https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js)";
+    import { getFirestore, doc, setDoc, getDoc, collection, query, orderBy, getDocs } from "[https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js](https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js)";
 
     // Global Firebase instances and user data
     let appInstance;
@@ -1317,6 +1327,9 @@
     let closeUnfollowedProfilesModal;
     let unfollowedProfilesListElem;
 
+    // New: Email Followed Users elements
+    let emailUsersList;
+
 
     // Function to initialize Firebase
     async function initializeFirebaseApp() {
@@ -1339,6 +1352,8 @@
                     console.log('User logged in:', currentUserId);
                     await loadAllUserUploads(); // Load all uploads for the selector
                     await loadLatestData(); // Load the latest data by default
+                    fetchEmailUsers(); // Fetch and display email users on login
+                    setInterval(fetchEmailUsers, 60000); // Auto-refresh every 60 seconds
 
                     loginBtnNav.style.display = 'none';
                     loginBtnMobile.style.display = 'none';
@@ -1385,6 +1400,7 @@
                     updateAnalyticsMetrics(0, 0, [], []); 
                     updateAccountsManagementMetrics(); // Reset accounts management metrics
                     populateUploadSelectors(); // Clear selectors
+                    emailUsersList.innerHTML = '<li>No email users found.</li>'; // Clear email users list on logout
                 }
             });
 
@@ -1708,7 +1724,7 @@
             const div = document.createElement('div');
             div.className = 'account-list-item';
             div.innerHTML = `
-                <a href="https://www.instagram.com/${account.username}/" target="_blank" rel="noopener noreferrer" class="font-medium text-blue-400 hover:underline">
+                <a href="[https://www.instagram.com/$](https://www.instagram.com/$){account.username}/" target="_blank" rel="noopener noreferrer" class="font-medium text-blue-400 hover:underline">
                     ${account.username}
                 </a>
                 <div class="flex items-center space-x-2">
@@ -1750,7 +1766,7 @@
             const div = document.createElement('div');
             div.className = 'account-list-item';
             div.innerHTML = `
-                <a href="https://www.instagram.com/${username}/" target="_blank" rel="noopener noreferrer" class="font-medium text-red-400 hover:underline">
+                <a href="[https://www.instagram.com/$](https://www.instagram.com/$){username}/" target="_blank" rel="noopener noreferrer" class="font-medium text-red-400 hover:underline">
                     ${username}
                 </a>
             `;
@@ -1769,7 +1785,7 @@
             const div = document.createElement('div');
             div.className = 'account-list-item';
             div.innerHTML = `
-                <a href="https://www.instagram.com/${username}/" target="_blank" rel="noopener noreferrer" class="font-medium text-green-400 hover:underline">
+                <a href="[https://www.instagram.com/$](https://www.instagram.com/$){username}/" target="_blank" rel="noopener noreferrer" class="font-medium text-green-400 hover:underline">
                     ${username}
                 </a>
             `;
@@ -1794,7 +1810,7 @@
             const div = document.createElement('div');
             div.className = 'flex justify-between items-center py-2 px-3 border-b border-gray-600 last:border-b-0 text-gray-200';
             div.innerHTML = `
-                <a href="https://www.instagram.com/${username}/" target="_blank" rel="noopener noreferrer" class="font-medium text-blue-400 hover:underline">
+                <a href="[https://www.instagram.com/$](https://www.instagram.com/$){username}/" target="_blank" rel="noopener noreferrer" class="font-medium text-blue-400 hover:underline">
                     ${username}
                 </a>
                 <span class="text-gray-400 text-sm">${formattedDate}</span>
@@ -1827,7 +1843,7 @@
             const div = document.createElement('div');
             div.className = 'flex justify-between items-center py-2 px-3 border-b border-gray-600 last:border-b-0 text-gray-200';
             div.innerHTML = `
-                <a href="https://www.instagram.com/${account.username}/" target="_blank" rel="noopener noreferrer" class="font-medium text-orange-400 hover:underline">
+                <a href="[https://www.instagram.com/$](https://www.instagram.com/$){account.username}/" target="_blank" rel="noopener noreferrer" class="font-medium text-orange-400 hover:underline">
                     ${account.username}
                 </a>
                 <span class="${timeInfo.color}">${timeInfo.text}</span>
@@ -1849,7 +1865,7 @@
         const seconds = Math.floor(diffMs / 1000);
         const minutes = Math.floor(seconds / 60);
         const hours = Math.floor(minutes / 60);
-        const days = Math.floor(hours / 24);
+        const days = Math.floor(minutes / 1440); // 1440 minutes in a day
         const months = Math.floor(days / 30.44); // Average days in a month
         const years = Math.floor(days / 365.25); // Average days in a year
 
@@ -2510,7 +2526,8 @@
         // If currentFileData exists, use its approved/removed/banned lists. Otherwise, start fresh.
         const currentApproved = currentFileData ? currentFileData.approvedAccounts || [] : [];
         const currentRemoved = currentFileData ? currentFileData.removedAccounts || [] : [];
-        const currentBanned = bannedUsers; // Banned users are already updated from recently_unfollowed_profiles.json/html and existing state
+        // Banned users are already updated from recently_unfollowed_profiles.json/html and existing state
+        const currentBanned = bannedUsers; 
         const currentManuallyAddedForReview = currentFileData ? currentFileData.accountsManuallyAddedForReview || [] : [];
         const currentManuallyAddedFollowing = currentFileData ? currentFileData.manuallyAddedFollowing || [] : [];
         const currentManuallyUnfollowedList = currentFileData ? currentFileData.manuallyUnfollowedList || [] : [];
@@ -2951,6 +2968,13 @@
                                 inputUsernames = inputUsernames.concat(jsonData.map(item => item.string_list_data[0].value));
                                 foundData = true;
                                 break;
+                            } else if (jsonData.messages && Array.isArray(jsonData.messages)) {
+                                // If it's a message file HTML, extract usernames from it
+                                const tempMap = new Map();
+                                processMessageData(jsonData, tempMap);
+                                inputUsernames = inputUsernames.concat(Array.from(tempMap.keys()));
+                                foundData = true;
+                                break;
                             }
                         } catch (e) { /* not JSON or not the right structure */ }
                     }
@@ -2961,6 +2985,12 @@
                                 const jsonData = JSON.parse(script.textContent);
                                 if (Array.isArray(jsonData) && jsonData.every(item => item.string_list_data)) {
                                     inputUsernames = inputUsernames.concat(jsonData.map(item => item.string_list_data[0].value));
+                                    foundData = true;
+                                    break;
+                                } else if (jsonData.messages && Array.isArray(jsonData.messages)) {
+                                    const tempMap = new Map();
+                                    processMessageData(jsonData, tempMap);
+                                    inputUsernames = inputUsernames.concat(Array.from(tempMap.keys()));
                                     foundData = true;
                                     break;
                                 }
@@ -3163,7 +3193,7 @@
             const div = document.createElement('div');
             div.className = 'account-list-item';
             div.innerHTML = `
-                <a href="https://www.instagram.com/${account.username}/" target="_blank" rel="noopener noreferrer" class="font-medium text-blue-400 hover:underline">
+                <a href="[https://www.instagram.com/$](https://www.instagram.com/$){account.username}/" target="_blank" rel="noopener noreferrer" class="font-medium text-blue-400 hover:underline">
                     ${account.username}
                 </a>
                 <span class="time-col ${timeInfo.color}">${timeInfo.text}</span>
@@ -3385,7 +3415,7 @@
             }
 
             div.innerHTML = `
-                <a href="https://www.instagram.com/${username}/" target="_blank" rel="noopener noreferrer" class="font-medium text-blue-400 hover:underline">
+                <a href="[https://www.instagram.com/$](https://www.instagram.com/$){username}/" target="_blank" rel="noopener noreferrer" class="font-medium text-blue-400 hover:underline">
                     ${username}
                 </a>
                 <div class="flex items-center space-x-2">
@@ -3420,7 +3450,7 @@
         // Add to accountsManuallyAddedForReview (if not already there)
         if (!accountsManuallyAddedForReview.some(acc => acc.username === username)) {
             accountsManuallyAddedForReview.push({ username: username, timestamp: Math.floor(Date.now() / 1000) });
-            accountsManuallyAddedForReview.sort((a,b) => a.username.localeCompare(b.username)); // Sort by username
+            accountsManuallyAddedForReview.sort((a,b) => a.username.localeCompare(b[0])); // Sort by username
             addedToReview = true;
         }
 
@@ -3567,7 +3597,7 @@
         const usernames = parseUsernamesFromText(text);
         if (usernames.length === 0) {
             showNotification('No valid usernames or links found in the input.', 'info');
-            return;
+                            return;
         }
 
         let anyAdded = false;
@@ -3797,6 +3827,48 @@
         unfollowedProfilesModal.style.display = 'none';
     }
 
+    // New: Function to fetch and display email-added users from Firestore
+    async function fetchEmailUsers() {
+      if (!dbInstance) {
+        console.warn("Firestore not initialized. Cannot fetch email users.");
+        return;
+      }
+      if (!emailUsersList) { // Ensure element is assigned
+          emailUsersList = document.getElementById('email-users-list');
+          if (!emailUsersList) {
+              console.error("Email users list element not found!");
+              return;
+          }
+      }
+
+      emailUsersList.innerHTML = ''; // clear existing
+
+      try {
+        // Fetch from the 'manuallyAddedFollowing' collection, as suggested by Chat GPT
+        // Note: This assumes the Python script is writing to a top-level collection named 'manuallyAddedFollowing'.
+        // If it's writing to a subcollection under the user's data, the path needs adjustment.
+        // For now, I'll use the top-level collection as specified.
+        const querySnapshot = await getDocs(collection(dbInstance, "manuallyAddedFollowing"));
+        if (querySnapshot.empty) {
+          emailUsersList.innerHTML = '<li>No email users found.</li>';
+          return;
+        }
+
+        querySnapshot.forEach((doc) => {
+          const data = doc.data();
+          const username = data.username; // Assuming the document has a 'username' field
+          if (username) {
+            const li = document.createElement('li');
+            li.textContent = username;
+            emailUsersList.appendChild(li);
+          }
+        });
+      } catch (error) {
+        console.error("Error fetching email users:", error);
+        emailUsersList.innerHTML = '<li>Error loading email users.</li>';
+      }
+    }
+
 
     // Initial app setup on window load
     window.onload = async function() {
@@ -3870,6 +3942,7 @@
         accountsLinkSidebarAccounts = document.getElementById('accounts-link-sidebar-accounts');
         settingsLinkSidebarAccounts = document.getElementById('settings-link-sidebar-accounts');
         bannedUsersLinkSidebarAccounts = document.getElementById('banned-users-link-sidebar-accounts'); // New
+        // dataUploadSelectorAccounts = document.getElementById('data-upload-selector-accounts'); // Removed as per user request
         uploadNewDataBtnAccounts = document.getElementById('upload-new-data-btn-accounts');
         accountsToRemoveCard = document.getElementById('accounts-to-remove-card');
         accountsToRemoveCount = document.getElementById('accounts-to-remove-count');
@@ -3954,6 +4027,9 @@
         unfollowedProfilesModal = document.getElementById('unfollowed-profiles-modal');
         closeUnfollowedProfilesModal = document.getElementById('close-unfollowed-profiles-modal');
         unfollowedProfilesListElem = document.getElementById('unfollowed-profiles-list');
+
+        // Assign new email followed users list element
+        emailUsersList = document.getElementById('email-users-list');
 
 
         // Now that elements are assigned, proceed with Firebase init and event listeners
@@ -4148,6 +4224,7 @@
         approvedAccountsCard.addEventListener('click', () => showAccountsManagement('approved'));
 
         // Event listeners for Add Account Page (formerly modal)
+        // No longer need closeAddAccountModal.addEventListener('click', closeAddAccountModalFunc);
         addSingleAccountBtn.addEventListener('click', handleAddSingleAccount);
         bulkAddAccountInput.addEventListener('keypress', (e) => {
             if (e.key === 'Enter' && e.shiftKey) { // Shift + Enter for new line, Enter alone to add
@@ -4159,16 +4236,11 @@
         });
         addBulkAccountsBtn.addEventListener('click', handleAddBulkAccounts);
 
-        // New: Event listeners for "People You Unfollowed" modal
-        youDontFollowBackCard.addEventListener('click', openUnfollowedProfilesModal);
-        closeUnfollowedProfilesModal.addEventListener('click', closeUnfollowedProfilesModalFunc);
-
 
         // Initial render of accounts (will show "No data" message)
         renderAccounts([]);
         renderAccountsToRemove([]); // Initial render for accounts management list
         renderOrangeListUsers([]); // Initial render for orange list users
-        renderUnfollowedProfilesList([]); // Initial render for unfollowed profiles list
     };
 
   </script>
