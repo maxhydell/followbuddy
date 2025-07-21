@@ -1010,7 +1010,7 @@
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
-    import { getAuth, onAuthStateChanged, signOut, createUserWithEmailAndPassword, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
+    import { getAuth, onAuthStateChanged, signOut, createUserWithEmailAndPassword, signInWithEmailAndPassword, signInWithCustomToken, signInAnonymously } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
     import { getFirestore, doc, setDoc, getDoc, collection, query, orderBy, getDocs } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
 
     // Global Firebase instances and user data
@@ -1036,7 +1036,19 @@
     // New global variable for manually added following accounts
     let manuallyAddedFollowing = [];
 
+    // Use __app_id and __firebase_config from the environment
     const appId = typeof __app_id !== 'undefined' ? __app_id : 'default-app-id';
+    const firebaseConfig = typeof __firebase_config !== 'undefined' ? JSON.parse(__firebase_config) : {
+        apiKey: "YOUR_FIREBASE_API_KEY", // Placeholder, will be replaced by Canvas runtime
+        authDomain: "YOUR_FIREBASE_AUTH_DOMAIN",
+        projectId: "YOUR_FIREBASE_PROJECT_ID",
+        storageBucket: "YOUR_FIREBASE_STORAGE_BUCKET",
+        messagingSenderId: "YOUR_FIREBASE_MESSAGING_SENDER_ID",
+        appId: "YOUR_FIREBASE_APP_ID",
+        measurementId: "YOUR_FIREBASE_MEASUREMENT_ID"
+    };
+    const initialAuthToken = typeof __initial_auth_token !== 'undefined' ? __initial_auth_token : null;
+
 
     // Custom Alert Function
     function showAlert(message, type = 'info') { // 'info', 'success', 'error'
@@ -1228,7 +1240,7 @@
     let addAccountNavLink;
     let addAccountNavLinkMobile;
     let addAccountPageSection; // Renamed from addAccountModal
-    let closeAddAccountModal; // This will no longer close a modal, but can be repurposed if needed
+    // let closeAddAccountModal; // This will no longer close a modal, but can be repurposed if needed
     let singleAddAccountInput;
     let addSingleAccountBtn;
     let bulkAddAccountInput;
@@ -1238,23 +1250,11 @@
 
     // Function to initialize Firebase
     async function initializeFirebaseApp() {
-        // Hardcoded Firebase Config for Canvas environment
-        const firebaseConfig = {
-            apiKey: "AIzaSyAZbNfrDlMXFtmws_5tJnxcyViaHMMFr5g",
-            authDomain: "followbuddy-5427d.firebaseapp.com",
-            projectId: "followbuddy-5427d",
-            storageBucket: "followbuddy-5427d.firebasestorage.app",
-            messagingSenderId: "363452171593",
-            appId: "1:363452171593:web:412e74ee7d956876228698",
-            measurementId: "G-YQ2MEKT92B"
-        };
-
         console.log("Firebase Config being used:", firebaseConfig);
 
-        if (!firebaseConfig.apiKey || firebaseConfig.apiKey === "") {
-            console.error("Firebase API Key is missing or empty in the configuration.");
-            showAlert("Firebase API Key is missing. Please ensure your Firebase project is correctly configured and the API key is available.", 'error');
-            return false; // Indicate failure
+        if (!firebaseConfig.apiKey || firebaseConfig.apiKey === "" || firebaseConfig.apiKey === "YOUR_FIREBASE_API_KEY") {
+            console.error("Firebase API Key is missing or empty in the configuration. Using anonymous sign-in.");
+            // Do not show an error alert here, as anonymous sign-in is a valid fallback.
         }
 
         try {
@@ -1280,9 +1280,16 @@
                     };
                     
                 } else {
-                    currentUserId = crypto.randomUUID();
+                    // Sign in anonymously if no user is logged in and no initial token is provided
+                    if (initialAuthToken) {
+                        await signInWithCustomToken(authInstance, initialAuthToken);
+                    } else {
+                        await signInAnonymously(authInstance);
+                    }
+                    currentUserId = authInstance.currentUser?.uid || crypto.randomUUID(); // Use actual UID if signed in, else random
                     userIdDisplay.textContent = currentUserId;
-                    console.log('User not logged in, using anonymous ID:', currentUserId);
+                    console.log('User not logged in, using ID:', currentUserId);
+
 
                     loginBtnNav.style.display = 'block';
                     loginBtnMobile.style.display = 'block';
@@ -2145,6 +2152,8 @@
             // Message file parsing for ZIPs
             zip.forEach((relativePath, zipEntry) => {
                 // Check for .json or .html message files in the expected path
+                // The user specified: "instagram-maxhydell-{timeanddate}.zip\your_instagram_activity\messages\inbox\maxhydell_17857205703357071" and then the file "message_1.json"
+                // So the path would be something like: your_instagram_activity/messages/inbox/maxhydell_17857205703357071/message_1.json
                 if (relativePath.startsWith('your_instagram_activity/messages/inbox/') && 
                     (relativePath.endsWith('.json') || relativePath.endsWith('.html')) && 
                     relativePath.includes('message_')) { // Ensure it's a message file
@@ -2155,9 +2164,33 @@
                                     const messageData = JSON.parse(messageContent);
                                     processMessageData(messageData, tempMessageUsernamesMap);
                                 } else { // .html
-                                    const parsedHtmlData = extractJsonFromZipEntry(zipEntry); // Use the helper to extract JSON from HTML
-                                    if (parsedHtmlData && parsedHtmlData.messages && Array.isArray(parsedHtmlData.messages)) {
-                                        processMessageData(parsedHtmlData, tempMessageUsernamesMap);
+                                    const parser = new DOMParser();
+                                    const doc = parser.parseFromString(messageContent, 'text/html');
+                                    // Look for JSON within <pre> or <script> tags in HTML message files
+                                    const preElements = doc.querySelectorAll('pre');
+                                    let foundMessageData = false;
+                                    for (const pre of preElements) {
+                                        try {
+                                            const jsonData = JSON.parse(pre.textContent);
+                                            if (jsonData.messages && Array.isArray(jsonData.messages)) {
+                                                processMessageData(jsonData, tempMessageUsernamesMap);
+                                                foundMessageData = true;
+                                                break;
+                                            }
+                                        } catch (e) { /* not JSON or not message data */ }
+                                    }
+                                    if (!foundMessageData) {
+                                        const scriptElements = doc.querySelectorAll('script[type="application/json"]');
+                                        for (const script of scriptElements) {
+                                            try {
+                                                const jsonData = JSON.parse(script.textContent);
+                                                if (jsonData.messages && Array.isArray(jsonData.messages)) {
+                                                    processMessageData(jsonData, tempMessageUsernamesMap);
+                                                    foundMessageData = true;
+                                                    break;
+                                                }
+                                            } catch (e) { /* not JSON or not message data */ }
+                                        }
                                     }
                                 }
                             } catch (parseError) {
@@ -2172,30 +2205,89 @@
 
         } else if (fileExtension === 'html') {
             const htmlContent = await file.text();
-            const parsedData = await extractJsonFromZipEntry({ async: () => Promise.resolve(htmlContent) }); // Simulate zip entry for html file
+            const parser = new DOMParser();
+            const doc = parser.parseFromString(htmlContent, 'text/html');
 
-            if (parsedData) {
-                if (parsedData.relationships_following) {
-                    followingData = parsedData;
-                } else if (parsedData.relationships_unfollowed_users && Array.isArray(parsedData.relationships_unfollowed_users)) {
-                    recentlyUnfollowedData = parsedData;
-                    recentlyUnfollowedData.relationships_unfollowed_users.forEach(item => {
-                        if (item.string_list_data && item.string_list_data.length > 0) {
-                            const username = item.string_list_data[0].value.toLowerCase();
-                            if (!bannedUsers.includes(username)) {
-                                bannedUsers.push(username);
+            // Find JSON data within <pre> tags, which is common for Instagram HTML exports
+            const preElements = doc.querySelectorAll('pre');
+            let foundFollowing = false;
+            let foundFollowers = false;
+            let foundRecentlyUnfollowed = false;
+            let foundMessageContent = false;
+
+            for (const pre of preElements) {
+                try {
+                    const jsonData = JSON.parse(pre.textContent);
+                    if (jsonData.relationships_following) {
+                        followingData = jsonData;
+                        foundFollowing = true;
+                    } else if (jsonData.relationships_unfollowed_users && Array.isArray(jsonData.relationships_unfollowed_users)) {
+                        // This is the recently_unfollowed_profiles.json structure
+                        recentlyUnfollowedData = jsonData;
+                        foundRecentlyUnfollowed = true;
+                        recentlyUnfollowedData.relationships_unfollowed_users.forEach(item => {
+                            if (item.string_list_data && item.string_list_data.length > 0) {
+                                const username = item.string_list_data[0].value.toLowerCase(); // Store in lowercase
+                                if (!bannedUsers.includes(username)) {
+                                    bannedUsers.push(username);
+                                }
                             }
-                        }
-                    });
-                    bannedUsers.sort();
-                    console.log("Banned users updated from HTML recently unfollowed:", bannedUsers);
-                } else if (Array.isArray(parsedData) && parsedData.every(item => item.string_list_data)) {
-                    // This could be followers_1.json. We need a heuristic to distinguish.
-                    if (!parsedData.some(item => item.title === "Recently Unfollowed")) {
-                        followersData = parsedData;
+                        });
+                        bannedUsers.sort();
+                        console.log("Banned users updated from HTML recently unfollowed:", bannedUsers);
                     }
-                } else if (parsedData.messages && Array.isArray(parsedData.messages)) {
-                    processMessageData(parsedData, tempMessageUsernamesMap);
+                    else if (Array.isArray(jsonData) && jsonData.every(item => item.string_list_data)) {
+                        // This could be followers_1.json. We need a heuristic to distinguish.
+                        // Assume it's followers if not already found and doesn't match unfollowed structure.
+                        if (!foundFollowers && !jsonData.some(item => item.title === "Recently Unfollowed")) { // Simple check to distinguish
+                            followersData = jsonData;
+                            foundFollowers = true;
+                        }
+                    } else if (jsonData.messages && Array.isArray(jsonData.messages)) {
+                        // This might be a message HTML file
+                        processMessageData(jsonData, tempMessageUsernamesMap);
+                        foundMessageContent = true;
+                    }
+                } catch (e) {
+                    // Not valid JSON in this pre tag, or not the data we're looking for
+                    console.warn("Could not parse JSON from a pre tag or it's not expected data:", e);
+                }
+            }
+
+            // Fallback: Try to find JSON in script tags (less common for Instagram, but good to have)
+            if (!foundFollowing || !foundFollowers || !foundRecentlyUnfollowed || !foundMessageContent) {
+                const scriptElements = doc.querySelectorAll('script[type="application/json"]');
+                for (const script of scriptElements) {
+                    try {
+                        const jsonData = JSON.parse(script.textContent);
+                        if (jsonData.relationships_following) {
+                            followingData = jsonData;
+                            foundFollowing = true;
+                        } else if (jsonData.relationships_unfollowed_users && Array.isArray(jsonData.relationships_unfollowed_users)) {
+                            recentlyUnfollowedData = jsonData;
+                            foundRecentlyUnfollowed = true;
+                            recentlyUnfollowedData.relationships_unfollowed_users.forEach(item => {
+                                if (item.string_list_data && item.string_list_data.length > 0) {
+                                    const username = item.string_list_data[0].value.toLowerCase(); // Store in lowercase
+                                    if (!bannedUsers.includes(username)) {
+                                        bannedUsers.push(username);
+                                    }
+                                }
+                            });
+                            bannedUsers.sort();
+                            console.log("Banned users updated from HTML script recently unfollowed:", bannedUsers);
+                        } else if (Array.isArray(jsonData) && jsonData.every(item => item.string_list_data)) {
+                            if (!foundFollowers && !jsonData.some(item => item.title === "Recently Unfollowed")) {
+                                followersData = jsonData;
+                                foundFollowers = true;
+                            }
+                        } else if (jsonData.messages && Array.isArray(jsonData.messages)) {
+                            processMessageData(jsonData, tempMessageUsernamesMap);
+                            foundMessageContent = true;
+                        }
+                    } catch (e) {
+                        console.warn("Could not parse JSON from a script tag:", e);
+                    }
                 }
             }
 
@@ -2342,7 +2434,9 @@
 
     // Helper function to process message data (used by both ZIP and HTML parsing)
     function processMessageData(messageData, tempMessageUsernamesMap) {
-        const instagramLinkRegex = /(?:https?:\/\/)?(?:www\.)?instagram\.com\/([a-zA-Z0-9_.]+)/g;
+        // Regex to find Instagram links (e.g., instagram.com/username)
+        const instagramLinkRegex = /(?:https?:\/\/)?(?:www\.)?instagram\.com\/([a-zA-Z0-9_.]+)(?:\/)?/g;
+        // Regex to find @usernames (e.g., @username)
         const atUsernameRegex = /(?<!\w)@([a-zA-Z0-9_.]+)(?!\w)/g;
 
         if (messageData.messages && Array.isArray(messageData.messages)) {
@@ -2365,7 +2459,8 @@
                     while ((match = atUsernameRegex.exec(message.content)) !== null) {
                         const username = match[1];
                         // Basic check to avoid common words, could be improved
-                        if (username.length > 2 && !username.includes('.')) { // Simple heuristic
+                        // Ensure it's not just a single character or common punctuation, and doesn't contain '.' which usually indicates a file extension or part of a URL.
+                        if (username.length > 2 && !username.includes('.')) { 
                             if (!tempMessageUsernamesMap.has(username) || tempMessageUsernamesMap.get(username) < messageTimestamp) {
                                 tempMessageUsernamesMap.set(username, messageTimestamp);
                             }
@@ -3435,7 +3530,8 @@
         notFollowingBackFilteredCountElem = document.getElementById('not-following-back-filtered-count');
         notFollowingBackTotalCountElem = document.getElementById('not-following-back-total-count');
         youDontFollowBackCountElem = document.getElementById('you-dont-follow-back-count');
-
+        analyticsSection = document.getElementById('analytics-section'); // Assign analyticsSection
+        
         uploadNewDataBtn = document.getElementById('upload-new-data-btn');
         searchInput = document.getElementById('search-input');
         timeFilterSelect = document.getElementById('time-filter-select');
@@ -3456,7 +3552,7 @@
         bannedUsersLinkSidebarAnalytics = document.getElementById('banned-users-link-sidebar-analytics'); // New
 
         // New Accounts Management elements assignment
-        accountsSection = document.getElementById('accounts-section'); // Assign accounts section
+        accountsSection = document.getElementById('accounts-section'); // Assign accountsSection
         dashboardLinkSidebarAccounts = document.getElementById('dashboard-link-sidebar-accounts');
         analyticsLinkSidebarAccounts = document.getElementById('analytics-link-sidebar-accounts');
         accountsLinkSidebarAccounts = document.getElementById('accounts-link-sidebar-accounts');
@@ -3477,7 +3573,7 @@
         accountsManagementList = document.getElementById('accounts-management-list');
 
         // New Banned Users Page elements assignment
-        bannedUsersPageSection = document.getElementById('banned-users-page-section'); // Assign banned users page section
+        bannedUsersPageSection = document.getElementById('banned-users-page-section'); // Assign bannedUsersPageSection
         dashboardLinkSidebarBanned = document.getElementById('dashboard-link-sidebar-banned');
         analyticsLinkSidebarBanned = document.getElementById('analytics-link-sidebar-banned');
         accountsLinkSidebarBanned = document.getElementById('accounts-link-sidebar-banned');
