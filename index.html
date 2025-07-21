@@ -3572,112 +3572,25 @@
         }
     }
 
-// NEW: Function to handle adding a single account via Cloud Function
-const handleAddSingleAccount = async () => {
-    const singleAddButton = document.getElementById('add-single-account-btn');
-    const username = singleAddAccountInput.value.trim();
-
-    if (!username) {
-        showAlert('Please enter a username.', 'info');
-        return;
-    }
-    if (!authInstance.currentUser) {
-        showAlert('You must be logged in to add an account.', 'error');
-        openAuthModal();
-        return;
-    }
-
-    // Show loading state
-    singleAddButton.classList.add('loading');
-    singleAddButton.disabled = true;
-
-    try {
-        // Call the cloud function
-        const result = await addInstagramAccountCallable({ usernameToAdd: username });
-        showNotification(result.data.message, result.data.status === 'success' ? 'success' : 'info');
-
-        // If successful, clear input and refresh data
-        if (result.data.status === 'success') {
-            singleAddAccountInput.value = '';
-            // Refresh the data on the page to reflect the change
-            if (currentFileData) {
-                await loadDataForUpload(currentFileData.id);
-            }
+    const handleAddSingleAccount = async () => {
+        const input = singleAddAccountInput.value.trim();
+        if (!input) {
+            showNotification('Please enter a username or link.', 'info');
+            return;
         }
-    } catch (error) {
-        console.error("Error calling addinstagramaccount function:", error);
-        showAlert(`Error: ${error.message}`, 'error');
-    } finally {
-        // Hide loading state
-        singleAddButton.classList.remove('loading');
-        singleAddButton.disabled = false;
-    }
-};
-
-// NEW: Function to handle adding bulk accounts via Cloud Function
-const handleAddBulkAccounts = async () => {
-    const bulkAddButton = document.getElementById('add-bulk-accounts-btn');
-    const text = bulkAddAccountInput.value.trim();
-
-    if (!text) {
-        showNotification('Please enter usernames in the bulk input area.', 'info');
-        return;
-    }
-    if (!authInstance.currentUser) {
-        showAlert('You must be logged in to add accounts.', 'error');
-        openAuthModal();
-        return;
-    }
-
-    const usernames = text.split(/[\n,]+/).map(name => name.trim()).filter(name => name.length > 0);
-    if (usernames.length === 0) {
-        showNotification('No valid usernames found in the input.', 'info');
-        return;
-    }
-
-    // Show loading state
-    bulkAddButton.classList.add('loading');
-    bulkAddButton.disabled = true;
-
-    let successCount = 0;
-    let noopCount = 0;
-    let errorCount = 0;
-
-    // Call the function for each username sequentially
-    for (const username of usernames) {
-        try {
-            const result = await addInstagramAccountCallable({ usernameToAdd: username });
-            if (result.data.status === 'success') {
-                successCount++;
+        const username = parseUsernamesFromText(input)[0]; // Use existing parser
+        if (username) {
+            const added = await addManuallyAddedAccount(username);
+            if (added) {
+                singleAddAccountInput.value = '';
+                showNotification(`Account ${username} added!`, 'success');
             } else {
-                noopCount++;
+                showNotification(`Account ${username} is already in your following list or review list.`, 'info');
             }
-        } catch (error) {
-            console.error(`Error adding ${username}:`, error);
-            errorCount++;
+        } else {
+            showNotification('Could not extract a valid username from the input.', 'error');
         }
-    }
-
-    // Hide loading state
-    bulkAddButton.classList.remove('loading');
-    bulkAddButton.disabled = false;
-
-    // Show summary notification
-    let summaryMessage = '';
-    if (successCount > 0) summaryMessage += `${successCount} new accounts added. `;
-    if (noopCount > 0) summaryMessage += `${noopCount} were already in the list. `;
-    if (errorCount > 0) summaryMessage += `${errorCount} failed.`;
-
-    showNotification(summaryMessage, errorCount > 0 ? 'error' : 'success', 5000);
-
-    // If any were successful, clear input and refresh data
-    if (successCount > 0) {
-        bulkAddAccountInput.value = '';
-        if (currentFileData) {
-            await loadDataForUpload(currentFileData.id);
-        }
-    }
-};
+    };
 
     const handleAddBulkAccounts = async () => {
         const text = bulkAddAccountInput.value.trim();
