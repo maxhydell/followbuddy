@@ -386,6 +386,25 @@
         opacity: 1;
         transform: translateY(0);
     }
+    /* Loading spinner for buttons */
+    .button-spinner {
+        display: none;
+        width: 20px;
+        height: 20px;
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        border-radius: 50%;
+        border-top-color: #fff;
+        animation: spin 1s ease-in-out infinite;
+    }
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+    button.loading .button-text {
+        display: none;
+    }
+    button.loading .button-spinner {
+        display: block;
+    }
   </style>
 </head>
 <body class="flex flex-col min-h-screen">
@@ -977,13 +996,19 @@
   <section id="add-account-page-section" class="hidden py-16 px-6 bg-gray-900">
     <div class="max-w-xl mx-auto bg-gray-800 p-8 rounded-xl shadow-lg text-center">
       <h3 class="text-3xl font-bold mb-4 text-gray-100">Add Account(s) I Follow</h3>
-      <p class="text-gray-300 mb-6">Manually add Instagram usernames or links to your "Following" list. This will update your dashboard metrics.</p>
+      <p class="text-gray-300 mb-6">Manually add Instagram usernames to your "Following" list. This will update your dashboard metrics by calling your new cloud function.</p>
       <div class="flex flex-col gap-4 mb-6">
-        <input type="text" id="single-add-account-input" placeholder="Enter single username or link" class="w-full border border-gray-600 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-700 text-gray-100" />
-        <button id="add-single-account-btn" class="bg-blue-600 text-white px-6 py-3 rounded-lg shadow hover:bg-blue-700 transition-colors duration-200 font-medium">Add Single Account</button>
+        <input type="text" id="single-add-account-input" placeholder="Enter single username" class="w-full border border-gray-600 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-700 text-gray-100" />
+        <button id="add-single-account-btn" class="bg-blue-600 text-white px-6 py-3 rounded-lg shadow hover:bg-blue-700 transition-colors duration-200 font-medium flex items-center justify-center h-12">
+            <span class="button-text">Add Single Account</span>
+            <div class="button-spinner"></div>
+        </button>
         <div class="border-t border-gray-700 my-4"></div>
-        <textarea id="bulk-add-account-input" placeholder="Enter multiple usernames or links, separated by commas or new lines" rows="6" class="w-full border border-gray-600 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-700 text-gray-100 resize-y"></textarea>
-        <button id="add-bulk-accounts-btn" class="bg-purple-600 text-white px-6 py-3 rounded-lg shadow hover:bg-purple-700 transition-colors duration-200 font-medium">Add All Accounts</button>
+        <textarea id="bulk-add-account-input" placeholder="Enter multiple usernames, separated by commas or new lines" rows="6" class="w-full border border-gray-600 rounded-lg px-4 py-3 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-700 text-gray-100 resize-y"></textarea>
+        <button id="add-bulk-accounts-btn" class="bg-purple-600 text-white px-6 py-3 rounded-lg shadow hover:bg-purple-700 transition-colors duration-200 font-medium flex items-center justify-center h-12">
+            <span class="button-text">Add All Accounts</span>
+            <div class="button-spinner"></div>
+        </button>
       </div>
       <div id="added-accounts-preview" class="max-h-60 overflow-y-auto border border-gray-600 rounded-lg p-4 bg-gray-700">
         <p class="text-gray-500 text-center">Accounts added will appear here.</p>
@@ -991,6 +1016,7 @@
     </div>
   </section>
   <!-- End New Add Account Page Section -->
+
 
 
   <div id="upload-data-modal" class="modal">
@@ -1048,9 +1074,12 @@
 
 
   <script type="module">
+    // Firebase SDK imports
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut, createUserWithEmailAndPassword, signInWithEmailAndPassword, signInWithCustomToken, signInAnonymously } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
     import { getFirestore, doc, setDoc, getDoc, collection, query, orderBy, getDocs } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+    // NEW: Import Firebase Functions SDK
+    import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-functions.js";
 
     // Global Firebase instances and user data
     let appInstance;
@@ -1063,6 +1092,8 @@
     let safeUsers = []; // Store safe users
     let bannedUsers = []; // New: Store banned users (permanent list)
     let allUserUploadsMetadata = []; // Stores {id, timestamp, fileName, followersList, followingList} for all uploads
+    let functionsInstance; // NEW: For Cloud Functions
+    let addInstagramAccountCallable; // NEW: The callable function reference
 
     // New global variables for Accounts Management
     let accountsManuallyAddedForReview = []; // List of accounts manually added for review in accounts management
@@ -1331,6 +1362,9 @@
             appInstance = initializeApp(firebaseConfig);
             authInstance = getAuth(appInstance);
             dbInstance = getFirestore(appInstance);
+            // NEW: Initialize Functions and the callable function reference
+            functionsInstance = getFunctions(appInstance, 'us-central1'); // Specify region if not default
+            addInstagramAccountCallable = httpsCallable(functionsInstance, 'addinstagramaccount');
 
             onAuthStateChanged(authInstance, async (user) => {
                 if (user) {
@@ -3538,25 +3572,112 @@
         }
     }
 
-    const handleAddSingleAccount = async () => {
-        const input = singleAddAccountInput.value.trim();
-        if (!input) {
-            showNotification('Please enter a username or link.', 'info');
-            return;
-        }
-        const username = parseUsernamesFromText(input)[0]; // Use existing parser
-        if (username) {
-            const added = await addManuallyAddedAccount(username);
-            if (added) {
-                singleAddAccountInput.value = '';
-                showNotification(`Account ${username} added!`, 'success');
-            } else {
-                showNotification(`Account ${username} is already in your following list or review list.`, 'info');
+// NEW: Function to handle adding a single account via Cloud Function
+const handleAddSingleAccount = async () => {
+    const singleAddButton = document.getElementById('add-single-account-btn');
+    const username = singleAddAccountInput.value.trim();
+
+    if (!username) {
+        showAlert('Please enter a username.', 'info');
+        return;
+    }
+    if (!authInstance.currentUser) {
+        showAlert('You must be logged in to add an account.', 'error');
+        openAuthModal();
+        return;
+    }
+
+    // Show loading state
+    singleAddButton.classList.add('loading');
+    singleAddButton.disabled = true;
+
+    try {
+        // Call the cloud function
+        const result = await addInstagramAccountCallable({ usernameToAdd: username });
+        showNotification(result.data.message, result.data.status === 'success' ? 'success' : 'info');
+
+        // If successful, clear input and refresh data
+        if (result.data.status === 'success') {
+            singleAddAccountInput.value = '';
+            // Refresh the data on the page to reflect the change
+            if (currentFileData) {
+                await loadDataForUpload(currentFileData.id);
             }
-        } else {
-            showNotification('Could not extract a valid username from the input.', 'error');
         }
-    };
+    } catch (error) {
+        console.error("Error calling addinstagramaccount function:", error);
+        showAlert(`Error: ${error.message}`, 'error');
+    } finally {
+        // Hide loading state
+        singleAddButton.classList.remove('loading');
+        singleAddButton.disabled = false;
+    }
+};
+
+// NEW: Function to handle adding bulk accounts via Cloud Function
+const handleAddBulkAccounts = async () => {
+    const bulkAddButton = document.getElementById('add-bulk-accounts-btn');
+    const text = bulkAddAccountInput.value.trim();
+
+    if (!text) {
+        showNotification('Please enter usernames in the bulk input area.', 'info');
+        return;
+    }
+    if (!authInstance.currentUser) {
+        showAlert('You must be logged in to add accounts.', 'error');
+        openAuthModal();
+        return;
+    }
+
+    const usernames = text.split(/[\n,]+/).map(name => name.trim()).filter(name => name.length > 0);
+    if (usernames.length === 0) {
+        showNotification('No valid usernames found in the input.', 'info');
+        return;
+    }
+
+    // Show loading state
+    bulkAddButton.classList.add('loading');
+    bulkAddButton.disabled = true;
+
+    let successCount = 0;
+    let noopCount = 0;
+    let errorCount = 0;
+
+    // Call the function for each username sequentially
+    for (const username of usernames) {
+        try {
+            const result = await addInstagramAccountCallable({ usernameToAdd: username });
+            if (result.data.status === 'success') {
+                successCount++;
+            } else {
+                noopCount++;
+            }
+        } catch (error) {
+            console.error(`Error adding ${username}:`, error);
+            errorCount++;
+        }
+    }
+
+    // Hide loading state
+    bulkAddButton.classList.remove('loading');
+    bulkAddButton.disabled = false;
+
+    // Show summary notification
+    let summaryMessage = '';
+    if (successCount > 0) summaryMessage += `${successCount} new accounts added. `;
+    if (noopCount > 0) summaryMessage += `${noopCount} were already in the list. `;
+    if (errorCount > 0) summaryMessage += `${errorCount} failed.`;
+
+    showNotification(summaryMessage, errorCount > 0 ? 'error' : 'success', 5000);
+
+    // If any were successful, clear input and refresh data
+    if (successCount > 0) {
+        bulkAddAccountInput.value = '';
+        if (currentFileData) {
+            await loadDataForUpload(currentFileData.id);
+        }
+    }
+};
 
     const handleAddBulkAccounts = async () => {
         const text = bulkAddAccountInput.value.trim();
