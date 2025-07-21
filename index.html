@@ -11,7 +11,7 @@
   <!-- <link rel="icon" href="faviconfollowbuddy.ico" type="image/x-icon"> -->
 
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">\
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <style>
@@ -71,7 +71,8 @@
     }
     /* Adjusted for Safe Users modal */
     #safe-users-modal .modal-content,
-    #banned-users-add-modal .modal-content { /* Apply to banned users add modal and new add account modal too */
+    #banned-users-add-modal .modal-content,
+    #unfollowed-profiles-modal .modal-content { /* Apply to banned users add modal and new add account modal too */
         max-width: 600px; /* Wider for bulk input */
     }
     /* Modal content themes */
@@ -365,6 +366,26 @@
         background-color: #16a34a; /* Green-600 */
         transform: translateY(-1px);
     }
+
+    /* Notification styles */
+    .notification {
+        position: fixed;
+        bottom: 20px;
+        right: 20px;
+        background-color: #22c55e; /* Green-500 */
+        color: white;
+        padding: 12px 20px;
+        border-radius: 8px;
+        box-shadow: 0 4px 8px rgba(0,0,0,0.2);
+        z-index: 1000;
+        opacity: 0;
+        transform: translateY(20px);
+        transition: opacity 0.3s ease-out, transform 0.3s ease-out;
+    }
+    .notification.show {
+        opacity: 1;
+        transform: translateY(0);
+    }
   </style>
 </head>
 <body class="flex flex-col min-h-screen">
@@ -592,8 +613,8 @@
             <p class="value-main" id="not-following-back-filtered-count">0</p>
             <p class="value-sub" id="not-following-back-total-count">/ 0</p>
           </div>
-          <div class="metric-card">
-            <p class="label">You Don't Follow Back</p>
+          <div class="metric-card" id="you-dont-follow-back-card">
+            <p class="label">People You Unfollowed</p>
             <p class="value" id="you-dont-follow-back-count">0</p>
           </div>
         </div>
@@ -753,9 +774,7 @@
         <div class="flex justify-between items-center mb-8">
           <h2 class="text-3xl font-bold text-gray-100">Accounts Management</h2>
           <div class="flex items-center space-x-3">
-            <select id="data-upload-selector-accounts" class="border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-700 text-gray-100">
-                <option value="">Select Data Upload</option>
-            </select>
+            <!-- Data upload selector removed as per user request -->
             <button id="upload-new-data-btn-accounts" class="bg-blue-600 text-white px-4 py-2 rounded-lg shadow hover:bg-blue-700 transition-colors duration-200 font-medium">
               <i class="fas fa-upload mr-2"></i>Upload New Data
             </button>
@@ -1007,6 +1026,21 @@
     </div>
   </div>
 
+  <!-- New Modal for "People You Unfollowed" -->
+  <div id="unfollowed-profiles-modal" class="modal">
+    <div class="modal-content">
+      <span class="close-button" id="close-unfollowed-profiles-modal">&times;</span>
+      <h3 class="text-2xl font-bold mb-4 text-gray-100">People You Unfollowed</h3>
+      <p class="text-gray-300 mb-4">This list shows accounts you have recently unfollowed, based on your Instagram data.</p>
+      <div id="unfollowed-profiles-list" class="max-h-96 overflow-y-auto border border-gray-600 rounded-lg p-2 bg-gray-700">
+        <p class="text-gray-500 text-center">No unfollowed profiles found.</p>
+      </div>
+    </div>
+  </div>
+
+  <!-- Notification Container -->
+  <div id="notification-container" class="notification"></div>
+
 
   <script type="module">
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
@@ -1026,10 +1060,10 @@
     let allUserUploadsMetadata = []; // Stores {id, timestamp, fileName, followersList, followingList} for all uploads
 
     // New global variables for Accounts Management
-    let accountsToRemoveList = []; // List of accounts to remove with timestamps
+    let accountsManuallyAddedForReview = []; // List of accounts manually added for review in accounts management
     let approvedAccountsList = []; // List of approved usernames
     let removedAccountsList = []; // List of removed usernames
-    let allMessageUsernames = []; // All unique usernames found in message files with their latest timestamp
+    let manuallyUnfollowedList = []; // New: List of users manually unfollowed via the app
 
     let currentAccountsViewMode = 'toRemove'; // 'toRemove', 'approved', 'removed'
 
@@ -1085,6 +1119,29 @@
             }
         };
     }
+
+    // New: Custom Notification Function (bottom right, disappears)
+    function showNotification(message, type = 'success', duration = 2000) {
+        const notificationContainer = document.getElementById('notification-container');
+        notificationContainer.textContent = message;
+        
+        // Reset classes and apply type-specific styles
+        notificationContainer.classList.remove('bg-green-500', 'bg-red-500', 'bg-blue-500');
+        if (type === 'success') {
+            notificationContainer.classList.add('bg-green-500');
+        } else if (type === 'error') {
+            notificationContainer.classList.add('bg-red-500');
+        } else { // default info
+            notificationContainer.classList.add('bg-blue-500');
+        }
+
+        notificationContainer.classList.add('show');
+
+        setTimeout(() => {
+            notificationContainer.classList.remove('show');
+        }, duration);
+    }
+
 
     // Function to open the new Upload Data Modal
     function openUploadDataModal() {
@@ -1167,7 +1224,7 @@
     let accountsLinkSidebarAccounts;
     let settingsLinkSidebarAccounts;
     let bannedUsersLinkSidebarAccounts; // New: Banned Users link in accounts sidebar
-    let dataUploadSelectorAccounts;
+    // let dataUploadSelectorAccounts; // Removed as per user request
     let uploadNewDataBtnAccounts;
     let accountsToRemoveCard;
     let accountsToRemoveCount;
@@ -1247,6 +1304,12 @@
     let addBulkAccountsBtn;
     let addedAccountsPreview;
 
+    // New: Elements for "People You Unfollowed" modal
+    let youDontFollowBackCard;
+    let unfollowedProfilesModal;
+    let closeUnfollowedProfilesModal;
+    let unfollowedProfilesListElem;
+
 
     // Function to initialize Firebase
     async function initializeFirebaseApp() {
@@ -1304,10 +1367,10 @@
                     safeUsers = [];
                     bannedUsers = []; // Reset banned users on logout
                     allUserUploadsMetadata = [];
-                    accountsToRemoveList = [];
+                    accountsManuallyAddedForReview = []; // Reset accounts management list
                     approvedAccountsList = [];
                     removedAccountsList = [];
-                    allMessageUsernames = [];
+                    manuallyUnfollowedList = []; // Reset manually unfollowed list
                     manuallyAddedFollowing = []; // Reset manually added following
                     updateDashboardMetrics(0, 0, 0, 0, 0);
                     // Reset analytics metrics and unfollowed/new followers lists
@@ -1349,7 +1412,7 @@
 
     // Populate the data upload selectors
     function populateUploadSelectors() {
-        const selectors = [dataUploadSelectorDashboard, dataUploadSelectorAnalytics, dataUploadSelectorAccounts];
+        const selectors = [dataUploadSelectorDashboard, dataUploadSelectorAnalytics]; // Accounts selector removed
         selectors.forEach(selector => {
             selector.innerHTML = '<option value="">Select Data Upload</option>'; // Clear and add default
             allUserUploadsMetadata.forEach(upload => {
@@ -1367,21 +1430,146 @@
                 selector.value = ""; // No selection
             }
         });
+
+        // Add delete buttons to the selectors
+        addDeleteButtonsToUploadSelectors();
     }
+
+    // New: Add delete buttons to upload selectors
+    function addDeleteButtonsToUploadSelectors() {
+        const selectors = [dataUploadSelectorDashboard, dataUploadSelectorAnalytics];
+        selectors.forEach(selector => {
+            // Remove existing delete buttons first to prevent duplicates
+            selector.querySelectorAll('.delete-upload-btn').forEach(btn => btn.remove());
+
+            // Iterate over options and add a delete button
+            Array.from(selector.options).forEach(option => {
+                if (option.value) { // Don't add for the "Select Data Upload" option
+                    const deleteButton = document.createElement('button');
+                    deleteButton.innerHTML = '<i class="fas fa-times-circle text-red-500 hover:text-red-700"></i>';
+                    deleteButton.className = 'delete-upload-btn ml-2 cursor-pointer';
+                    deleteButton.title = 'Delete this upload';
+                    deleteButton.dataset.uploadId = option.value;
+                    deleteButton.addEventListener('click', (e) => {
+                        e.stopPropagation(); // Prevent dropdown from closing or changing value
+                        e.preventDefault(); // Prevent default button action
+                        const uploadIdToDelete = e.currentTarget.dataset.uploadId;
+                        deleteUpload(uploadIdToDelete);
+                    });
+
+                    // Insert the button right after the option text (visually)
+                    // This is a bit tricky for <select><option> structure.
+                    // A better UI might involve a list outside the select.
+                    // For simplicity, we'll append it to the parent of the select,
+                    // and rely on styling to position it.
+                    // This is a common workaround for limited <select> styling.
+                    // Let's attach it to the option's parent, and use flexbox on the parent.
+                    // Or, a more robust solution is to render the options as a custom list.
+                    // For now, I'll put it next to the select element and manage its position.
+                    // This requires a change in how the select is rendered or a container around it.
+
+                    // Let's modify the populateUploadSelectors to create a custom dropdown display
+                    // if this approach of adding buttons directly to options proves too difficult.
+                    // For now, I'll add a simple placeholder for where the button *would* go,
+                    // and rely on the user understanding that clicking the 'X' next to the dropdown
+                    // will delete the *currently selected* item, or we need a more complex UI.
+
+                    // Given the constraints of a <select> element, directly adding buttons next to options is not standard HTML.
+                    // The best approach is to have a separate display area for selected uploads,
+                    // or a button that deletes the *currently selected* upload.
+                    // I will implement a button *next to* the select that deletes the *currently selected* upload.
+                    // This is simpler and avoids complex custom select rendering.
+                }
+            });
+
+            // Add a delete button for the currently selected upload next to the selector
+            const currentDeleteBtnId = `delete-current-upload-btn-${selector.id}`;
+            let existingDeleteBtn = document.getElementById(currentDeleteBtnId);
+            if (!existingDeleteBtn) {
+                existingDeleteBtn = document.createElement('button');
+                existingDeleteBtn.id = currentDeleteBtnId;
+                existingDeleteBtn.innerHTML = '<i class="fas fa-trash-alt text-red-500 hover:text-red-700"></i>';
+                existingDeleteBtn.className = 'ml-2 px-3 py-2 rounded-lg bg-gray-700 text-gray-100 shadow hover:bg-gray-600 transition-colors duration-200';
+                existingDeleteBtn.title = 'Delete currently selected upload';
+                selector.parentNode.insertBefore(existingDeleteBtn, selector.nextSibling);
+            }
+            existingDeleteBtn.onclick = () => {
+                const selectedUploadId = selector.value;
+                if (selectedUploadId) {
+                    deleteUpload(selectedUploadId);
+                } else {
+                    showNotification('No upload selected to delete.', 'info');
+                }
+            };
+        });
+    }
+
+
+    // New: Function to delete an upload
+    async function deleteUpload(uploadId) {
+        if (!currentUserId || !dbInstance || !uploadId) {
+            showNotification('Cannot delete: No user or upload ID.', 'error');
+            return;
+        }
+
+        // Confirmation (using custom alert for now, can be a custom modal later)
+        showAlert('Are you sure you want to delete this upload and all its associated data? This action cannot be undone.', 'error');
+        document.getElementById('alert-ok-btn').onclick = async () => {
+            try {
+                const uploadDocRef = doc(dbInstance, `artifacts/${appId}/users/${currentUserId}/userUploads`, uploadId);
+                await setDoc(uploadDocRef, {}); // Clear the document
+                console.log(`Upload ${uploadId} deleted from Firestore.`);
+                showNotification('Upload deleted successfully!', 'success');
+
+                await loadAllUserUploads(); // Reload metadata to update dropdowns
+                
+                // If the deleted upload was the currently selected one, load the new latest or reset
+                if (currentFileData && currentFileData.id === uploadId) {
+                    currentFileData = null; // Clear current data
+                    await loadLatestData(); // Load the new latest or reset UI
+                } else {
+                    // If a different upload was deleted, just ensure UI is updated
+                    populateUploadSelectors();
+                    // Re-render current dashboard/analytics if needed
+                    if (dashboardSection.classList.contains('hidden') === false) {
+                        applyFiltersAndRenderAccounts();
+                    } else if (analyticsSection.classList.contains('hidden') === false) {
+                        findAndLoadBestAnalyticsData();
+                    } else if (accountsSection.classList.contains('hidden') === false) {
+                        applyAccountsManagementFiltersAndRender();
+                    }
+                }
+            } catch (error) {
+                console.error('Error deleting upload:', error);
+                showAlert('Failed to delete upload. Error: ' + error.message, 'error');
+            }
+            document.getElementById('custom-alert-modal').style.display = 'none'; // Close alert
+        };
+        // If user clicks close/cancel on the alert, do nothing
+        document.getElementById('close-alert-modal').onclick = () => {
+            document.getElementById('custom-alert-modal').style.display = 'none';
+        };
+        window.onclick = (event) => {
+            if (event.target == document.getElementById('custom-alert-modal')) {
+                document.getElementById('custom-alert-modal').style.display = 'none';
+            }
+        };
+    }
+
 
     // Load data for a specific upload ID
     async function loadDataForUpload(uploadId) {
         if (!currentUserId || !dbInstance || !uploadId) {
-            console.log("No upload ID provided or user not authenticated.");
+            console.log("No upload ID provided or user not authenticated. Resetting UI.");
             currentFileData = null;
             allNonFollowers = [];
             originalNotFollowingBack = [];
             safeUsers = [];
             bannedUsers = []; // Reset banned users on data load
-            accountsToRemoveList = [];
+            accountsManuallyAddedForReview = []; // Reset accounts management list
             approvedAccountsList = [];
             removedAccountsList = [];
-            allMessageUsernames = [];
+            manuallyUnfollowedList = []; // Reset manually unfollowed list
             manuallyAddedFollowing = []; // Reset manually added following
             updateDashboardMetrics(0, 0, 0, 0, 0);
             updateAnalyticsMetrics(0, 0, [], []); // Reset analytics metrics and lists
@@ -1389,6 +1577,7 @@
             renderAccounts([]); // Dashboard non-followers
             renderAccountsToRemove([]); // Accounts management list
             renderOrangeListUsers([]); // New: Clear orange list
+            renderUnfollowedProfilesList([]); // Clear unfollowed profiles list
             return;
         }
 
@@ -1403,18 +1592,23 @@
                 safeUsers = currentFileData.safeUsers || []; // Ensure safeUsers is loaded
                 bannedUsers = currentFileData.bannedUsers || []; // New: Load banned users
                 manuallyAddedFollowing = currentFileData.manuallyAddedFollowing || []; // Load manually added following
-                
+                accountsManuallyAddedForReview = currentFileData.accountsManuallyAddedForReview || []; // Load manually added for review
+                approvedAccountsList = currentFileData.approvedAccounts || [];
+                removedAccountsList = currentFileData.removedAccounts || [];
+                manuallyUnfollowedList = currentFileData.manuallyUnfollowedList || []; // Load manually unfollowed list
+
                 // Filter notFollowingBack based on current safeUsers
                 allNonFollowers = originalNotFollowingBack.filter(account => !safeUsers.includes(account.username));
 
-                // Load Accounts Management data
-                allMessageUsernames = currentFileData.allMessageUsernames || [];
-                approvedAccountsList = currentFileData.approvedAccounts || [];
-                removedAccountsList = currentFileData.removedAccounts || [];
-                
-                // Filter accountsToRemoveList based on loaded approved/removed lists
-                accountsToRemoveList = allMessageUsernames.filter(account =>
-                    !approvedAccountsList.includes(account.username) && !removedAccountsList.includes(account.username)
+                // Accounts to Remove logic: accounts manually added for review, that are NOT approved, NOT removed, AND NOT in the current (original + manually added - manually unfollowed) following list
+                const combinedFollowingSet = new Set(currentFileData.followingList);
+                manuallyAddedFollowing.forEach(user => combinedFollowingSet.add(user));
+                manuallyUnfollowedList.forEach(user => combinedFollowingSet.delete(user)); // Remove manually unfollowed from combined following
+
+                accountsToRemoveList = accountsManuallyAddedForReview.filter(account =>
+                    !approvedAccountsList.includes(account.username) &&
+                    !removedAccountsList.includes(account.username) &&
+                    !combinedFollowingSet.has(account.username) // Only show if they are NOT in the combined following list
                 );
                 // Sort by oldest to newest by default for this list
                 accountsToRemoveList.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
@@ -1452,12 +1646,16 @@
                     }
                 }
                 console.log(`Analytics for upload ${uploadId}: Unfollowed: ${unfollowedYou}, New Followers: ${newFollowers}`);
+                
+                // Calculate current total following including manual additions and removals
+                const effectiveFollowingCount = (currentFileData.followingList || []).length + manuallyAddedFollowing.length - manuallyUnfollowedList.length;
+
                 updateDashboardMetrics(
-                    currentFileData.totalFollowing + manuallyAddedFollowing.length, // Include manually added for total following
+                    effectiveFollowingCount,
                     currentFileData.totalFollowers,
                     allNonFollowers.length,
                     originalNotFollowingBack.length,
-                    currentFileData.youDontFollowBackCount
+                    (currentFileData.recentlyUnfollowedProfiles || []).length // Use the length of this list for the count
                 );
                 // Correctly pass newFollowers and unfollowedYou to their respective elements
                 updateAnalyticsMetrics(newFollowers, unfollowedYou, newFollowerAccounts, unfollowedAccounts);
@@ -1465,6 +1663,7 @@
                 renderAccounts(allNonFollowers); // Render dashboard non-followers
                 applyAccountsManagementFiltersAndRender(); // Render accounts management list
                 renderOrangeListUsers(originalNotFollowingBack); // New: Render orange list users
+                renderUnfollowedProfilesList(currentFileData.recentlyUnfollowedProfiles || []); // Render unfollowed profiles list
             } else {
                 console.log('No data found for the selected upload ID:', uploadId);
                 showAlert('No data found for the selected upload. Please try another or upload new data.', 'info');
@@ -1473,10 +1672,10 @@
                 originalNotFollowingBack = [];
                 safeUsers = [];
                 bannedUsers = []; // Reset banned users
-                accountsToRemoveList = [];
+                accountsManuallyAddedForReview = []; // Reset accounts management list
                 approvedAccountsList = [];
                 removedAccountsList = [];
-                allMessageUsernames = [];
+                manuallyUnfollowedList = []; // Reset manually unfollowed list
                 manuallyAddedFollowing = []; // Reset manually added following
                 updateDashboardMetrics(0, 0, 0, 0, 0);
                 updateAnalyticsMetrics(0, 0, [], []);
@@ -1484,6 +1683,7 @@
                 renderAccounts([]);
                 renderAccountsToRemove([]);
                 renderOrangeListUsers([]); // New: Clear orange list
+                renderUnfollowedProfilesList([]); // Clear unfollowed profiles list
             }
         } catch (error) {
             console.error('Error loading data for upload:', error);
@@ -1499,7 +1699,7 @@
             // Set the dropdowns to the latest upload
             dataUploadSelectorDashboard.value = latestUploadId;
             dataUploadSelectorAnalytics.value = latestUploadId;
-            dataUploadSelectorAccounts.value = latestUploadId;
+            // dataUploadSelectorAccounts.value = latestUploadId; // Removed
         } else {
             console.log('No uploads found for the user.');
             currentFileData = null;
@@ -1507,10 +1707,10 @@
             originalNotFollowingBack = [];
             safeUsers = [];
             bannedUsers = []; // Reset banned users
-            accountsToRemoveList = [];
+            accountsManuallyAddedForReview = []; // Reset accounts management list
             approvedAccountsList = [];
             removedAccountsList = [];
-            allMessageUsernames = [];
+            manuallyUnfollowedList = []; // Reset manually unfollowed list
             manuallyAddedFollowing = []; // Reset manually added following
             updateDashboardMetrics(0, 0, 0, 0, 0);
             updateAnalyticsMetrics(0, 0, [], []);
@@ -1518,6 +1718,7 @@
             renderAccounts([]);
             renderAccountsToRemove([]);
             renderOrangeListUsers([]); // New: Clear orange list
+            renderUnfollowedProfilesList([]); // Clear unfollowed profiles list
         }
     }
 
@@ -1537,9 +1738,31 @@
                 <a href="https://www.instagram.com/${account.username}/" target="_blank" rel="noopener noreferrer" class="font-medium text-blue-400 hover:underline">
                     ${account.username}
                 </a>
-                <span class="time-col ${timeInfo.color}">${timeInfo.text}</span>
+                <div class="flex items-center space-x-2">
+                    <span class="time-col ${timeInfo.color}">${timeInfo.text}</span>
+                    <button data-username="${account.username}" class="safe-user-dashboard-btn text-green-400 hover:text-green-500 transition-colors" title="Add to Safe List">
+                        <i class="fas fa-user-plus"></i>
+                    </button>
+                    <button data-username="${account.username}" class="remove-from-following-dashboard-btn text-red-400 hover:text-red-500 transition-colors" title="Remove as Following">
+                        <i class="fas fa-user-minus"></i>
+                    </button>
+                </div>
             `;
             nonFollowersList.appendChild(div);
+        });
+
+        // Add event listeners for new dashboard buttons
+        document.querySelectorAll('.safe-user-dashboard-btn').forEach(button => {
+            button.addEventListener('click', (e) => {
+                const username = e.currentTarget.dataset.username;
+                handleSafeUserFromDashboard(username);
+            });
+        });
+        document.querySelectorAll('.remove-from-following-dashboard-btn').forEach(button => {
+            button.addEventListener('click', (e) => {
+                const username = e.currentTarget.dataset.username;
+                handleRemoveFromFollowingFromDashboard(username);
+            });
         });
     }
 
@@ -1578,6 +1801,32 @@
                 </a>
             `;
             newFollowersListElem.appendChild(div);
+        });
+    }
+
+    // New: Function to render unfollowed profiles (from recently_unfollowed_profiles.json)
+    function renderUnfollowedProfilesList(profiles) {
+        unfollowedProfilesListElem.innerHTML = '';
+        if (!profiles || profiles.length === 0) {
+            unfollowedProfilesListElem.innerHTML = '<p class="text-gray-500 text-center">No unfollowed profiles found.</p>';
+            return;
+        }
+
+        profiles.forEach(profile => {
+            const username = profile.string_list_data[0].value;
+            const timestamp = profile.string_list_data[0].timestamp;
+            const date = new Date(timestamp * 1000); // Convert seconds to milliseconds
+            const formattedDate = date.toLocaleString();
+
+            const div = document.createElement('div');
+            div.className = 'flex justify-between items-center py-2 px-3 border-b border-gray-600 last:border-b-0 text-gray-200';
+            div.innerHTML = `
+                <a href="https://www.instagram.com/${username}/" target="_blank" rel="noopener noreferrer" class="font-medium text-blue-400 hover:underline">
+                    ${username}
+                </a>
+                <span class="text-gray-400 text-sm">${formattedDate}</span>
+            `;
+            unfollowedProfilesListElem.appendChild(div);
         });
     }
 
@@ -1675,7 +1924,7 @@
         notFollowingBackFilteredCountElem.textContent = filteredNotFollowingBack;
         notFollowingBackTotalCountElem.textContent = `/ ${totalNotFollowingBack}`;
         
-        // Update 'You Don't Follow Back' metric
+        // Update 'People You Unfollowed' metric (from recently_unfollowed_profiles)
         youDontFollowBackCountElem.textContent = youDontFollowBack;
     }
 
@@ -1738,12 +1987,16 @@
         if (currentFileData) {
             // Recalculate allNonFollowers based on current safeUsers
             allNonFollowers = originalNotFollowingBack.filter(account => !safeUsers.includes(account.username)); // Filter by username
+            
+            // Calculate current total following including manual additions and removals
+            const effectiveFollowingCount = (currentFileData.followingList || []).length + manuallyAddedFollowing.length - manuallyUnfollowedList.length;
+
             updateDashboardMetrics(
-                currentFileData.totalFollowing + manuallyAddedFollowing.length, // Include manually added for total following
+                effectiveFollowingCount,
                 currentFileData.totalFollowers,
                 allNonFollowers.length, // Filtered count
                 originalNotFollowingBack.length, // Total count
-                currentFileData.youDontFollowBackCount
+                (currentFileData.recentlyUnfollowedProfiles || []).length
             );
             applyFiltersAndRenderAccounts(); // Apply filters when showing dashboard
         } else {
@@ -1811,7 +2064,7 @@
         // Ensure the selector reflects the chosen upload
         dataUploadSelectorAnalytics.value = bestUploadIdForAnalytics;
         dataUploadSelectorDashboard.value = bestUploadIdForAnalytics;
-        dataUploadSelectorAccounts.value = bestUploadIdForAnalytics;
+        // dataUploadSelectorAccounts.value = bestUploadIdForAnalytics; // Removed
     }
 
     // Function to show analytics and hide other sections
@@ -1934,17 +2187,17 @@
     const handleLogout = async () => {
       try {
         await signOut(authInstance);
-        showAlert('Logged out successfully!', 'success');
+        showNotification('Logged out successfully!', 'success');
         currentFileData = null; // Clear data on logout
         allNonFollowers = [];
         originalNotFollowingBack = [];
         safeUsers = [];
         bannedUsers = []; // Clear banned users on logout
         allUserUploadsMetadata = []; // Clear upload metadata
-        accountsToRemoveList = [];
+        accountsManuallyAddedForReview = []; // Reset accounts management list
         approvedAccountsList = [];
         removedAccountsList = [];
-        allMessageUsernames = [];
+        manuallyUnfollowedList = []; // Reset manually unfollowed list
         manuallyAddedFollowing = []; // Reset manually added following
         updateDashboardMetrics(0, 0, 0, 0, 0);
         updateAnalyticsMetrics(0, 0, [], []); // Reset analytics metrics
@@ -1988,12 +2241,16 @@
         if (currentFileData) {
             // Ensure allNonFollowers is updated based on current safeUsers
             allNonFollowers = originalNotFollowingBack.filter(account => !safeUsers.includes(account.username)); // Filter by username
+            
+            // Calculate current total following including manual additions and removals
+            const effectiveFollowingCount = (currentFileData.followingList || []).length + manuallyAddedFollowing.length - manuallyUnfollowedList.length;
+
             updateDashboardMetrics(
-                currentFileData.totalFollowing + manuallyAddedFollowing.length, // Include manually added for total following
+                effectiveFollowingCount,
                 currentFileData.totalFollowers,
                 allNonFollowers.length, // Filtered count
                 originalNotFollowingBack.length, // Total count
-                currentFileData.youDontFollowBackCount
+                (currentFileData.recentlyUnfollowedProfiles || []).length
             );
             showDashboard();
         } else {
@@ -2013,7 +2270,7 @@
                 console.log('Current user data cleared from Firestore.');
                 await loadAllUserUploads(); // Reload metadata to update dropdowns
                 await loadLatestData(); // Load the new latest data or reset if no more uploads
-                showAlert('Current file removed. You can upload a new one.', 'info');
+                showNotification('Current file removed. You can upload a new one.', 'info');
             } catch (error) {
                 console.error('Error clearing data from Firestore:', error);
                 showAlert('Failed to clear data from storage.', 'error');
@@ -2027,14 +2284,15 @@
         originalNotFollowingBack = []; // Clear original list
         safeUsers = [];
         bannedUsers = []; // Clear banned users
-        accountsToRemoveList = [];
+        accountsManuallyAddedForReview = []; // Reset accounts management list
         approvedAccountsList = [];
         removedAccountsList = [];
-        allMessageUsernames = [];
+        manuallyUnfollowedList = []; // Reset manually unfollowed list
         manuallyAddedFollowing = []; // Clear manually added following
         updateDashboardMetrics(0, 0, 0, 0, 0); // Reset dashboard metrics
         updateAnalyticsMetrics(0, 0, [], []); // Reset analytics metrics
         updateAccountsManagementMetrics(); // Reset accounts management metrics
+        renderUnfollowedProfilesList([]); // Clear unfollowed profiles list
         fileInput.value = ''; // Clear the file input on landing page
         modalFileInput.value = ''; // Clear the file input in modal
         showUploadSection(false); // Show initial upload state on landing page
@@ -2100,11 +2358,9 @@
         return;
       }
 
-      let followingData;
-      let followersData;
-      let recentlyUnfollowedData; // New variable for recently unfollowed
-      let messageParsingPromises = [];
-      let tempMessageUsernamesMap = new Map(); // username -> latest timestamp
+      let followingData = null;
+      let followersData = null;
+      let recentlyUnfollowedData = null; // New variable for recently unfollowed
 
       try {
         if (fileExtension === 'zip') {
@@ -2131,82 +2387,18 @@
             followersData = await findAndExtract(followersPaths);
             recentlyUnfollowedData = await findAndExtract(recentlyUnfollowedPaths);
 
-            if (!followingData || !followersData) {
-                showAlert(`Required Instagram data (following/followers) not found in the ZIP. Please ensure 'following.json'/'following.html' and 'followers_1.json'/'followers_1.html' exist.`, 'error');
-                return;
+            // Handle missing data gracefully
+            if (!followingData) {
+                showNotification(`'following.json' or 'following.html' not found in ZIP. Following stats may be incomplete.`, 'info');
+            }
+            if (!followersData) {
+                showNotification(`'followers_1.json' or 'followers_1.html' not found in ZIP. Follower stats may be incomplete.`, 'info');
+            }
+            if (!recentlyUnfollowedData) {
+                showNotification(`'recently_unfollowed_profiles.json' or '.html' not found in ZIP. "People You Unfollowed" stats will be unavailable.`, 'info');
             }
 
-            if (recentlyUnfollowedData) { // Check if the file exists and was parsed
-                if (recentlyUnfollowedData && Array.isArray(recentlyUnfollowedData.relationships_unfollowed_users)) {
-                    recentlyUnfollowedData.relationships_unfollowed_users.forEach(item => {
-                        if (item.string_list_data && item.string_list_data.length > 0) {
-                            const username = item.string_list_data[0].value.toLowerCase(); // Store in lowercase
-                            if (!bannedUsers.includes(username)) {
-                                bannedUsers.push(username);
-                            }
-                        }
-                    });
-                    bannedUsers.sort(); // Keep sorted
-                    console.log("Banned users updated from recently unfollowed:", bannedUsers);
-                } else {
-                    console.warn("recently_unfollowed_profiles.json found but did not contain 'relationships_unfollowed_users' array or was not an object.");
-                }
-            }
-
-            // Message file parsing for ZIPs
-            zip.forEach((relativePath, zipEntry) => {
-                // Check for .json or .html message files in the expected path
-                // The user specified: "instagram-maxhydell-{timeanddate}.zip\your_instagram_activity\messages\inbox\maxhydell_17857205703357071" and then the file "message_1.json"
-                // So the path would be something like: your_instagram_activity/messages/inbox/maxhydell_17857205703357071/message_1.json
-                if (relativePath.startsWith('your_instagram_activity/messages/inbox/') && 
-                    (relativePath.endsWith('.json') || relativePath.endsWith('.html')) && 
-                    relativePath.includes('message_')) { // Ensure it's a message file
-                    console.log(`Processing message file: ${relativePath}`); // Log which message file is being processed
-                    messageParsingPromises.push(
-                        zipEntry.async('text').then(messageContent => {
-                            try {
-                                if (relativePath.endsWith('.json')) {
-                                    const messageData = JSON.parse(messageContent);
-                                    processMessageData(messageData, tempMessageUsernamesMap);
-                                } else { // .html
-                                    const parser = new DOMParser();
-                                    const doc = parser.parseFromString(messageContent, 'text/html');
-                                    // Look for JSON within <pre> or <script> tags in HTML message files
-                                    const preElements = doc.querySelectorAll('pre');
-                                    let foundMessageData = false;
-                                    for (const pre of preElements) {
-                                        try {
-                                            const jsonData = JSON.parse(pre.textContent);
-                                            if (jsonData.messages && Array.isArray(jsonData.messages)) {
-                                                processMessageData(jsonData, tempMessageUsernamesMap);
-                                                foundMessageData = true;
-                                                break;
-                                            }
-                                        } catch (e) { /* not JSON or not message data */ }
-                                    }
-                                    if (!foundMessageData) {
-                                        const scriptElements = doc.querySelectorAll('script[type="application/json"]');
-                                        for (const script of scriptElements) {
-                                            try {
-                                                const jsonData = JSON.parse(script.textContent);
-                                                if (jsonData.messages && Array.isArray(jsonData.messages)) {
-                                                    processMessageData(jsonData, tempMessageUsernamesMap);
-                                                    foundMessageData = true;
-                                                    break;
-                                                }
-                                            } catch (e) { /* not JSON or not message data */ }
-                                        }
-                                    }
-                                }
-                            } catch (parseError) {
-                                console.warn(`Could not parse message file ${relativePath}:`, parseError);
-                            }
-                        }).catch(err => {
-                            console.warn(`Error reading zip entry ${relativePath}:`, err);
-                        })
-                    );
-                }
-            });
+            // No message file parsing for Accounts Management anymore
 
         } else if (fileExtension === 'html') {
             const htmlContent = await file.text();
@@ -2218,79 +2410,46 @@
             let foundFollowing = false;
             let foundFollowers = false;
             let foundRecentlyUnfollowed = false;
-            let foundMessageContent = false;
 
             for (const pre of preElements) {
                 try {
                     const jsonData = JSON.parse(pre.textContent);
-                    if (jsonData.relationships_following) {
+                    if (jsonData.relationships_following && !foundFollowing) {
                         followingData = jsonData;
                         foundFollowing = true;
-                    } else if (jsonData.relationships_unfollowed_users && Array.isArray(jsonData.relationships_unfollowed_users)) {
-                        // This is the recently_unfollowed_profiles.json structure
+                    } else if (jsonData.relationships_unfollowed_users && Array.isArray(jsonData.relationships_unfollowed_users) && !foundRecentlyUnfollowed) {
                         recentlyUnfollowedData = jsonData;
                         foundRecentlyUnfollowed = true;
-                        recentlyUnfollowedData.relationships_unfollowed_users.forEach(item => {
-                            if (item.string_list_data && item.string_list_data.length > 0) {
-                                const username = item.string_list_data[0].value.toLowerCase(); // Store in lowercase
-                                if (!bannedUsers.includes(username)) {
-                                    bannedUsers.push(username);
-                                }
-                            }
-                        });
-                        bannedUsers.sort();
-                        console.log("Banned users updated from HTML recently unfollowed:", bannedUsers);
-                    }
-                    else if (Array.isArray(jsonData) && jsonData.every(item => item.string_list_data)) {
+                    } else if (Array.isArray(jsonData) && jsonData.every(item => item.string_list_data) && !foundFollowers) {
                         // This could be followers_1.json. We need a heuristic to distinguish.
                         // Assume it's followers if not already found and doesn't match unfollowed structure.
-                        if (!foundFollowers && !jsonData.some(item => item.title === "Recently Unfollowed")) { // Simple check to distinguish
+                        if (!jsonData.some(item => item.title === "Recently Unfollowed")) { // Simple check to distinguish
                             followersData = jsonData;
                             foundFollowers = true;
                         }
-                    } else if (jsonData.messages && Array.isArray(jsonData.messages)) {
-                        // This might be a message HTML file
-                        console.log(`Processing message data from HTML file: ${fileName}`); // Log processing of HTML message file
-                        processMessageData(jsonData, tempMessageUsernamesMap);
-                        foundMessageContent = true;
                     }
                 } catch (e) {
-                    // Not valid JSON in this pre tag, or not the data we're looking for
                     console.warn("Could not parse JSON from a pre tag or it's not expected data:", e);
                 }
             }
 
             // Fallback: Try to find JSON in script tags (less common for Instagram, but good to have)
-            if (!foundFollowing || !foundFollowers || !foundRecentlyUnfollowed || !foundMessageContent) {
+            if (!foundFollowing || !foundFollowers || !foundRecentlyUnfollowed) {
                 const scriptElements = doc.querySelectorAll('script[type="application/json"]');
                 for (const script of scriptElements) {
                     try {
                         const jsonData = JSON.parse(script.textContent);
-                        if (jsonData.relationships_following) {
+                        if (jsonData.relationships_following && !foundFollowing) {
                             followingData = jsonData;
                             foundFollowing = true;
-                        } else if (jsonData.relationships_unfollowed_users && Array.isArray(jsonData.relationships_unfollowed_users)) {
+                        } else if (jsonData.relationships_unfollowed_users && Array.isArray(jsonData.relationships_unfollowed_users) && !foundRecentlyUnfollowed) {
                             recentlyUnfollowedData = jsonData;
                             foundRecentlyUnfollowed = true;
-                            recentlyUnfollowedData.relationships_unfollowed_users.forEach(item => {
-                                if (item.string_list_data && item.string_list_data.length > 0) {
-                                    const username = item.string_list_data[0].value.toLowerCase(); // Store in lowercase
-                                    if (!bannedUsers.includes(username)) {
-                                        bannedUsers.push(username);
-                                    }
-                                }
-                            });
-                            bannedUsers.sort();
-                            console.log("Banned users updated from HTML script recently unfollowed:", bannedUsers);
-                        } else if (Array.isArray(jsonData) && jsonData.every(item => item.string_list_data)) {
-                            if (!foundFollowers && !jsonData.some(item => item.title === "Recently Unfollowed")) {
+                        } else if (Array.isArray(jsonData) && jsonData.every(item => item.string_list_data) && !foundFollowers) {
+                            if (!jsonData.some(item => item.title === "Recently Unfollowed")) {
                                 followersData = jsonData;
                                 foundFollowers = true;
                             }
-                        } else if (jsonData.messages && Array.isArray(jsonData.messages)) {
-                            console.log(`Processing message data from HTML script tag: ${fileName}`); // Log processing of HTML message script
-                            processMessageData(jsonData, tempMessageUsernamesMap);
-                            foundMessageContent = true;
                         }
                     } catch (e) {
                         console.warn("Could not parse JSON from a script tag:", e);
@@ -2298,28 +2457,49 @@
                 }
             }
 
-            if (!followingData || !followersData) {
-                showAlert('Required Instagram data (following/followers) not found in the HTML file. Please ensure it contains the correct data structure.', 'error');
-                return;
+            // Handle missing data gracefully for HTML
+            if (!followingData) {
+                showNotification(`Following data not found in HTML. Following stats may be incomplete.`, 'info');
+            }
+            if (!followersData) {
+                showNotification(`Followers data not found in HTML. Follower stats may be incomplete.`, 'info');
+            }
+            if (!recentlyUnfollowedData) {
+                showNotification(`Recently unfollowed profiles data not found in HTML. "People You Unfollowed" stats will be unavailable.`, 'info');
             }
         }
 
-        await Promise.all(messageParsingPromises); // Wait for all message files (if zip) to be processed
-        allMessageUsernames = Array.from(tempMessageUsernamesMap, ([username, timestamp]) => ({ username, timestamp }));
-        console.log("Extracted usernames from messages for Accounts Management:", allMessageUsernames);
+        // Process recently unfollowed data for banned users list
+        if (recentlyUnfollowedData && Array.isArray(recentlyUnfollowedData.relationships_unfollowed_users)) {
+            recentlyUnfollowedData.relationships_unfollowed_users.forEach(item => {
+                if (item.string_list_data && item.string_list_data.length > 0) {
+                    const username = item.string_list_data[0].value.toLowerCase(); // Store in lowercase
+                    if (!bannedUsers.includes(username)) {
+                        bannedUsers.push(username);
+                    }
+                }
+            });
+            bannedUsers.sort(); // Keep sorted
+            console.log("Banned users updated from recently unfollowed:", bannedUsers);
+        } else if (recentlyUnfollowedData) {
+            console.warn("recently_unfollowed_profiles data found but did not contain expected 'relationships_unfollowed_users' array.");
+        }
+
 
         const followingMap = new Map();
         const followingUsernames = new Set();
-        followingData.relationships_following.forEach(item => {
-            if (item.string_list_data && item.string_list_data.length > 0) {
-                const username = item.string_list_data[0].value;
-                const timestamp = item.string_list_data[0].timestamp;
-                followingMap.set(username, timestamp);
-                followingUsernames.add(username);
-            }
-        });
+        if (followingData && followingData.relationships_following) {
+            followingData.relationships_following.forEach(item => {
+                if (item.string_list_data && item.string_list_data.length > 0) {
+                    const username = item.string_list_data[0].value;
+                    const timestamp = item.string_list_data[0].timestamp;
+                    followingMap.set(username, timestamp);
+                    followingUsernames.add(username);
+                }
+            });
+        }
 
-        // Add manually added following accounts
+        // Add manually added following accounts (these are "real" follows for the app)
         manuallyAddedFollowing.forEach(username => {
             if (!followingUsernames.has(username)) {
                 followingUsernames.add(username);
@@ -2328,13 +2508,23 @@
             }
         });
 
-
-        const followersUsernames = new Set();
-        followersData.forEach(item => {
-            if (item.string_list_data && item.string_list_data.length > 0) {
-                followersUsernames.add(item.string_list_data[0].value);
+        // Remove manually unfollowed accounts from the following list
+        manuallyUnfollowedList.forEach(username => {
+            if (followingUsernames.has(username)) {
+                followingUsernames.delete(username);
+                followingMap.delete(username);
             }
         });
+
+
+        const followersUsernames = new Set();
+        if (followersData) {
+            followersData.forEach(item => {
+                if (item.string_list_data && item.string_list_data.length > 0) {
+                    followersUsernames.add(item.string_list_data[0].value);
+                }
+            });
+        }
 
         const totalFollowing = followingUsernames.size;
         const totalFollowers = followersUsernames.size;
@@ -2356,7 +2546,7 @@
             }
         });
 
-        const youDontFollowBackCount = totalFollowers - mutualsCount;
+        const youDontFollowBackCount = totalFollowers - mutualsCount; // This is still "followers I don't follow back"
 
         // Filter notFollowingBack based on current safeUsers
         allNonFollowers = originalNotFollowingBack.filter(account => !safeUsers.includes(account.username));
@@ -2364,16 +2554,11 @@
         // If currentFileData exists, use its approved/removed/banned lists. Otherwise, start fresh.
         const currentApproved = currentFileData ? currentFileData.approvedAccounts || [] : [];
         const currentRemoved = currentFileData ? currentFileData.removedAccounts || [] : [];
-        // Banned users are already updated from recently_unfollowed_profiles.json/html and existing state
-        const currentBanned = bannedUsers; 
-
-        // Filter accountsToRemoveList based on loaded approved/removed lists
-        accountsToRemoveList = allMessageUsernames.filter(account =>
-            !currentApproved.includes(account.username) && !currentRemoved.includes(account.username)
-        );
-        // Sort by oldest to newest by default for this list
-        accountsToRemoveList.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
-        console.log("Accounts to Remove (after filtering by approved/removed):", accountsToRemoveList);
+        const currentBanned = bannedUsers; // Banned users are already updated from recently_unfollowed_profiles.json/html and existing state
+        const currentManuallyAddedForReview = currentFileData ? currentFileData.accountsManuallyAddedForReview || [] : [];
+        const currentManuallyAddedFollowing = currentFileData ? currentFileData.manuallyAddedFollowing || [] : [];
+        const currentManuallyUnfollowedList = currentFileData ? currentFileData.manuallyUnfollowedList || [] : [];
+        const currentRecentlyUnfollowedProfiles = recentlyUnfollowedData ? recentlyUnfollowedData.relationships_unfollowed_users || [] : [];
 
 
         // Prepare data for saving
@@ -2388,13 +2573,15 @@
             followingList: Array.from(followingUsernames), // Save as array for Firestore
             followersList: Array.from(followersUsernames), // Save as array for Firestore
             originalNotFollowingBack,
-            youDontFollowBackCount,
+            youDontFollowBackCount, // This is the "followers I don't follow back" count
+            recentlyUnfollowedProfiles: currentRecentlyUnfollowedProfiles, // New: Save the raw data for "People You Unfollowed"
             safeUsers: safeUsers, // Current safe users
             bannedUsers: currentBanned, // New: Save current banned users
-            allMessageUsernames: allMessageUsernames, // Save all extracted message usernames
+            accountsManuallyAddedForReview: currentManuallyAddedForReview, // Save accounts manually added for review
             approvedAccounts: currentApproved, // Save current approved accounts
             removedAccounts: currentRemoved, // Save current removed accounts
-            manuallyAddedFollowing: manuallyAddedFollowing // Save manually added following
+            manuallyAddedFollowing: currentManuallyAddedFollowing, // Save manually added following
+            manuallyUnfollowedList: currentManuallyUnfollowedList // Save manually unfollowed list
         };
 
         // Save data to Firestore
@@ -2404,7 +2591,7 @@
             console.log('User data saved to Firestore with ID:', uploadId);
             await loadAllUserUploads(); // Reload all uploads to update dropdowns
             await loadDataForUpload(uploadId); // Load the newly uploaded data
-            showAlert('Instagram data uploaded successfully!', 'success');
+            showNotification('Instagram data uploaded successfully!', 'success');
             showDashboard(); // Go to dashboard after successful upload
         } else {
             // For unauthenticated users, data is temporary
@@ -2413,20 +2600,26 @@
             approvedAccountsList = currentApproved;
             removedAccountsList = currentRemoved;
             bannedUsers = currentBanned; // New: Update global banned users for unauthenticated users
-            manuallyAddedFollowing = manuallyAddedFollowing; // Update global manually added following
+            accountsManuallyAddedForReview = currentManuallyAddedForReview; // Update global manually added for review
+            manuallyAddedFollowing = currentManuallyAddedFollowing; // Update global manually added following
+            manuallyUnfollowedList = currentManuallyUnfollowedList; // Update global manually unfollowed list
             
+            // Calculate current total following including manual additions and removals
+            const effectiveFollowingCount = (currentFileData.followingList || []).length + manuallyAddedFollowing.length - manuallyUnfollowedList.length;
+
             updateDashboardMetrics(
-                currentFileData.totalFollowing + manuallyAddedFollowing.length, // Include manually added for total following
+                effectiveFollowingCount,
                 currentFileData.totalFollowers,
                 allNonFollowers.length,
                 originalNotFollowingBack.length,
-                currentFileData.youDontFollowBackCount
+                (currentFileData.recentlyUnfollowedProfiles || []).length
             );
             updateAnalyticsMetrics(0, 0, [], []);
             updateAccountsManagementMetrics(); // Update new metrics
             renderAccounts(allNonFollowers); // Render non-followers
             applyAccountsManagementFiltersAndRender(); // Render accounts to remove
             renderOrangeListUsers(originalNotFollowingBack); // New: Render orange list users
+            renderUnfollowedProfilesList(currentFileData.recentlyUnfollowedProfiles || []); // Render unfollowed profiles list
             showDashboard(); // Show dashboard section
             showAlert('Instagram data processed. Log in to save your data and access full analytics!', 'info');
         }
@@ -2438,83 +2631,6 @@
         showAlert('Failed to process Instagram data. Please ensure it\'s a valid Instagram data export file (.zip or .html) and contains the correct files. Error: ' + error.message, 'error');
         showUploadSection(false);
       }
-    }
-
-    // Helper function to process message data (used by both ZIP and HTML parsing)
-    function processMessageData(messageData, tempMessageUsernamesMap) {
-        // Regex to find Instagram links (e.g., instagram.com/username)
-        const instagramLinkRegex = /(?:https?:\/\/)?(?:www\.)?instagram\.com\/([a-zA-Z0-9_.]+)(?:\/)?/g;
-        // Regex to find @usernames (e.g., @username) - improved to be more specific
-        const atUsernameRegex = /(?<!\w)@([a-zA-Z0-9_]{3,})(?!\w)/g; // At least 3 characters, no special chars, word boundary
-
-        if (messageData.messages && Array.isArray(messageData.messages)) {
-            messageData.messages.forEach(message => {
-                const messageTimestamp = Math.floor(message.timestamp_ms / 1000); // Convert ms to seconds
-
-                // 1. Check message.content for links and @usernames
-                if (message.content) {
-                    let match;
-                    // Links in content
-                    while ((match = instagramLinkRegex.exec(message.content)) !== null) {
-                        const username = match[1].toLowerCase(); // Store in lowercase
-                        console.log(`Extracted from content link: ${username}`);
-                        if (!tempMessageUsernamesMap.has(username) || tempMessageUsernamesMap.get(username) < messageTimestamp) {
-                            tempMessageUsernamesMap.set(username, messageTimestamp);
-                        }
-                    }
-                    instagramLinkRegex.lastIndex = 0; // Reset regex for next match
-
-                    // @usernames in content
-                    while ((match = atUsernameRegex.exec(message.content)) !== null) {
-                        const username = match[1].toLowerCase(); // Store in lowercase
-                        // Basic check to avoid common words, could be improved
-                        // Ensure it's not just a single character or common punctuation, and doesn't contain '.' which usually indicates a file extension or part of a URL.
-                        if (username.length > 2 && !username.includes('.')) { 
-                            console.log(`Extracted from content @mention: ${username}`);
-                            if (!tempMessageUsernamesMap.has(username) || tempMessageUsernamesMap.get(username) < messageTimestamp) {
-                                tempMessageUsernamesMap.set(username, messageTimestamp);
-                            }
-                        }
-                    }
-                    atUsernameRegex.lastIndex = 0; // Reset regex for next match
-                }
-
-                // 2. Check message.share.link and message.share.profile_share_username
-                if (message.share) {
-                    if (message.share.link) {
-                        const match = instagramLinkRegex.exec(message.share.link);
-                        if (match && match[1]) {
-                            const username = match[1].toLowerCase(); // Store in lowercase
-                            console.log(`Extracted from share link: ${username}`);
-                            if (!tempMessageUsernamesMap.has(username) || tempMessageUsernamesMap.get(username) < messageTimestamp) {
-                                tempMessageUsernamesMap.set(username, messageTimestamp);
-                            }
-                        }
-                        instagramLinkRegex.lastIndex = 0;
-                    }
-                    if (message.share.profile_share_username) {
-                        const username = message.share.profile_share_username.toLowerCase(); // Store in lowercase
-                        console.log(`Extracted from profile share username: ${username}`);
-                        if (!tempMessageUsernamesMap.has(username) || tempMessageUsernamesMap.get(username) < messageTimestamp) {
-                            tempMessageUsernamesMap.set(username, messageTimestamp);
-                        }
-                    }
-                }
-
-                // 3. Check message.share_to_direct_story.media.uri
-                if (message.share_to_direct_story && message.share_to_direct_story.media && message.share_to_direct_story.media.uri) {
-                    const match = instagramLinkRegex.exec(message.share_to_direct_story.media.uri);
-                    if (match && match[1]) {
-                        const username = match[1].toLowerCase(); // Store in lowercase
-                        console.log(`Extracted from direct story media URI: ${username}`);
-                        if (!tempMessageUsernamesMap.has(username) || tempMessageUsernamesMap.get(username) < messageTimestamp) {
-                            tempMessageUsernamesMap.set(username, messageTimestamp);
-                        }
-                    }
-                    instagramLinkRegex.lastIndex = 0;
-                }
-            });
-        }
     }
 
 
@@ -2606,13 +2722,17 @@
             // Re-render dashboard metrics and non-followers list
             allNonFollowers = originalNotFollowingBack.filter(account => !safeUsers.includes(account.username)); // Filter by username
             applyFiltersAndRenderAccounts(); // Re-apply filters and render
+            
+            // Calculate current total following including manual additions and removals
+            const effectiveFollowingCount = (currentFileData.followingList || []).length + manuallyAddedFollowing.length - manuallyUnfollowedList.length;
+
             // Update dashboard metrics to reflect the change in filtered non-followers count
             updateDashboardMetrics(
-                currentFileData.totalFollowing + manuallyAddedFollowing.length,
+                effectiveFollowingCount,
                 currentFileData.totalFollowers,
                 allNonFollowers.length, // Updated filtered count
                 originalNotFollowingBack.length,
-                currentFileData.youDontFollowBackCount
+                (currentFileData.recentlyUnfollowedProfiles || []).length
             );
         }
         renderSafeUsersList(); // Always re-render the modal list
@@ -2626,9 +2746,9 @@
             if (added) {
                 safeUserInput.value = ''; // Clear input only on success
                 await processAndSaveSafeUsers(true);
-                showAlert('Safe user added!', 'success'); // Green success popup
+                showNotification('Safe user added!', 'success'); // Green success popup
             } else {
-                showAlert('User is already in the safe list.', 'info');
+                showNotification('User is already in the safe list.', 'info');
             }
         }
     };
@@ -2637,7 +2757,7 @@
     const addBulkSafeUserButtonClickHandler = async () => {
         const text = bulkSafeUserInput.value.trim();
         if (!text) {
-            showAlert('Please enter usernames in the bulk input area.', 'info');
+            showNotification('Please enter usernames in the bulk input area.', 'info');
             return;
         }
 
@@ -2657,12 +2777,12 @@
         if (anyAdded) {
             bulkSafeUserInput.value = '';
             await processAndSaveSafeUsers(true);
-            showAlert('Safe users added!', 'success');
+            showNotification('Safe users added!', 'success');
             closeSafeUsersModalFunc(); // Close modal after bulk add
         } else if (alreadyInList.length > 0) {
             showAlert(`All entered users are already in the safe list: ${alreadyInList.join(', ')}`, 'info');
         } else {
-            showAlert('No valid users were entered.', 'info');
+            showNotification('No valid users were entered.', 'info');
         }
     };
 
@@ -2670,7 +2790,7 @@
     async function removeSafeUser(username) {
         safeUsers = safeUsers.filter(user => user !== username);
         await processAndSaveSafeUsers(true); // Treat removal as a change that needs saving
-        showAlert('Safe user removed!', 'info'); // Info popup for removal
+        showNotification('Safe user removed!', 'info'); // Info popup for removal
     }
 
     async function saveSafeUsersToFirestore() {
@@ -2784,9 +2904,9 @@
             if (added) {
                 bannedUserInput.value = '';
                 await processAndSaveBannedUsers(true);
-                showAlert('Banned user added!', 'success');
+                showNotification('Banned user added!', 'success');
             } else {
-                showAlert('User is already in the banned list.', 'info');
+                showNotification('User is already in the banned list.', 'info');
             }
         }
     };
@@ -2794,7 +2914,7 @@
     const addBulkBannedUserButtonClickHandlerForBanned = async () => { // Renamed to avoid conflict
         const text = bulkBannedUserInput.value.trim();
         if (!text) {
-            showAlert('Please enter usernames in the bulk input area.', 'info');
+            showNotification('Please enter usernames in the bulk input area.', 'info');
             return;
         }
 
@@ -2814,19 +2934,19 @@
         if (anyAdded) {
             bulkBannedUserInput.value = '';
             await processAndSaveBannedUsers(true);
-            showAlert('Banned users added!', 'success');
+            showNotification('Banned users added!', 'success');
             closeBannedUsersAddModalFunc(); // Close modal after bulk add
         } else if (alreadyInList.length > 0) {
             showAlert(`All entered users are already in the banned list: ${alreadyInList.join(', ')}`, 'info');
         } else {
-            showAlert('No valid users were entered.', 'info');
+            showNotification('No valid users were entered.', 'info');
         }
     };
 
     async function removeBannedUser(username) {
         bannedUsers = bannedUsers.filter(user => user !== username);
         await processAndSaveBannedUsers(true);
-        showAlert('Banned user removed!', 'info');
+        showNotification('Banned user removed!', 'info');
     }
 
     async function saveBannedUsersToFirestore() {
@@ -2874,13 +2994,6 @@
                                 inputUsernames = inputUsernames.concat(jsonData.map(item => item.string_list_data[0].value));
                                 foundData = true;
                                 break;
-                            } else if (jsonData.messages && Array.isArray(jsonData.messages)) {
-                                // If it's a message file HTML, extract usernames from it
-                                const tempMap = new Map();
-                                processMessageData(jsonData, tempMap);
-                                inputUsernames = inputUsernames.concat(Array.from(tempMap.keys()));
-                                foundData = true;
-                                break;
                             }
                         } catch (e) { /* not JSON or not the right structure */ }
                     }
@@ -2891,12 +3004,6 @@
                                 const jsonData = JSON.parse(script.textContent);
                                 if (Array.isArray(jsonData) && jsonData.every(item => item.string_list_data)) {
                                     inputUsernames = inputUsernames.concat(jsonData.map(item => item.string_list_data[0].value));
-                                    foundData = true;
-                                    break;
-                                } else if (jsonData.messages && Array.isArray(jsonData.messages)) {
-                                    const tempMap = new Map();
-                                    processMessageData(jsonData, tempMap);
-                                    inputUsernames = inputUsernames.concat(Array.from(tempMap.keys()));
                                     foundData = true;
                                     break;
                                 }
@@ -3028,14 +3135,33 @@
         let accountsToDisplay = [];
         let listTitle = "";
 
+        // Re-calculate accountsToRemoveList based on current state
+        if (currentFileData) {
+            const combinedFollowingSet = new Set(currentFileData.followingList);
+            manuallyAddedFollowing.forEach(user => combinedFollowingSet.add(user));
+            manuallyUnfollowedList.forEach(user => combinedFollowingSet.delete(user)); // Remove manually unfollowed from combined following
+
+            accountsToRemoveList = accountsManuallyAddedForReview.filter(account =>
+                !approvedAccountsList.includes(account.username) &&
+                !removedAccountsList.includes(account.username) &&
+                !combinedFollowingSet.has(account.username) // Only show if they are NOT in the combined following list
+            );
+            accountsToRemoveList.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+        } else {
+            accountsToRemoveList = [];
+        }
+
+
         if (currentAccountsViewMode === 'toRemove') {
             accountsToDisplay = [...accountsToRemoveList];
             listTitle = "Accounts to Remove";
         } else if (currentAccountsViewMode === 'approved') {
-            accountsToDisplay = allMessageUsernames.filter(account => approvedAccountsList.includes(account.username));
+            // Filter accountsManuallyAddedForReview by approvedAccountsList
+            accountsToDisplay = accountsManuallyAddedForReview.filter(account => approvedAccountsList.includes(account.username));
             listTitle = "Approved Accounts";
         } else if (currentAccountsViewMode === 'removed') {
-            accountsToDisplay = allMessageUsernames.filter(account => removedAccountsList.includes(account.username));
+            // Filter accountsManuallyAddedForReview by removedAccountsList
+            accountsToDisplay = accountsManuallyAddedForReview.filter(account => removedAccountsList.includes(account.username));
             listTitle = "Removed Accounts";
         }
 
@@ -3072,7 +3198,7 @@
     function renderAccountsToRemove(accountsToRender) {
         accountsManagementList.innerHTML = ''; // Clear existing list
         if (accountsToRender.length === 0) {
-            accountsManagementList.innerHTML = '<p class="text-gray-500 text-center">No accounts to display for this view. Ensure message data is uploaded and contains Instagram links/mentions.</p>';
+            accountsManagementList.innerHTML = '<p class="text-gray-500 text-center">No accounts to display for this view. Add accounts via the "Add Account" page.</p>';
             return;
         }
         accountsToRender.forEach(account => {
@@ -3112,26 +3238,82 @@
     }
 
     async function handleRemoveAccount(username) {
-        // Remove from accountsToRemoveList
-        accountsToRemoveList = accountsToRemoveList.filter(account => account.username !== username);
+        // Open link in new tab
+        window.open(`https://www.instagram.com/${username}/`, '_blank');
+
+        // Remove from accountsManuallyAddedForReview (if it exists there)
+        accountsManuallyAddedForReview = accountsManuallyAddedForReview.filter(account => account.username !== username);
+        
         // Add to removedAccountsList
         if (!removedAccountsList.includes(username)) {
             removedAccountsList.push(username);
             removedAccountsList.sort(); // Keep sorted
         }
 
+        // Also remove them from the app's internal following list (simulating an unfollow)
+        if (currentFileData && currentFileData.followingList) {
+            const initialFollowingSize = currentFileData.followingList.length;
+            currentFileData.followingList = currentFileData.followingList.filter(user => user !== username);
+            if (currentFileData.followingList.length < initialFollowingSize) {
+                // If actually removed from original following, add to manuallyUnfollowedList
+                if (!manuallyUnfollowedList.includes(username)) {
+                    manuallyUnfollowedList.push(username);
+                    manuallyUnfollowedList.sort();
+                }
+            }
+        }
+        // Also remove from manuallyAddedFollowing if they were added there
+        manuallyAddedFollowing = manuallyAddedFollowing.filter(user => user !== username);
+
+
         // Update Firestore
-        await saveAccountsManagementState();
+        await saveAccountsManagementState(); // Saves approved, removed, and accountsManuallyAddedForReview
+        await saveFollowingAndUnfollowedLists(); // Saves followingList, manuallyAddedFollowing, manuallyUnfollowedList
+
+        // Re-calculate not-following-back lists and update dashboard
+        if (currentFileData) {
+            const followingMap = new Map();
+            currentFileData.followingList.forEach(user => {
+                const originalAccount = currentFileData.originalNotFollowingBack.find(acc => acc.username === user);
+                followingMap.set(user, originalAccount ? originalAccount.timestamp : null);
+            });
+            manuallyAddedFollowing.forEach(user => {
+                if (!followingMap.has(user)) { // Only add if not already in original following
+                    followingMap.set(user, Math.floor(Date.now() / 1000)); // Use current timestamp for manual adds
+                }
+            });
+
+            const combinedFollowingSet = new Set(Array.from(followingMap.keys())); // All users we consider "following"
+
+            originalNotFollowingBack = Array.from(combinedFollowingSet).filter(username => 
+                !new Set(currentFileData.followersList).has(username)
+            ).map(username => ({ username: username, timestamp: followingMap.get(username) }));
+
+            allNonFollowers = originalNotFollowingBack.filter(account => !safeUsers.includes(account.username));
+
+            // Calculate current total following including manual additions and removals
+            const effectiveFollowingCount = (currentFileData.followingList || []).length + manuallyAddedFollowing.length - manuallyUnfollowedList.length;
+
+            updateDashboardMetrics(
+                effectiveFollowingCount,
+                currentFileData.totalFollowers,
+                allNonFollowers.length,
+                originalNotFollowingBack.length,
+                (currentFileData.recentlyUnfollowedProfiles || []).length
+            );
+            applyFiltersAndRenderAccounts(); // Re-render dashboard list
+        }
         
-        // Re-render and update metrics
+        // Re-render and update metrics for accounts management
         applyAccountsManagementFiltersAndRender();
         updateAccountsManagementMetrics();
-        // Removed showAlert and window.open as per user request
+        showNotification(`Account ${username} removed and unfollowed!`, 'success');
     }
 
     async function handleApproveAccount(username) {
-        // Remove from accountsToRemoveList
-        accountsToRemoveList = accountsToRemoveList.filter(account => account.username !== username);
+        // Remove from accountsManuallyAddedForReview (if it exists there)
+        accountsManuallyAddedForReview = accountsManuallyAddedForReview.filter(account => account.username !== username);
+        
         // Add to approvedAccountsList
         if (!approvedAccountsList.includes(username)) {
             approvedAccountsList.push(username);
@@ -3144,7 +3326,7 @@
         // Re-render and update metrics
         applyAccountsManagementFiltersAndRender();
         updateAccountsManagementMetrics();
-        showAlert(`Account ${username} approved!`, 'success');
+        showNotification(`Account ${username} approved!`, 'success');
     }
 
     async function saveAccountsManagementState() {
@@ -3153,9 +3335,9 @@
                 const userDocRef = doc(dbInstance, `artifacts/${appId}/users/${currentUserId}/userUploads`, currentFileData.id);
                 // Update only the relevant arrays
                 await setDoc(userDocRef, { 
+                    accountsManuallyAddedForReview: accountsManuallyAddedForReview,
                     approvedAccounts: approvedAccountsList,
                     removedAccounts: removedAccountsList,
-                    // allMessageUsernames is already saved with the upload
                 }, { merge: true }); // Use merge: true to only update these fields
                 console.log('Accounts management state saved to Firestore for current upload.');
             } catch (error) {
@@ -3164,6 +3346,26 @@
             }
         } else {
             console.warn('Cannot save accounts management state: User not authenticated or currentFileData not available.');
+        }
+    }
+
+    // New: Function to save following and manually unfollowed lists
+    async function saveFollowingAndUnfollowedLists() {
+        if (currentUserId && authInstance.currentUser && dbInstance && currentFileData) {
+            try {
+                const userDocRef = doc(dbInstance, `artifacts/${appId}/users/${currentUserId}/userUploads`, currentFileData.id);
+                await setDoc(userDocRef, {
+                    followingList: currentFileData.followingList, // Save the modified followingList
+                    manuallyAddedFollowing: manuallyAddedFollowing,
+                    manuallyUnfollowedList: manuallyUnfollowedList
+                }, { merge: true });
+                console.log('Following and manually unfollowed lists saved to Firestore.');
+            } catch (error) {
+                console.error('Error saving following/unfollowed lists to Firestore:', error);
+                showAlert('Failed to save following/unfollowed lists to storage.', 'error');
+            }
+        } else {
+            console.warn('Cannot save following/unfollowed lists: User not authenticated or currentFileData not available.');
         }
     }
 
@@ -3195,24 +3397,51 @@
             openedCount++;
         });
 
-        showAlert(`Opening ${openedCount} ${colorCategory} users in new tabs. Please allow pop-ups.`, 'success');
+        showNotification(`Opening ${openedCount} ${colorCategory} users in new tabs. Please allow pop-ups.`, 'success');
     }
 
     // New Add Account Page Functions
     function renderAddedAccountsPreview() {
         addedAccountsPreview.innerHTML = '';
-        if (manuallyAddedFollowing.length === 0) {
+        if (manuallyAddedFollowing.length === 0 && accountsManuallyAddedForReview.length === 0) {
             addedAccountsPreview.innerHTML = '<p class="text-gray-500 text-center">Accounts added will appear here.</p>';
             return;
         }
+
+        const allAdded = new Map(); // Use map to store unique usernames and their latest timestamp if available
+        
+        // Add from manuallyAddedFollowing (these are "real" follows)
         manuallyAddedFollowing.forEach(username => {
+            allAdded.set(username, { type: 'Following', timestamp: null }); // No timestamp for this list
+        });
+
+        // Add from accountsManuallyAddedForReview (these are for review)
+        accountsManuallyAddedForReview.forEach(account => {
+            allAdded.set(account.username, { type: 'For Review', timestamp: account.timestamp });
+        });
+
+        Array.from(allAdded.entries()).sort((a,b) => a[0].localeCompare(b[0])).forEach(([username, info]) => {
             const div = document.createElement('div');
             div.className = 'flex justify-between items-center py-2 px-3 border-b border-gray-600 last:border-b-0 text-gray-200';
+            
+            let statusText = '';
+            if (info.type === 'Following') {
+                statusText = '<span class="text-green-400">Following (Manually Added)</span>';
+            } else if (info.type === 'For Review') {
+                const timeInfo = info.timestamp ? formatTimeDifference(info.timestamp) : { text: 'N/A', color: 'text-gray-500' };
+                statusText = `<span class="text-yellow-400">For Review (${timeInfo.text})</span>`;
+            }
+
             div.innerHTML = `
-                <span>${username}</span>
-                <button data-user="${username}" class="remove-added-account-btn text-red-400 hover:text-red-500 transition-colors">
-                    <i class="fas fa-times-circle"></i>
-                </button>
+                <a href="https://www.instagram.com/${username}/" target="_blank" rel="noopener noreferrer" class="font-medium text-blue-400 hover:underline">
+                    ${username}
+                </a>
+                <div class="flex items-center space-x-2">
+                    ${statusText}
+                    <button data-user="${username}" class="remove-added-account-btn text-red-400 hover:text-red-500 transition-colors" title="Remove from this list">
+                        <i class="fas fa-times-circle"></i>
+                    </button>
+                </div>
             `;
             addedAccountsPreview.appendChild(div);
         });
@@ -3226,35 +3455,62 @@
     }
 
     async function addManuallyAddedAccount(username) {
-        if (username && !manuallyAddedFollowing.includes(username)) {
+        let addedToFollowing = false;
+        let addedToReview = false;
+
+        // Add to manuallyAddedFollowing (if not already there)
+        if (currentFileData && currentFileData.followingList && !currentFileData.followingList.includes(username) && !manuallyAddedFollowing.includes(username)) {
             manuallyAddedFollowing.push(username);
-            manuallyAddedFollowing.sort(); // Keep sorted
-            await saveManuallyAddedFollowing();
+            manuallyAddedFollowing.sort();
+            addedToFollowing = true;
+        } else if (!currentFileData) { // If no file data, just add to manuallyAddedFollowing temporarily
+            if (!manuallyAddedFollowing.includes(username)) {
+                manuallyAddedFollowing.push(username);
+                manuallyAddedFollowing.sort();
+                addedToFollowing = true;
+            }
+        }
+
+        // Add to accountsManuallyAddedForReview (if not already there)
+        if (!accountsManuallyAddedForReview.some(acc => acc.username === username)) {
+            accountsManuallyAddedForReview.push({ username: username, timestamp: Math.floor(Date.now() / 1000) });
+            accountsManuallyAddedForReview.sort((a,b) => a.username.localeCompare(b.username)); // Sort by username
+            addedToReview = true;
+        }
+
+        if (addedToFollowing || addedToReview) {
+            await saveManuallyAddedState(); // Save both lists
             // Re-process data to update counts
             if (currentFileData) {
-                // Simulate re-processing with updated manuallyAddedFollowing
-                const tempFollowingSet = new Set(currentFileData.followingList);
-                manuallyAddedFollowing.forEach(user => tempFollowingSet.add(user));
+                // Manually update followingList in currentFileData to reflect changes
+                currentFileData.followingList = Array.from(new Set([...currentFileData.followingList, ...manuallyAddedFollowing]))
+                                                .filter(user => !manuallyUnfollowedList.includes(user));
 
-                const tempCalculatedNotFollowingBack = [];
-                tempFollowingSet.forEach(user => {
-                    if (!new Set(currentFileData.followersList).has(user)) {
-                        // Find original timestamp if available, otherwise use current
-                        const originalAccount = currentFileData.originalNotFollowingBack.find(acc => acc.username === user);
-                        const timestamp = originalAccount ? originalAccount.timestamp : Math.floor(Date.now() / 1000);
-                        tempCalculatedNotFollowingBack.push({ username: user, timestamp: timestamp });
-                    }
+                // Recalculate originalNotFollowingBack based on the updated followingList
+                const followingMap = new Map();
+                currentFileData.followingList.forEach(user => {
+                    const originalAccount = currentFileData.originalNotFollowingBack.find(acc => acc.username === user);
+                    followingMap.set(user, originalAccount ? originalAccount.timestamp : Math.floor(Date.now() / 1000)); // Use current timestamp if new
                 });
-                originalNotFollowingBack = tempCalculatedNotFollowingBack;
+
+                originalNotFollowingBack = Array.from(followingMap.entries()).filter(([username]) => 
+                    !new Set(currentFileData.followersList).has(username)
+                ).map(([username, timestamp]) => ({ username: username, timestamp: timestamp }));
+
                 allNonFollowers = originalNotFollowingBack.filter(account => !safeUsers.includes(account.username));
+
+                // Calculate current total following including manual additions and removals
+                const effectiveFollowingCount = (currentFileData.followingList || []).length + manuallyAddedFollowing.length - manuallyUnfollowedList.length;
+
                 updateDashboardMetrics(
-                    tempFollowingSet.size, // Updated total following
+                    effectiveFollowingCount,
                     currentFileData.totalFollowers,
                     allNonFollowers.length,
                     originalNotFollowingBack.length,
-                    currentFileData.youDontFollowBackCount
+                    (currentFileData.recentlyUnfollowedProfiles || []).length
                 );
                 applyFiltersAndRenderAccounts();
+                applyAccountsManagementFiltersAndRender(); // Update accounts management list
             }
             renderAddedAccountsPreview();
             return true;
@@ -3263,57 +3519,89 @@
     }
 
     async function removeManuallyAddedAccount(username) {
-        manuallyAddedFollowing = manuallyAddedFollowing.filter(user => user !== username);
-        await saveManuallyAddedFollowing();
-        // Re-process data to update counts (similar to addManuallyAddedAccount)
-        if (currentFileData) {
-            const tempFollowingSet = new Set(currentFileData.followingList);
-            manuallyAddedFollowing.forEach(user => tempFollowingSet.add(user));
+        let removedFromFollowing = false;
+        let removedFromReview = false;
 
-            const tempCalculatedNotFollowingBack = [];
-            tempFollowingSet.forEach(user => {
-                if (!new Set(currentFileData.followersList).has(user)) {
-                    const originalAccount = currentFileData.originalNotFollowingBack.find(acc => acc.username === user);
-                    const timestamp = originalAccount ? originalAccount.timestamp : null; // No timestamp for removed manual
-                    tempCalculatedNotFollowingBack.push({ username: user, timestamp: timestamp });
-                }
-            });
-            originalNotFollowingBack = tempCalculatedNotFollowingBack;
-            allNonFollowers = originalNotFollowingBack.filter(account => !safeUsers.includes(account.username));
-            updateDashboardMetrics(
-                tempFollowingSet.size,
-                currentFileData.totalFollowers,
-                allNonFollowers.length,
-                originalNotFollowingBack.length,
-                currentFileData.youDontFollowBackCount
-            );
-            applyFiltersAndRenderAccounts();
+        // Remove from manuallyAddedFollowing
+        const initialManuallyAddedFollowingSize = manuallyAddedFollowing.length;
+        manuallyAddedFollowing = manuallyAddedFollowing.filter(user => user !== username);
+        if (manuallyAddedFollowing.length < initialManuallyAddedFollowingSize) {
+            removedFromFollowing = true;
         }
-        renderAddedAccountsPreview();
-        showAlert(`Account ${username} removed from manually added list.`, 'info');
+
+        // Remove from accountsManuallyAddedForReview
+        const initialAccountsManuallyAddedForReviewSize = accountsManuallyAddedForReview.length;
+        accountsManuallyAddedForReview = accountsManuallyAddedForReview.filter(account => account.username !== username);
+        if (accountsManuallyAddedForReview.length < initialAccountsManuallyAddedForReviewSize) {
+            removedFromReview = true;
+        }
+
+        if (removedFromFollowing || removedFromReview) {
+            await saveManuallyAddedState();
+            // Re-process data to update counts (similar to addManuallyAddedAccount)
+            if (currentFileData) {
+                // Manually update followingList in currentFileData to reflect changes
+                currentFileData.followingList = Array.from(new Set([...currentFileData.followingList, ...manuallyAddedFollowing]))
+                                                .filter(user => !manuallyUnfollowedList.includes(user));
+
+                // Recalculate originalNotFollowingBack based on the updated followingList
+                const followingMap = new Map();
+                currentFileData.followingList.forEach(user => {
+                    const originalAccount = currentFileData.originalNotFollowingBack.find(acc => acc.username === user);
+                    followingMap.set(user, originalAccount ? originalAccount.timestamp : null); 
+                });
+
+                originalNotFollowingBack = Array.from(followingMap.entries()).filter(([username]) => 
+                    !new Set(currentFileData.followersList).has(username)
+                ).map(([username, timestamp]) => ({ username: username, timestamp: timestamp }));
+
+                allNonFollowers = originalNotFollowingBack.filter(account => !safeUsers.includes(account.username));
+
+                // Calculate current total following including manual additions and removals
+                const effectiveFollowingCount = (currentFileData.followingList || []).length + manuallyAddedFollowing.length - manuallyUnfollowedList.length;
+
+                updateDashboardMetrics(
+                    effectiveFollowingCount,
+                    currentFileData.totalFollowers,
+                    allNonFollowers.length,
+                    originalNotFollowingBack.length,
+                    (currentFileData.recentlyUnfollowedProfiles || []).length
+                );
+                applyFiltersAndRenderAccounts();
+                applyAccountsManagementFiltersAndRender(); // Update accounts management list
+            }
+            renderAddedAccountsPreview();
+            showNotification(`Account ${username} removed from manually added lists.`, 'info');
+        } else {
+            showNotification(`Account ${username} not found in manually added lists.`, 'info');
+        }
     }
 
-    async function saveManuallyAddedFollowing() {
+    async function saveManuallyAddedState() {
         if (currentUserId && authInstance.currentUser && dbInstance && currentFileData) {
             try {
                 const userDocRef = doc(dbInstance, `artifacts/${appId}/users/${currentUserId}/userUploads`, currentFileData.id);
                 await setDoc(userDocRef, { 
                     manuallyAddedFollowing: manuallyAddedFollowing,
+                    accountsManuallyAddedForReview: accountsManuallyAddedForReview,
+                    // Also save the modified followingList if it was changed
+                    followingList: currentFileData.followingList, 
+                    manuallyUnfollowedList: manuallyUnfollowedList
                 }, { merge: true });
-                console.log('Manually added following saved to Firestore.');
+                console.log('Manually added following and review accounts saved to Firestore.');
             } catch (error) {
-                console.error('Error saving manually added following to Firestore:', error);
+                console.error('Error saving manually added state to Firestore:', error);
                 showAlert('Failed to save manually added accounts to storage.', 'error');
             }
         } else {
-            console.warn('Cannot save manually added following: User not authenticated or currentFileData not available.');
+            console.warn('Cannot save manually added state: User not authenticated or currentFileData not available.');
         }
     }
 
     const handleAddSingleAccount = async () => {
         const input = singleAddAccountInput.value.trim();
         if (!input) {
-            showAlert('Please enter a username or link.', 'info');
+            showNotification('Please enter a username or link.', 'info');
             return;
         }
         const username = parseUsernamesFromText(input)[0]; // Use existing parser
@@ -3321,24 +3609,24 @@
             const added = await addManuallyAddedAccount(username);
             if (added) {
                 singleAddAccountInput.value = '';
-                showAlert(`Account ${username} added!`, 'success');
+                showNotification(`Account ${username} added!`, 'success');
             } else {
-                showAlert(`Account ${username} is already in your following list or manually added list.`, 'info');
+                showNotification(`Account ${username} is already in your following list or review list.`, 'info');
             }
         } else {
-            showAlert('Could not extract a valid username from the input.', 'error');
+            showNotification('Could not extract a valid username from the input.', 'error');
         }
     };
 
     const handleAddBulkAccounts = async () => {
         const text = bulkAddAccountInput.value.trim();
         if (!text) {
-            showAlert('Please enter usernames or links in the bulk input area.', 'info');
+            showNotification('Please enter usernames or links in the bulk input area.', 'info');
             return;
         }
         const usernames = parseUsernamesFromText(text);
         if (usernames.length === 0) {
-            showAlert('No valid usernames or links found in the input.', 'info');
+            showNotification('No valid usernames or links found in the input.', 'info');
             return;
         }
 
@@ -3355,14 +3643,84 @@
 
         if (anyAdded) {
             bulkAddAccountInput.value = '';
-            showAlert('Accounts added successfully!', 'success');
+            showNotification('Accounts added successfully!', 'success');
             // No longer closing a modal, just updating the page
         } else if (alreadyInList.length > 0) {
-            showAlert(`All entered accounts are already in your following list or manually added list: ${alreadyInList.join(', ')}`, 'info');
+            showAlert(`All entered accounts are already in your following list or review list: ${alreadyInList.join(', ')}`, 'info');
         } else {
-            showAlert('No new accounts were added.', 'info');
+            showNotification('No new accounts were added.', 'info');
         }
     };
+
+    // New: Handle "Safe" button click from dashboard
+    async function handleSafeUserFromDashboard(username) {
+        const added = await addSafeUser(username);
+        if (added) {
+            await processAndSaveSafeUsers(true);
+            showNotification(`Account ${username} added to safe list.`, 'success');
+        } else {
+            showNotification(`Account ${username} is already in the safe list.`, 'info');
+        }
+    }
+
+    // New: Handle "Remove" button click from dashboard (simulates unfollow)
+    async function handleRemoveFromFollowingFromDashboard(username) {
+        // Open Instagram link
+        window.open(`https://www.instagram.com/${username}/`, '_blank');
+
+        // Remove from currentFileData.followingList
+        if (currentFileData && currentFileData.followingList) {
+            const initialFollowingSize = currentFileData.followingList.length;
+            currentFileData.followingList = currentFileData.followingList.filter(user => user !== username);
+            if (currentFileData.followingList.length < initialFollowingSize) {
+                // If actually removed from original following, add to manuallyUnfollowedList
+                if (!manuallyUnfollowedList.includes(username)) {
+                    manuallyUnfollowedList.push(username);
+                    manuallyUnfollowedList.sort();
+                }
+            }
+        }
+        // Also remove from manuallyAddedFollowing if they were added there
+        manuallyAddedFollowing = manuallyAddedFollowing.filter(user => user !== username);
+
+        // Save updated lists
+        await saveFollowingAndUnfollowedLists();
+
+        // Recalculate originalNotFollowingBack and allNonFollowers
+        if (currentFileData) {
+            const followingMap = new Map();
+            currentFileData.followingList.forEach(user => {
+                const originalAccount = currentFileData.originalNotFollowingBack.find(acc => acc.username === user);
+                followingMap.set(user, originalAccount ? originalAccount.timestamp : null);
+            });
+            manuallyAddedFollowing.forEach(user => {
+                if (!followingMap.has(user)) { // Only add if not already in original following
+                    followingMap.set(user, Math.floor(Date.now() / 1000)); // Use current timestamp for manual adds
+                }
+            });
+
+            const combinedFollowingSet = new Set(Array.from(followingMap.keys())); // All users we consider "following"
+
+            originalNotFollowingBack = Array.from(combinedFollowingSet).filter(username => 
+                !new Set(currentFileData.followersList).has(username)
+            ).map(username => ({ username: username, timestamp: followingMap.get(username) }));
+
+            allNonFollowers = originalNotFollowingBack.filter(account => !safeUsers.includes(account.username));
+
+            // Calculate current total following including manual additions and removals
+            const effectiveFollowingCount = (currentFileData.followingList || []).length + manuallyAddedFollowing.length - manuallyUnfollowedList.length;
+
+            updateDashboardMetrics(
+                effectiveFollowingCount,
+                currentFileData.totalFollowers,
+                allNonFollowers.length,
+                originalNotFollowingBack.length,
+                (currentFileData.recentlyUnfollowedProfiles || []).length
+            );
+            applyFiltersAndRenderAccounts(); // Re-render dashboard list
+        }
+        showNotification(`Account ${username} removed from your following list!`, 'success');
+    }
 
 
     // Mobile Menu Toggle
@@ -3429,7 +3787,7 @@
                     }
                 }
                 else if (targetId === '#upload') {
-                    showUploadSection(currentFileData !== null && currentFileData.fileName, currentFileData ? currentFileData.fileName : '', currentFileData ? currentFileData.fileSize : '');
+                    showUploadSection(currentFileData !== null && currentFileData.fileName, currentFileData ? currentFileData.fileName : '', currentFileData ? file.size : '');
                 }
                 else {
                     showLandingPage(); // Show all landing sections
@@ -3500,6 +3858,16 @@
         e.preventDefault();
         showLandingPage(); // Direct to landing page as per request
     };
+
+    // New: Functions for "People You Unfollowed" modal
+    function openUnfollowedProfilesModal() {
+        unfollowedProfilesModal.style.display = 'flex';
+        renderUnfollowedProfilesList(currentFileData.recentlyUnfollowedProfiles || []);
+    }
+
+    function closeUnfollowedProfilesModalFunc() {
+        unfollowedProfilesModal.style.display = 'none';
+    }
 
 
     // Initial app setup on window load
@@ -3573,7 +3941,7 @@
         accountsLinkSidebarAccounts = document.getElementById('accounts-link-sidebar-accounts');
         settingsLinkSidebarAccounts = document.getElementById('settings-link-sidebar-accounts');
         bannedUsersLinkSidebarAccounts = document.getElementById('banned-users-link-sidebar-accounts'); // New
-        dataUploadSelectorAccounts = document.getElementById('data-upload-selector-accounts');
+        // dataUploadSelectorAccounts = document.getElementById('data-upload-selector-accounts'); // Removed
         uploadNewDataBtnAccounts = document.getElementById('upload-new-data-btn-accounts');
         accountsToRemoveCard = document.getElementById('accounts-to-remove-card');
         accountsToRemoveCount = document.getElementById('accounts-to-remove-count');
@@ -3654,6 +4022,12 @@
         addBulkAccountsBtn = document.getElementById('add-bulk-accounts-btn');
         addedAccountsPreview = document.getElementById('added-accounts-preview');
 
+        // Assign "People You Unfollowed" modal elements
+        youDontFollowBackCard = document.getElementById('you-dont-follow-back-card');
+        unfollowedProfilesModal = document.getElementById('unfollowed-profiles-modal');
+        closeUnfollowedProfilesModal = document.getElementById('close-unfollowed-profiles-modal');
+        unfollowedProfilesListElem = document.getElementById('unfollowed-profiles-list');
+
 
         // Now that elements are assigned, proceed with Firebase init and event listeners
         const firebaseInitialized = await initializeFirebaseApp();
@@ -3725,7 +4099,7 @@
             const email = authEmailInput.value.trim();
             const password = authPasswordInput.value.trim();
             if (!email || !password) { showAlert('Please enter both email and password.', 'error'); return; }
-            try { await signInWithEmailAndPassword(authInstance, email, password); showAlert('Logged in successfully!', 'success'); closeAuthModalFunc(); }
+            try { await signInWithEmailAndPassword(authInstance, email, password); showNotification('Logged in successfully!', 'success'); closeAuthModalFunc(); }
             catch (error) { console.error('Login failed:', error); showAlert(`Login failed: ${error.message}`, 'error'); }
         });
         authSignupBtn.addEventListener('click', async () => {
@@ -3733,7 +4107,7 @@
             const password = authPasswordInput.value.trim();
             if (!email || !password) { showAlert('Please enter both email and password.', 'error'); return; }
             if (password.length < 6) { showAlert('Password should be at least 6 characters.', 'error'); return; }
-            try { await createUserWithEmailAndPassword(authInstance, email, password); showAlert('Account created and logged in successfully!', 'success'); closeAuthModalFunc(); }
+            try { await createUserWithEmailAndPassword(authInstance, email, password); showNotification('Account created and logged in successfully!', 'success'); closeAuthModalFunc(); }
             catch (error) { console.error('Signup failed:', error); showAlert(`Signup failed: ${error.message}`, 'error'); }
         });
 
@@ -3751,20 +4125,15 @@
             await loadDataForUpload(e.target.value);
             // Keep other selectors in sync
             dataUploadSelectorAnalytics.value = e.target.value;
-            dataUploadSelectorAccounts.value = e.target.value;
+            // dataUploadSelectorAccounts.value = e.target.value; // Removed
         });
         dataUploadSelectorAnalytics.addEventListener('change', async (e) => {
             await loadDataForUpload(e.target.value);
             // Keep other selectors in sync
             dataUploadSelectorDashboard.value = e.target.value;
-            dataUploadSelectorAccounts.value = e.target.value;
+            // dataUploadSelectorAccounts.value = e.target.value; // Removed
         });
-        dataUploadSelectorAccounts.addEventListener('change', async (e) => {
-            await loadDataForUpload(e.target.value);
-            // Keep other selectors in sync
-            dataUploadSelectorDashboard.value = e.target.value;
-            dataUploadSelectorAnalytics.value = e.target.value;
-        });
+        // dataUploadSelectorAccounts removed
 
 
         // Mobile Menu Toggle
@@ -3866,11 +4235,16 @@
         });
         addBulkAccountsBtn.addEventListener('click', handleAddBulkAccounts);
 
+        // New: Event listeners for "People You Unfollowed" modal
+        youDontFollowBackCard.addEventListener('click', openUnfollowedProfilesModal);
+        closeUnfollowedProfilesModal.addEventListener('click', closeUnfollowedProfilesModalFunc);
+
 
         // Initial render of accounts (will show "No data" message)
         renderAccounts([]);
         renderAccountsToRemove([]); // Initial render for accounts management list
         renderOrangeListUsers([]); // Initial render for orange list users
+        renderUnfollowedProfilesList([]); // Initial render for unfollowed profiles list
     };
 
   </script>
