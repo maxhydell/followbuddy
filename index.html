@@ -11,7 +11,7 @@
   <!-- <link rel="icon" href="faviconfollowbuddy.ico" type="image/x-icon"> -->
 
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;700&display=swap" rel="stylesheet" />
-  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0-beta3/css/all.min.css">\
   <script src="https://cdn.tailwindcss.com"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
   <style>
@@ -1680,11 +1680,15 @@
     }
 
     // Function to update analytics metrics
-    function updateAnalyticsMetrics(newFollowers, unfollowedYou, newFollowerAccounts, unfollowedAccounts) {
-        newFollowersCountElem.textContent = newFollowers;
-        unfollowedYouCountElem.textContent = unfollowedYou;
-        renderNewFollowersList(newFollowerAccounts);
-        renderUnfollowedAccountsList(unfollowedAccounts);
+    function updateAnalyticsMetrics(newFollowersCalculated, unfollowedYouCalculated, newFollowerAccountsList, unfollowedAccountsList) {
+        // The user reported that the analytics outputs were reversed.
+        // We are swapping the values assigned to the display elements to correct this.
+        newFollowersCountElem.textContent = unfollowedYouCalculated; // Display unfollowed count under "New Followers"
+        unfollowedYouCountElem.textContent = newFollowersCalculated; // Display new followers count under "Unfollowed You"
+
+        // Also swap the lists for rendering to match the swapped counts
+        renderNewFollowersList(unfollowedAccountsList); // Render unfollowed accounts under "New Followers" list
+        renderUnfollowedAccountsList(newFollowerAccountsList); // Render new follower accounts under "Unfollowed You" list
     }
 
     // Function to update Accounts Management metrics
@@ -2157,6 +2161,7 @@
                 if (relativePath.startsWith('your_instagram_activity/messages/inbox/') && 
                     (relativePath.endsWith('.json') || relativePath.endsWith('.html')) && 
                     relativePath.includes('message_')) { // Ensure it's a message file
+                    console.log(`Processing message file: ${relativePath}`); // Log which message file is being processed
                     messageParsingPromises.push(
                         zipEntry.async('text').then(messageContent => {
                             try {
@@ -2245,6 +2250,7 @@
                         }
                     } else if (jsonData.messages && Array.isArray(jsonData.messages)) {
                         // This might be a message HTML file
+                        console.log(`Processing message data from HTML file: ${fileName}`); // Log processing of HTML message file
                         processMessageData(jsonData, tempMessageUsernamesMap);
                         foundMessageContent = true;
                     }
@@ -2282,6 +2288,7 @@
                                 foundFollowers = true;
                             }
                         } else if (jsonData.messages && Array.isArray(jsonData.messages)) {
+                            console.log(`Processing message data from HTML script tag: ${fileName}`); // Log processing of HTML message script
                             processMessageData(jsonData, tempMessageUsernamesMap);
                             foundMessageContent = true;
                         }
@@ -2299,7 +2306,7 @@
 
         await Promise.all(messageParsingPromises); // Wait for all message files (if zip) to be processed
         allMessageUsernames = Array.from(tempMessageUsernamesMap, ([username, timestamp]) => ({ username, timestamp }));
-        console.log("Extracted usernames from messages:", allMessageUsernames);
+        console.log("Extracted usernames from messages for Accounts Management:", allMessageUsernames);
 
         const followingMap = new Map();
         const followingUsernames = new Set();
@@ -2366,6 +2373,7 @@
         );
         // Sort by oldest to newest by default for this list
         accountsToRemoveList.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+        console.log("Accounts to Remove (after filtering by approved/removed):", accountsToRemoveList);
 
 
         // Prepare data for saving
@@ -2436,8 +2444,8 @@
     function processMessageData(messageData, tempMessageUsernamesMap) {
         // Regex to find Instagram links (e.g., instagram.com/username)
         const instagramLinkRegex = /(?:https?:\/\/)?(?:www\.)?instagram\.com\/([a-zA-Z0-9_.]+)(?:\/)?/g;
-        // Regex to find @usernames (e.g., @username)
-        const atUsernameRegex = /(?<!\w)@([a-zA-Z0-9_.]+)(?!\w)/g;
+        // Regex to find @usernames (e.g., @username) - improved to be more specific
+        const atUsernameRegex = /(?<!\w)@([a-zA-Z0-9_]{3,})(?!\w)/g; // At least 3 characters, no special chars, word boundary
 
         if (messageData.messages && Array.isArray(messageData.messages)) {
             messageData.messages.forEach(message => {
@@ -2448,7 +2456,8 @@
                     let match;
                     // Links in content
                     while ((match = instagramLinkRegex.exec(message.content)) !== null) {
-                        const username = match[1];
+                        const username = match[1].toLowerCase(); // Store in lowercase
+                        console.log(`Extracted from content link: ${username}`);
                         if (!tempMessageUsernamesMap.has(username) || tempMessageUsernamesMap.get(username) < messageTimestamp) {
                             tempMessageUsernamesMap.set(username, messageTimestamp);
                         }
@@ -2457,10 +2466,11 @@
 
                     // @usernames in content
                     while ((match = atUsernameRegex.exec(message.content)) !== null) {
-                        const username = match[1];
+                        const username = match[1].toLowerCase(); // Store in lowercase
                         // Basic check to avoid common words, could be improved
                         // Ensure it's not just a single character or common punctuation, and doesn't contain '.' which usually indicates a file extension or part of a URL.
                         if (username.length > 2 && !username.includes('.')) { 
+                            console.log(`Extracted from content @mention: ${username}`);
                             if (!tempMessageUsernamesMap.has(username) || tempMessageUsernamesMap.get(username) < messageTimestamp) {
                                 tempMessageUsernamesMap.set(username, messageTimestamp);
                             }
@@ -2474,7 +2484,8 @@
                     if (message.share.link) {
                         const match = instagramLinkRegex.exec(message.share.link);
                         if (match && match[1]) {
-                            const username = match[1];
+                            const username = match[1].toLowerCase(); // Store in lowercase
+                            console.log(`Extracted from share link: ${username}`);
                             if (!tempMessageUsernamesMap.has(username) || tempMessageUsernamesMap.get(username) < messageTimestamp) {
                                 tempMessageUsernamesMap.set(username, messageTimestamp);
                             }
@@ -2482,7 +2493,8 @@
                         instagramLinkRegex.lastIndex = 0;
                     }
                     if (message.share.profile_share_username) {
-                        const username = message.share.profile_share_username;
+                        const username = message.share.profile_share_username.toLowerCase(); // Store in lowercase
+                        console.log(`Extracted from profile share username: ${username}`);
                         if (!tempMessageUsernamesMap.has(username) || tempMessageUsernamesMap.get(username) < messageTimestamp) {
                             tempMessageUsernamesMap.set(username, messageTimestamp);
                         }
@@ -2493,7 +2505,8 @@
                 if (message.share_to_direct_story && message.share_to_direct_story.media && message.share_to_direct_story.media.uri) {
                     const match = instagramLinkRegex.exec(message.share_to_direct_story.media.uri);
                     if (match && match[1]) {
-                        const username = match[1];
+                        const username = match[1].toLowerCase(); // Store in lowercase
+                        console.log(`Extracted from direct story media URI: ${username}`);
                         if (!tempMessageUsernamesMap.has(username) || tempMessageUsernamesMap.get(username) < messageTimestamp) {
                             tempMessageUsernamesMap.set(username, messageTimestamp);
                         }
@@ -3027,6 +3040,8 @@
         }
 
         accountsListTitle.textContent = listTitle; // Update the title
+        console.log(`Rendering Accounts Management list in mode: ${currentAccountsViewMode}. Accounts to display:`, accountsToDisplay);
+
 
         const searchTerm = accountsSearchInput.value.toLowerCase();
         if (searchTerm) {
@@ -3057,7 +3072,7 @@
     function renderAccountsToRemove(accountsToRender) {
         accountsManagementList.innerHTML = ''; // Clear existing list
         if (accountsToRender.length === 0) {
-            accountsManagementList.innerHTML = '<p class="text-gray-500 text-center">No accounts to display for this view.</p>';
+            accountsManagementList.innerHTML = '<p class="text-gray-500 text-center">No accounts to display for this view. Ensure message data is uploaded and contains Instagram links/mentions.</p>';
             return;
         }
         accountsToRender.forEach(account => {
