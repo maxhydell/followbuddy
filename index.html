@@ -3604,7 +3604,7 @@ const handleAddSingleAccount = async () => {
     
     try {
         // Call the Firebase Cloud Function
-        const addAccountCallable = firebase.functions().httpsCallable('addinstagramaccount');
+        const addAccountCallable = httpsCallable(functionsInstance, 'addinstagramaccount');
         const result = await addAccountCallable({ usernameToAdd: username });
 
         if (result.data.status === 'success') {
@@ -3651,7 +3651,7 @@ const handleAddBulkAccounts = async () => {
 
     for (const username of usernames) {
         try {
-            const addAccountCallable = firebase.functions().httpsCallable('addinstagramaccount');
+            const addAccountCallable = httpsCallable(functionsInstance, 'addinstagramaccount');
             const result = await addAccountCallable({ usernameToAdd: username });
 
             if (result.data.status === 'success') {
