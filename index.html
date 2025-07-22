@@ -1086,7 +1086,8 @@
     let authInstance;
     let dbInstance;
     let currentUserId = null;
-    let currentFileData = null; // Store processed data temporarily for the currently selected upload
+    let currentFileData = null;
+    let unsubscribeFromFirebase = null; // New: To manage our Firebase listener // Store processed data temporarily for the currently selected upload
     let allNonFollowers = []; // Store the filtered non-followers for display and search
     let originalNotFollowingBack = []; // Store the original non-followers before safe user filtering
     let safeUsers = []; // Store safe users
@@ -1558,35 +1559,42 @@
     }
 
 
-    // Load data for a specific upload ID
-    async function loadDataForUpload(uploadId) {
-        if (!currentUserId || !dbInstance || !uploadId) {
-            console.log("No upload ID provided or user not authenticated. Resetting UI.");
-            currentFileData = null;
-            allNonFollowers = [];
-            originalNotFollowingBack = [];
-            safeUsers = [];
-            bannedUsers = []; // Reset banned users on data load
-            accountsManuallyAddedForReview = []; // Reset accounts management list
-            approvedAccountsList = [];
-            removedAccountsList = [];
-            manuallyUnfollowedList = []; // Reset manually unfollowed list
-            accountsToRemoveList = []; // Initialize accountsToRemoveList
-            manuallyAddedFollowing = []; // Reset manually added following
-            updateDashboardMetrics(0, 0, 0, 0, 0);
-            updateAnalyticsMetrics(0, 0, [], []); // Reset analytics metrics and lists
-            updateAccountsManagementMetrics(); // Reset accounts management metrics
-            renderAccounts([]); // Dashboard non-followers
-            renderAccountsToRemove([]); // Accounts management list
-            renderOrangeListUsers([]); // New: Clear orange list
-            renderUnfollowedProfilesList([]); // Clear unfollowed profiles list
-            return;
-        }
+// Line 528: Replace the entire existing loadDataForUpload function
+async function loadDataForUpload(uploadId) {
+    if (!currentUserId || !dbInstance || !uploadId) {
+        console.log("No upload ID provided or user not authenticated. Resetting UI.");
+        currentFileData = null;
+        allNonFollowers = [];
+        originalNotFollowingBack = [];
+        safeUsers = [];
+        bannedUsers = []; // Reset banned users on data load
+        accountsManuallyAddedForReview = []; // Reset accounts management list
+        approvedAccountsList = [];
+        removedAccountsList = [];
+        manuallyUnfollowedList = []; // Reset manually unfollowed list
+        accountsToRemoveList = []; // Initialize accountsToRemoveList
+        manuallyAddedFollowing = []; // Reset manually added following
+        updateDashboardMetrics(0, 0, 0, 0, 0);
+        updateAnalyticsMetrics(0, 0, [], []); // Reset analytics metrics and lists
+        updateAccountsManagementMetrics(); // Reset accounts management metrics
+        renderAccounts([]); // Dashboard non-followers
+        renderAccountsToRemove([]); // Accounts management list
+        renderOrangeListUsers([]); // New: Clear orange list
+        renderUnfollowedProfilesList([]); // Clear unfollowed profiles list
+        return;
+    }
 
-        try {
-            const uploadDocRef = doc(dbInstance, `artifacts/${appId}/users/${currentUserId}/userUploads`, uploadId);
-            const docSnap = await getDoc(uploadDocRef);
+    // New: Unsubscribe from previous listener if it exists
+    if (unsubscribeFromFirebase) {
+        unsubscribeFromFirebase();
+        console.log("Unsubscribed from previous Firebase listener.");
+    }
 
+    try {
+        const uploadDocRef = doc(dbInstance, `artifacts/${appId}/users/${currentUserId}/userUploads`, uploadId);
+
+        // New: Set up a real-time listener using onSnapshot
+        unsubscribeFromFirebase = onSnapshot(uploadDocRef, async (docSnap) => {
             if (docSnap.exists()) {
                 const data = docSnap.data();
                 currentFileData = { id: docSnap.id, ...data }; // Store the ID
@@ -1628,7 +1636,7 @@
                 if (currentIndex < allUserUploadsMetadata.length - 1) { // Check if there's an older upload
                     const previousUploadMetadata = allUserUploadsMetadata[currentIndex + 1]; // This is the older upload
                     const previousUploadDocRef = doc(dbInstance, `artifacts/${appId}/users/${currentUserId}/userUploads`, previousUploadMetadata.id);
-                    const prevDocSnap = await getDoc(previousUploadDocRef);
+                    const prevDocSnap = await getDoc(previousUploadDocRef); // Still use getDoc for historical data
 
                     if (prevDocSnap.exists()) {
                         const prevData = prevDocSnap.data();
@@ -1649,7 +1657,7 @@
                     }
                 }
                 console.log(`Analytics for upload ${uploadId}: Unfollowed (lost followers): ${unfollowedYou}, New Followers (gained followers): ${newFollowers}`);
-                
+
                 // Calculate current total following including manual additions and removals
                 const effectiveFollowingCount = (currentFileData.followingList || []).length + manuallyAddedFollowing.length - manuallyUnfollowedList.length;
 
@@ -1692,12 +1700,15 @@
                 renderOrangeListUsers([]); // New: Clear orange list
                 renderUnfollowedProfilesList([]); // Clear unfollowed profiles list
             }
-        } catch (error) {
-            console.error('Error loading data for upload:', error);
+        }, (error) => {
+            console.error('Error listening to document:', error);
             showAlert('Failed to load data for the selected upload. Error: ' + error.message, 'error');
-        }
+        });
+    } catch (error) {
+        console.error('Error setting up listener for upload:', error);
+        showAlert('Failed to set up real-time data listener. Error: ' + error.message, 'error');
     }
-
+}
     // Load the latest data by default when user logs in or app starts
     async function loadLatestData() {
         if (allUserUploadsMetadata.length > 0) {
@@ -2195,6 +2206,12 @@
       try {
         await signOut(authInstance);
         showNotification('Logged out successfully!', 'success');
+        // New: Unsubscribe when user logs out
+        if (unsubscribeFromFirebase) {
+            unsubscribeFromFirebase();
+            unsubscribeFromFirebase = null; // Clear the reference
+            console.log("Firebase listener unsubscribed on logout.");
+        }
         currentFileData = null; // Clear data on logout
         allNonFollowers = [];
         originalNotFollowingBack = [];
@@ -3587,7 +3604,7 @@ const handleAddSingleAccount = async () => {
     
     try {
         // Call the Firebase Cloud Function
-        const addAccountCallable = httpsCallable(functionsInstance, 'addinstagramaccount');
+        const addAccountCallable = firebase.functions().httpsCallable('addinstagramaccount');
         const result = await addAccountCallable({ usernameToAdd: username });
 
         if (result.data.status === 'success') {
@@ -3634,7 +3651,7 @@ const handleAddBulkAccounts = async () => {
 
     for (const username of usernames) {
         try {
-            const addAccountCallable = httpsCallable(functionsInstance, 'addinstagramaccount');
+            const addAccountCallable = firebase.functions().httpsCallable('addinstagramaccount');
             const result = await addAccountCallable({ usernameToAdd: username });
 
             if (result.data.status === 'success') {
@@ -3672,44 +3689,6 @@ const handleAddBulkAccounts = async () => {
             showNotification(`Account ${username} added to safe list.`, 'success');
         } else {
             showNotification(`Account ${username} is already in the safe list.`, 'info');
-        }
-    }
-
-    // Loading Indicator Functions (NEWLY ADDED)
-    let loadingModal = null; // To hold the loading modal element
-    let loadingMessageElem = null; // To hold the message element inside the loading modal
-
-    function initializeLoadingModal() {
-        // Create the loading modal structure if it doesn't exist
-        if (!document.getElementById('loading-modal')) {
-            const modalHtml = `
-                <div id="loading-modal" class="modal">
-                    <div class="modal-content bg-gray-700 text-white flex flex-col items-center justify-center p-8 rounded-lg shadow-lg">
-                        <div class="button-spinner mb-4" style="display: block;"></div>
-                        <p id="loading-message" class="text-lg font-semibold">Loading...</p>
-                    </div>
-                </div>
-            `;
-            document.body.insertAdjacentHTML('beforeend', modalHtml);
-            loadingModal = document.getElementById('loading-modal');
-            loadingMessageElem = document.getElementById('loading-message');
-        } else {
-            loadingModal = document.getElementById('loading-modal');
-            loadingMessageElem = document.getElementById('loading-message');
-        }
-    }
-
-    function showLoading(message = 'Loading...') {
-        if (!loadingModal) {
-            initializeLoadingModal();
-        }
-        loadingMessageElem.textContent = message;
-        loadingModal.style.display = 'flex';
-    }
-
-    function hideLoading() {
-        if (loadingModal) {
-            loadingModal.style.display = 'none';
         }
     }
 
@@ -4065,8 +4044,6 @@ const handleAddBulkAccounts = async () => {
         closeUnfollowedProfilesModal = document.getElementById('close-unfollowed-profiles-modal');
         unfollowedProfilesListElem = document.getElementById('unfollowed-profiles-list');
 
-        // Initialize loading modal structure
-        initializeLoadingModal();
 
         // Now that elements are assigned, proceed with Firebase init and event listeners
         const firebaseInitialized = await initializeFirebaseApp();
