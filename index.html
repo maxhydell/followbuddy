@@ -806,8 +806,8 @@
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div class="metric-card" id="accounts-to-remove-card">
-            <p class="label">Accounts to Remove</p>
+          <div class="metric-card bg-orange-800" id="accounts-to-remove-card">
+            <p class="label">Accounts to Review</p>
             <p class="value" id="accounts-to-remove-count">0</p>
           </div>
           <div class="metric-card" id="total-accounts-removed-card">
@@ -826,7 +826,7 @@
 
         <div class="bg-gray-800 p-6 rounded-xl shadow-lg">
           <div class="flex justify-between items-center mb-6">
-            <h3 id="accounts-list-title" class="text-xl font-bold text-gray-100">Accounts to Remove</h3>
+            <h3 id="accounts-list-title" class="text-xl font-bold text-gray-100">Accounts to Review</h3>
             <div class="flex items-center space-x-4">
               <input type="text" id="accounts-search-input" placeholder="Search for a specific account..." class="border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-700 text-gray-100" />
               <select id="accounts-sort-select" class="border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-700 text-gray-100">
@@ -1603,7 +1603,7 @@
                 // Filter notFollowingBack based on current safeUsers
                 allNonFollowers = originalNotFollowingBack.filter(account => !safeUsers.includes(account.username));
 
-                // Accounts to Remove logic: accounts manually added for review, that are NOT approved, NOT removed, AND NOT in the current (original + manually added - manually unfollowed) following list
+                // Accounts to Review logic: accounts manually added for review, that are NOT approved, NOT removed, AND NOT in the current (original + manually added - manually unfollowed) following list
                 const combinedFollowingSet = new Set(currentFileData.followingList); // Base from uploaded file
                 manuallyAddedFollowing.forEach(user => combinedFollowingSet.add(user)); // Add manually added
                 manuallyUnfollowedList.forEach(user => combinedFollowingSet.delete(user)); // Remove manually unfollowed
@@ -1950,7 +1950,7 @@
 
     // Function to update Accounts Management metrics
     function updateAccountsManagementMetrics() {
-        // Accounts to Remove
+        // Accounts to Review
         const accountsToRemoveCountValue = accountsToRemoveList.length;
         accountsToRemoveCount.textContent = accountsToRemoveCountValue;
         accountsToRemoveCount.classList.remove('accounts-to-remove-green', 'accounts-to-remove-orange', 'accounts-to-remove-red');
@@ -2608,7 +2608,7 @@
             updateAnalyticsMetrics(0, 0, [], []);
             updateAccountsManagementMetrics(); // Update new metrics
             renderAccounts(allNonFollowers); // Render non-followers
-            applyAccountsManagementFiltersAndRender(); // Render accounts to remove
+            applyAccountsManagementFiltersAndRender(); // Render accounts to Review
             renderOrangeListUsers(originalNotFollowingBack); // New: Render orange list users
             renderUnfollowedProfilesList(currentFileData.recentlyUnfollowedProfiles || []); // Render unfollowed profiles list
             showDashboard(); // Show dashboard section
@@ -3143,9 +3143,9 @@
         }
 
 
-        if (currentAccountsViewMode === 'toRemove') {
+        if (currentAccountsViewMode === 'toReview') {
             accountsToDisplay = [...accountsToRemoveList];
-            listTitle = "Accounts to Remove";
+            listTitle = "Accounts to Review";
         } else if (currentAccountsViewMode === 'approved') {
             // Filter accountsManuallyAddedForReview by approvedAccountsList
             accountsToDisplay = accountsManuallyAddedForReview.filter(account => approvedAccountsList.includes(account.username));
@@ -3572,59 +3572,97 @@
         }
     }
 
-    const handleAddSingleAccount = async () => {
-        const input = singleAddAccountInput.value.trim();
-        if (!input) {
-            showNotification('Please enter a username or link.', 'info');
-            return;
-        }
-        const username = parseUsernamesFromText(input)[0]; // Use existing parser
-        if (username) {
-            const added = await addManuallyAddedAccount(username);
-            if (added) {
-                singleAddAccountInput.value = '';
-                showNotification(`Account ${username} added!`, 'success');
-            } else {
-                showNotification(`Account ${username} is already in your following list or review list.`, 'info');
-            }
+const handleAddSingleAccount = async () => {
+    const username = singleAddAccountInput.value.trim(); // Directly use input value
+    if (!username) {
+        showAlert('Please enter an Instagram username.', 'error');
+        return;
+    }
+
+    if (!currentUserId || !currentFileData) { // Check for currentFileData instead of latestUploadId
+        showAlert('User data not loaded. Please upload your data first.', 'error');
+        return;
+    }
+
+    
+    try {
+        // Call the Firebase Cloud Function
+        const addAccountCallable = httpsCallable(functionsInstance, 'addinstagramaccount');
+        const result = await addAccountCallable({ usernameToAdd: username });
+
+        if (result.data.status === 'success') {
+            showAlert(result.data.message, 'success');
+            singleAddAccountInput.value = ''; // Clear input
+            // Re-fetch data to update dashboard metrics and lists
+            await loadDataForUpload(currentFileData.id); // Reload current data
+        } else if (result.data.status === 'noop') {
+            showAlert(result.data.message, 'info');
         } else {
-            showNotification('Could not extract a valid username from the input.', 'error');
+            showAlert(result.data.message || 'Failed to add account.', 'error');
         }
-    };
+    } catch (error) {
+        console.error('Error calling addinstagramaccount function:', error);
+        showAlert(`Error adding account: ${error.message}`, 'error');
+    } finally {
+        hideLoading(); // Assuming you have a hideLoading function
+    }
+};
 
-    const handleAddBulkAccounts = async () => {
-        const text = bulkAddAccountInput.value.trim();
-        if (!text) {
-            showNotification('Please enter usernames or links in the bulk input area.', 'info');
-            return;
-        }
-        const usernames = parseUsernamesFromText(text);
-        if (usernames.length === 0) {
-            showNotification('No valid usernames or links found in the input.', 'info');
-            return;
-        }
+const handleAddBulkAccounts = async () => {
+    const usernamesText = bulkAddAccountInput.value.trim();
+    if (!usernamesText) {
+        showAlert('Please enter usernames for bulk addition.', 'error');
+        return;
+    }
 
-        let anyAdded = false;
-        const alreadyInList = [];
-        for (const username of usernames) {
-            const added = await addManuallyAddedAccount(username);
-            if (added) {
-                anyAdded = true;
+    if (!currentUserId || !currentFileData) { // Check for currentFileData
+        showAlert('User data not loaded. Please upload your data first.', 'error');
+        return;
+    }
+
+    const usernames = usernamesText.split(/[\n,]+/).map(u => u.trim()).filter(u => u);
+    if (usernames.length === 0) {
+        showAlert('No valid usernames found for bulk addition.', 'error');
+        return;
+    }
+
+    showLoading(`Adding ${usernames.length} account(s)...`);
+    let successCount = 0;
+    let noopCount = 0;
+    let errorCount = 0;
+    const errors = [];
+
+    for (const username of usernames) {
+        try {
+            const addAccountCallable = httpsCallable(functionsInstance, 'addinstagramaccount');
+            const result = await addAccountCallable({ usernameToAdd: username });
+
+            if (result.data.status === 'success') {
+                successCount++;
+            } else if (result.data.status === 'noop') {
+                noopCount++;
             } else {
-                alreadyInList.push(username);
+                errorCount++;
+                errors.push(`${username}: ${result.data.message || 'Unknown error'}`);
             }
+        } catch (error) {
+            errorCount++;
+            errors.push(`${username}: ${error.message}`);
+            console.error(`Error adding ${username}:`, error);
         }
+    }
 
-        if (anyAdded) {
-            bulkAddAccountInput.value = '';
-            showNotification('Accounts added successfully!', 'success');
-            // No longer closing a modal, just updating the page
-        } else if (alreadyInList.length > 0) {
-            showAlert(`All entered accounts are already in your following list or review list: ${alreadyInList.join(', ')}`, 'info');
-        } else {
-            showNotification('No new accounts were added.', 'info');
-        }
-    };
+    hideLoading();
+    let message = `Bulk addition complete: ${successCount} added, ${noopCount} already present.`;
+    if (errorCount > 0) {
+        message += ` ${errorCount} failed. See console for details.`;
+        showAlert(message, 'error');
+    } else {
+        showAlert(message, 'success');
+    }
+    bulkAddAccountInput.value = ''; // Clear input
+    await loadDataForUpload(currentFileData.id); // Reload current data after bulk add
+};
 
     // New: Handle "Safe" button click from dashboard
     async function handleSafeUserFromDashboard(username) {
@@ -3634,6 +3672,44 @@
             showNotification(`Account ${username} added to safe list.`, 'success');
         } else {
             showNotification(`Account ${username} is already in the safe list.`, 'info');
+        }
+    }
+
+    // Loading Indicator Functions (NEWLY ADDED)
+    let loadingModal = null; // To hold the loading modal element
+    let loadingMessageElem = null; // To hold the message element inside the loading modal
+
+    function initializeLoadingModal() {
+        // Create the loading modal structure if it doesn't exist
+        if (!document.getElementById('loading-modal')) {
+            const modalHtml = `
+                <div id="loading-modal" class="modal">
+                    <div class="modal-content bg-gray-700 text-white flex flex-col items-center justify-center p-8 rounded-lg shadow-lg">
+                        <div class="button-spinner mb-4" style="display: block;"></div>
+                        <p id="loading-message" class="text-lg font-semibold">Loading...</p>
+                    </div>
+                </div>
+            `;
+            document.body.insertAdjacentHTML('beforeend', modalHtml);
+            loadingModal = document.getElementById('loading-modal');
+            loadingMessageElem = document.getElementById('loading-message');
+        } else {
+            loadingModal = document.getElementById('loading-modal');
+            loadingMessageElem = document.getElementById('loading-message');
+        }
+    }
+
+    function showLoading(message = 'Loading...') {
+        if (!loadingModal) {
+            initializeLoadingModal();
+        }
+        loadingMessageElem.textContent = message;
+        loadingModal.style.display = 'flex';
+    }
+
+    function hideLoading() {
+        if (loadingModal) {
+            loadingModal.style.display = 'none';
         }
     }
 
@@ -3989,6 +4065,8 @@
         closeUnfollowedProfilesModal = document.getElementById('close-unfollowed-profiles-modal');
         unfollowedProfilesListElem = document.getElementById('unfollowed-profiles-list');
 
+        // Initialize loading modal structure
+        initializeLoadingModal();
 
         // Now that elements are assigned, proceed with Firebase init and event listeners
         const firebaseInitialized = await initializeFirebaseApp();
@@ -4177,7 +4255,7 @@
         openRedUsersBtn.addEventListener('click', () => openUsersByColor('red'));
 
         // Event listeners for Accounts Management stat cards to filter the list
-        accountsToRemoveCard.addEventListener('click', () => showAccountsManagement('toRemove'));
+        accountsToRemoveCard.addEventListener('click', () => showAccountsManagement('toReview'));
         totalAccountsRemovedCard.addEventListener('click', () => showAccountsManagement('removed'));
         approvedAccountsCard.addEventListener('click', () => showAccountsManagement('approved'));
 
