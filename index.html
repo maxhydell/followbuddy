@@ -3621,7 +3621,6 @@ const handleAddSingleAccount = async () => {
         console.error('Error calling addinstagramaccount function:', error);
         showAlert(`Error adding account: ${error.message}`, 'error');
     } finally {
-        hideLoading(); // Assuming you have a hideLoading function
     }
 };
 
@@ -3669,7 +3668,7 @@ const handleAddBulkAccounts = async () => {
         }
     }
 
-    hideLoading();
+    
     let message = `Bulk addition complete: ${successCount} added, ${noopCount} already present.`;
     if (errorCount > 0) {
         message += ` ${errorCount} failed. See console for details.`;
