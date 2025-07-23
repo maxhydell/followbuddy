@@ -1077,10 +1077,10 @@
     // Firebase SDK imports
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut, createUserWithEmailAndPassword, signInWithEmailAndPassword, signInWithCustomToken, signInAnonymously } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
-    import { getFirestore, doc, setDoc, getDoc, collection, query, orderBy, getDocs, onSnapshot, deleteDoc } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+    import { getFirestore, doc, setDoc, getDoc, collection, query, orderBy, getDocs, onSnapshot, deleteDoc, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
     // NEW: Import Firebase Functions SDK
     import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-functions.js";
-    import { collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+    
 
 
     // Global Firebase instances and user data
