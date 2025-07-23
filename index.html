@@ -3174,6 +3174,7 @@ async function loadDataForUpload(uploadId) {
         }
 
         accountsListTitle.textContent = listTitle; // Update the title
+        console.log(`Accounts Management is reading from: /artifacts/${appId}/users/${currentUserId}/userUploads/${currentFileData ? currentFileData.id : 'N/A'}. Data source:`, accountsToDisplay);
         console.log(`Rendering Accounts Management list in mode: ${currentAccountsViewMode}. Accounts to display:`, accountsToDisplay);
 
 
