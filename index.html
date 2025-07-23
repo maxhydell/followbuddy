@@ -3613,6 +3613,15 @@ const handleAddSingleAccount = async () => {
       timestamp: serverTimestamp()
     });
 
+    // Update frontend state manually
+    manuallyAddedFollowing.push(username);
+    accountsToRemoveList.push({ username: username, added_via: "manual", timestamp: Date.now() });
+
+    // Update dashboard UI immediately
+    updateAccountsManagementView();  // Refreshes list
+    updateAccountsCounters();        // Updates cards like "Accounts to Review"
+
+
     showNotification(`Added: ${username}`, 'success');
     singleAddAccountInput.value = '';
     await loadDataForUpload(currentFileData.id); // refresh
@@ -3635,7 +3644,11 @@ const handleAddBulkAccounts = async () => {
     return;
   }
 
-  const usernames = usernamesText.split(/[\n,]+/).map(u => u.trim()).filter(Boolean);
+  const usernames = usernamesText
+    .split(/[\n,]+/)
+    .map(u => u.trim())
+    .filter(u => u.length > 0);
+
   if (usernames.length === 0) {
     showAlert('No valid usernames found.', 'error');
     return;
@@ -3651,16 +3664,29 @@ const handleAddBulkAccounts = async () => {
         added_via: "manual",
         timestamp: serverTimestamp()
       });
+
+      // ✅ Update local state so they show up right away
+      manuallyAddedFollowing.push(username);
+      accountsToRemoveList.push({
+        username: username,
+        added_via: "manual",
+        timestamp: Date.now()
+      });
+
       successCount++;
     } catch (error) {
-      console.error(`Failed to add ${username}:`, error);
+      console.error(`❌ Failed to add ${username}:`, error);
     }
   }
 
   hideLoading();
+  bulkAddAccountInput.value = "";
+
+  // ✅ Update dashboard instantly
+  updateAccountsManagementView();
+  updateAccountsCounters();
+
   showNotification(`✅ ${successCount} accounts added.`, 'success');
-  bulkAddAccountInput.value = '';
-  await loadDataForUpload(currentFileData.id); // refresh
 };
 
 
