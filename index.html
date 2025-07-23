@@ -1077,7 +1077,7 @@
     // Firebase SDK imports
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut, createUserWithEmailAndPassword, signInWithEmailAndPassword, signInWithCustomToken, signInAnonymously } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
-    import { getFirestore, doc, setDoc, getDoc, collection, query, orderBy, getDocs, onSnapshot } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+    import { getFirestore, doc, setDoc, getDoc, collection, query, orderBy, getDocs, onSnapshot, deleteDoc } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
     // NEW: Import Firebase Functions SDK
     import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-functions.js";
 
@@ -2291,7 +2291,7 @@ async function loadDataForUpload(uploadId) {
             try {
                 // Delete data from Firestore
                 const userDocRef = doc(dbInstance, `artifacts/${appId}/users/${currentUserId}/userUploads`, currentFileData.id);
-                await setDoc(userDocRef, {}); // Clear the document by setting it to an empty object
+                await deleteDoc(userDocRef); // This completely deletes the document
                 console.log('Current user data cleared from Firestore.');
                 await loadAllUserUploads(); // Reload metadata to update dropdowns
                 await loadLatestData(); // Load the new latest or reset if no more uploads
