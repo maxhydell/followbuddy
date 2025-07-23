@@ -1591,7 +1591,7 @@ async function loadDataForUpload(uploadId) {
     }
 
     try {
-        const uploadDocRef = doc(dbInstance, `artifacts/${appId}/users/${currentUserId}/userUploads`, uploadId);
+        const uploadDocRef = doc(dbInstance, `artifacts/default-app-id/users/${currentUserId}/userUploads`, uploadId);
 
         // New: Set up a real-time listener using onSnapshot
         unsubscribeFromFirebase = onSnapshot(uploadDocRef, async (docSnap) => {
