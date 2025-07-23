@@ -3198,6 +3198,8 @@ async function loadDataForUpload(uploadId) {
             }
             return 0;
         });
+        // NEW CONSOLE LOG: Check the final array after all filters and sorts
+        console.log(`Accounts Management final array for rendering:`, accountsToDisplay);
 
         renderAccountsToRemove(accountsToDisplay);
     }
