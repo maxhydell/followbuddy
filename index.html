@@ -1080,6 +1080,8 @@
     import { getFirestore, doc, setDoc, getDoc, collection, query, orderBy, getDocs, onSnapshot, deleteDoc } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
     // NEW: Import Firebase Functions SDK
     import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-functions.js";
+    import { collection, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+
 
     // Global Firebase instances and user data
     let appInstance;
@@ -3593,95 +3595,76 @@ async function loadDataForUpload(uploadId) {
     }
 
 const handleAddSingleAccount = async () => {
-    const username = singleAddAccountInput.value.trim(); // Directly use input value
-    if (!username) {
-        showAlert('Please enter an Instagram username.', 'error');
-        return;
-    }
+  const username = singleAddAccountInput.value.trim();
+  if (!username) {
+    showAlert('Please enter an Instagram username.', 'error');
+    return;
+  }
 
-    if (!currentUserId || !currentFileData) { // Check for currentFileData instead of latestUploadId
-        showAlert('User data not loaded. Please upload your data first.', 'error');
-        return;
-    }
+  if (!currentUserId || !currentFileData || !dbInstance) {
+    showAlert('User data not loaded. Please upload your data first.', 'error');
+    return;
+  }
 
-    
-    try {
-        // Call the Firebase Cloud Function
-        const addAccountCallable = httpsCallable(functionsInstance, 'addinstagramaccount');
-        const result = await addAccountCallable({ usernameToAdd: username });
+  try {
+    await addDoc(collection(dbInstance, "manuallyAddedFollowing"), {
+      username: username,
+      added_via: "manual",
+      timestamp: serverTimestamp()
+    });
 
-        if (result.data.status === 'success') {
-            showAlert(result.data.message, 'success');
-            singleAddAccountInput.value = ''; // Clear input
-            // Re-fetch data to update dashboard metrics and lists
-            await loadDataForUpload(currentFileData.id); // Reload current data
-        } else if (result.data.status === 'noop') {
-            showAlert(result.data.message, 'info');
-        } else {
-            showAlert(result.data.message || 'Failed to add account.', 'error');
-        }
-    } catch (error) {
-        console.error('Error calling addinstagramaccount function:', error);
-        showAlert(`Error adding account: ${error.message}`, 'error');
-    } finally {
-    }
+    showNotification(`Added: ${username}`, 'success');
+    singleAddAccountInput.value = '';
+    await loadDataForUpload(currentFileData.id); // refresh
+  } catch (error) {
+    console.error("Error adding account:", error);
+    showAlert(`Failed to add account: ${error.message}`, 'error');
+  }
 };
+
 
 const handleAddBulkAccounts = async () => {
-    const usernamesText = bulkAddAccountInput.value.trim();
-    if (!usernamesText) {
-        showAlert('Please enter usernames for bulk addition.', 'error');
-        return;
+  const usernamesText = bulkAddAccountInput.value.trim();
+  if (!usernamesText) {
+    showAlert('Please enter usernames for bulk addition.', 'error');
+    return;
+  }
+
+  if (!currentUserId || !currentFileData || !dbInstance) {
+    showAlert('User data not loaded. Please upload your data first.', 'error');
+    return;
+  }
+
+  const usernames = usernamesText.split(/[\n,]+/).map(u => u.trim()).filter(Boolean);
+  if (usernames.length === 0) {
+    showAlert('No valid usernames found.', 'error');
+    return;
+  }
+
+  showLoading(`Adding ${usernames.length} account(s)...`);
+  let successCount = 0;
+
+  for (const username of usernames) {
+    try {
+      await addDoc(collection(dbInstance, "manuallyAddedFollowing"), {
+        username: username,
+        added_via: "manual",
+        timestamp: serverTimestamp()
+      });
+      successCount++;
+    } catch (error) {
+      console.error(`Failed to add ${username}:`, error);
     }
+  }
 
-    if (!currentUserId || !currentFileData) { // Check for currentFileData
-        showAlert('User data not loaded. Please upload your data first.', 'error');
-        return;
-    }
-
-    const usernames = usernamesText.split(/[\n,]+/).map(u => u.trim()).filter(u => u);
-    if (usernames.length === 0) {
-        showAlert('No valid usernames found for bulk addition.', 'error');
-        return;
-    }
-
-    
-    let successCount = 0;
-    let noopCount = 0;
-    let errorCount = 0;
-    const errors = [];
-
-    for (const username of usernames) {
-        try {
-            const addAccountCallable = httpsCallable(functionsInstance, 'addinstagramaccount');
-            const result = await addAccountCallable({ usernameToAdd: username });
-
-            if (result.data.status === 'success') {
-                successCount++;
-            } else if (result.data.status === 'noop') {
-                noopCount++;
-            } else {
-                errorCount++;
-                errors.push(`${username}: ${result.data.message || 'Unknown error'}`);
-            }
-        } catch (error) {
-            errorCount++;
-            errors.push(`${username}: ${error.message}`);
-            console.error(`Error adding ${username}:`, error);
-        }
-    }
-
-    
-    let message = `Bulk addition complete: ${successCount} added, ${noopCount} already present.`;
-    if (errorCount > 0) {
-        message += ` ${errorCount} failed. See console for details.`;
-        showAlert(message, 'error');
-    } else {
-        showAlert(message, 'success');
-    }
-    bulkAddAccountInput.value = ''; // Clear input
-    await loadDataForUpload(currentFileData.id); // Reload current data after bulk add
+  hideLoading();
+  showNotification(`✅ ${successCount} accounts added.`, 'success');
+  bulkAddAccountInput.value = '';
+  await loadDataForUpload(currentFileData.id); // refresh
 };
+
+
+
 
     // New: Handle "Safe" button click from dashboard
     async function handleSafeUserFromDashboard(username) {
