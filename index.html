@@ -3613,15 +3613,17 @@ const handleAddSingleAccount = async () => {
       timestamp: serverTimestamp()
     });
 
-    // Update frontend state manually
     manuallyAddedFollowing.push(username);
-    accountsToRemoveList.push({ username: username, added_via: "manual", timestamp: Date.now() });
+    accountsManuallyAddedForReview.push({
+      username: username,
+      timestamp: Math.floor(Date.now() / 1000)
+    });
 
-    // Update dashboard UI immediately
+    await saveManuallyAddedState();
+
     applyAccountsManagementFiltersAndRender();
     updateAccountsManagementMetrics();
-    renderAddedAccountsPreview(); // Optional: for the add accounts preview area
-
+    renderAddedAccountsPreview();
 
     showNotification(`Added: ${username}`, 'success');
     singleAddAccountInput.value = '';
@@ -3666,13 +3668,12 @@ const handleAddBulkAccounts = async () => {
         timestamp: serverTimestamp()
       });
 
-      // ✅ Update local state so they show up right away
       manuallyAddedFollowing.push(username);
-      accountsToRemoveList.push({
+      accountsManuallyAddedForReview.push({
         username: username,
-        added_via: "manual",
-        timestamp: Date.now()
+        timestamp: Math.floor(Date.now() / 1000)
       });
+
 
       successCount++;
     } catch (error) {
@@ -3683,10 +3684,12 @@ const handleAddBulkAccounts = async () => {
   hideLoading();
   bulkAddAccountInput.value = "";
 
-  // ✅ Update dashboard instantly
+  await saveManuallyAddedState();
+
   applyAccountsManagementFiltersAndRender();
   updateAccountsManagementMetrics();
-  renderAddedAccountsPreview(); // Optional: for the add accounts preview area
+  renderAddedAccountsPreview();
+
 
 
   showNotification(`✅ ${successCount} accounts added.`, 'success');
