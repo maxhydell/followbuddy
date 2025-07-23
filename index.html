@@ -3618,8 +3618,9 @@ const handleAddSingleAccount = async () => {
     accountsToRemoveList.push({ username: username, added_via: "manual", timestamp: Date.now() });
 
     // Update dashboard UI immediately
-    updateAccountsManagementView();  // Refreshes list
-    updateAccountsCounters();        // Updates cards like "Accounts to Review"
+    applyAccountsManagementFiltersAndRender();
+    updateAccountsManagementMetrics();
+    renderAddedAccountsPreview(); // Optional: for the add accounts preview area
 
 
     showNotification(`Added: ${username}`, 'success');
@@ -3683,8 +3684,10 @@ const handleAddBulkAccounts = async () => {
   bulkAddAccountInput.value = "";
 
   // ✅ Update dashboard instantly
-  updateAccountsManagementView();
-  updateAccountsCounters();
+  applyAccountsManagementFiltersAndRender();
+  updateAccountsManagementMetrics();
+  renderAddedAccountsPreview(); // Optional: for the add accounts preview area
+
 
   showNotification(`✅ ${successCount} accounts added.`, 'success');
 };
