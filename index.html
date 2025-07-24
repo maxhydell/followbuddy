@@ -1986,6 +1986,75 @@ async function loadDataForUpload(uploadId) {
         youDontFollowBackCountElem.textContent = youDontFollowBack;
     }
 
+
+// --- INSERT NEW MODAL-RELATED FUNCTIONS BELOW THIS LINE ---
+
+// New: Function to render a generic list of accounts inside a modal
+function renderAccountList(containerElement, accountsArray, searchTerm = '') {
+    containerElement.innerHTML = ''; // Clear existing list
+    const filteredAccounts = accountsArray.filter(account =>
+        account.toLowerCase().includes(searchTerm.toLowerCase())
+    ).sort((a, b) => a.localeCompare(b)); // Sort alphabetically
+
+    if (filteredAccounts.length === 0) {
+        containerElement.innerHTML = `<p class="text-gray-500 text-center">${searchTerm ? 'No matching profiles found.' : 'No data available.'}</p>`;
+        return;
+    }
+
+    filteredAccounts.forEach(username => {
+        const div = document.createElement('div');
+        div.className = 'account-list-item'; // Reuse existing styling
+        div.innerHTML = `
+            <a href="https://www.instagram.com/${username}/" target="_blank" rel="noopener noreferrer" class="font-medium text-blue-400 hover:underline">
+                ${username}
+            </a>
+        `;
+        containerElement.appendChild(div);
+    });
+}
+
+// New: Open Followers List Modal
+function openFollowersListModal() {
+    if (!currentFileData || !currentFileData.followersList) {
+        showAlert('Followers data not available. Please upload your data.', 'info');
+        return;
+    }
+    followersListModal.style.display = 'flex';
+    renderAccountList(followersListContainer, currentFileData.followersList);
+    followersSearchInput.value = ''; // Clear search input
+    followersSearchInput.focus();
+}
+
+// New: Close Followers List Modal
+function closeFollowersListModalFunc() {
+    followersListModal.style.display = 'none';
+}
+
+// New: Open Following List Modal
+function openFollowingListModal() {
+    if (!currentFileData || !currentFileData.followingList) {
+        showAlert('Following data not available. Please upload your data.', 'info');
+        return;
+    }
+    // Combine original following list with manually added and remove manually unfollowed
+    const effectiveFollowingSet = new Set(currentFileData.followingList);
+    manuallyAddedFollowing.forEach(user => effectiveFollowingSet.add(user));
+    manuallyUnfollowedList.forEach(user => effectiveFollowingSet.delete(user));
+    const effectiveFollowingList = Array.from(effectiveFollowingSet);
+
+    followingListModal.style.display = 'flex';
+    renderAccountList(followingListContainer, effectiveFollowingList);
+    followingSearchInput.value = ''; // Clear search input
+    followingSearchInput.focus();
+}
+
+// New: Close Following List Modal
+function closeFollowingListModalFunc() {
+    followingListModal.style.display = 'none';
+}
+
+// --- END OF NEW MODAL-RELATED FUNCTIONS ---
+
     // Function to update analytics metrics
     function updateAnalyticsMetrics(unfollowedYouCalculated, newFollowersCalculated, unfollowedAccountsList, newFollowerAccountsList) {
         // User requested to swap the display:
