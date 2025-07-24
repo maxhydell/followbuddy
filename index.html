@@ -619,13 +619,11 @@
         </div>
 
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
-          <div class="metric-card">
-            <p class="label">Total Followers</p>
-            <p class="value" id="followers-count">0</p>
+          <div class="metric-card" id="followers-card"> <p class="label">Total Followers</p>
+              <p class="value" id="followers-count">0</p>
           </div>
-          <div class="metric-card">
-            <p class="label">Total Following</p>
-            <p class="value" id="following-count">0</p>
+          <div class="metric-card" id="following-card"> <p class="label">Total Following</p>
+              <p class="value" id="following-count">0</p>
           </div>
           <div class="metric-card">
             <p class="label">Not Following Back</p>
@@ -1068,6 +1066,31 @@
       </div>
     </div>
   </div>
+<!-- Followers List Modal -->
+<div id="followers-list-modal" class="modal">
+    <div class="modal-content">
+        <span class="close-button" id="close-followers-list-modal">&times;</span>
+        <h3 class="text-2xl font-bold mb-4">Your Followers</h3>
+        <input type="text" id="followers-search-input" placeholder="Search followers..." class="w-full p-2 mb-4 rounded bg-gray-700 text-gray-100 border border-gray-600" />
+        <div id="followers-list-container" class="max-h-80 overflow-y-auto custom-scrollbar text-left">
+            <!-- Followers list items will be rendered here -->
+            <p class="text-gray-500 text-center">Loading followers...</p>
+        </div>
+    </div>
+</div>
+
+<!-- Following List Modal -->
+<div id="following-list-modal" class="modal">
+    <div class="modal-content">
+        <span class="close-button" id="close-following-list-modal">&times;</span>
+        <h3 class="text-2xl font-bold mb-4">People You Are Following</h3>
+        <input type="text" id="following-search-input" placeholder="Search following..." class="w-full p-2 mb-4 rounded bg-gray-700 text-gray-100 border border-gray-600" />
+        <div id="following-list-container" class="max-h-80 overflow-y-auto custom-scrollbar text-left">
+            <!-- Following list items will be rendered here -->
+            <p class="text-gray-500 text-center">Loading following...</p>
+        </div>
+    </div>
+</div>
 
   <!-- Notification Container -->
   <div id="notification-container" class="notification"></div>
@@ -3623,6 +3646,18 @@ const handleAddSingleAccount = async () => {
     return;
   }
 
+
+  const isAlreadyFollowing = currentFileData.followingList.includes(username);
+  const isManuallyAdded = manuallyAddedFollowing.includes(username);
+
+  if (isAlreadyFollowing || isManuallyAdded) {
+      showAlert(`Profile '${username}' is already in your following list or has been manually added.`, 'info');
+      singleAddAccountInput.value = ''; // Clear input field
+      return; // Stop processing this username
+  }
+
+
+
   try {
 
     manuallyAddedFollowing.push(username);
@@ -3674,12 +3709,23 @@ const handleAddBulkAccounts = async () => {
 
   for (const username of usernames) {
     try {
-      manuallyAddedFollowing.push(username);
+      const normalizedUsername = username.toLowerCase(); // Normalize username for consistent comparison
+
+      // START OF UPDATED CODE BLOCK: Add duplicate check here
+      const isAlreadyFollowing = currentFileData.followingList.includes(normalizedUsername);
+      const isManuallyAdded = manuallyAddedFollowing.includes(normalizedUsername);
+
+      if (isAlreadyFollowing || isManuallyAdded) {
+        console.warn(`Skipping duplicate profile: ${normalizedUsername}`);
+        continue; // Skip to the next username in the loop
+      }
+      // END OF UPDATED CODE BLOCK
+
+      manuallyAddedFollowing.push(normalizedUsername); // Use normalizedUsername here
       accountsManuallyAddedForReview.push({
-        username: username,
+        username: normalizedUsername, // Use normalizedUsername here
         timestamp: Math.floor(Date.now() / 1000)
       });
-
 
       successCount++;
     } catch (error) {
@@ -3696,12 +3742,8 @@ const handleAddBulkAccounts = async () => {
   updateAccountsManagementMetrics();
   renderAddedAccountsPreview();
 
-
-
   showNotification(`✅ ${successCount} accounts added.`, 'success');
 };
-
-
 
 
     // New: Handle "Safe" button click from dashboard
