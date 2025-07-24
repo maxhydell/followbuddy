@@ -3153,8 +3153,7 @@ async function loadDataForUpload(uploadId) {
 
             accountsToRemoveList = accountsManuallyAddedForReview.filter(account =>
                 !approvedAccountsList.includes(account.username) &&
-                !removedAccountsList.includes(account.username) &&
-                !combinedFollowingSet.has(account.username) // Only show if they are NOT in the combined following list
+                !removedAccountsList.includes(account.username)
             );
             accountsToRemoveList.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
         } else {
