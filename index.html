@@ -3180,6 +3180,28 @@ async function loadDataForUpload(uploadId) {
         console.log(`Rendering Accounts Management list in mode: ${currentAccountsViewMode}. Accounts to display:`, accountsToDisplay);
 
 
+       
+    if (accountsDocSnapshot.exists()) {
+        const data = accountsDocSnapshot.data();
+
+        // Populate global arrays
+        accountsManuallyAddedForReview = data.manuallyAddedFollowing || [];
+        removedAccountsList = data.removedAccounts || [];
+        originalNotFollowingBack = (data.originalNotFollowingBack || []).map(u => (typeof u === 'object' ? u.username : u));
+        safeUsersList = data.safeUsers || [];
+
+        // You can log for debugging
+        console.log("✅ Loaded accounts data from Firestore:");
+        console.log("accountsManuallyAddedForReview:", accountsManuallyAddedForReview);
+        console.log("removedAccountsList:", removedAccountsList);
+        console.log("originalNotFollowingBack:", originalNotFollowingBack);
+        console.log("safeUsersList:", safeUsersList);
+    } else {
+        console.warn("❌ No accounts document found at", accountsDocPath);
+    }
+
+
+
         const searchTerm = accountsSearchInput.value.toLowerCase();
         if (searchTerm) {
             accountsToDisplay = accountsToDisplay.filter(account =>
