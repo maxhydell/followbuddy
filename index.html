@@ -1782,109 +1782,32 @@ async function loadDataForUpload(uploadId) {
 
 
     // Function to render accounts (non-followers)
-  // Function to render accounts for the dashboard (Accounts Not Following You Back)
-  function renderAccounts(accountsToRender) {
-    const nonFollowersList = document.getElementById('non-followers-list');
-    nonFollowersList.innerHTML = ''; // Clear existing list
-
-    if (accountsToRender.length === 0) {
-      nonFollowersList.innerHTML = '<p class="text-gray-500 text-center">No accounts to display based on current filters.</p>';
-      return;
-    }
-
-    accountsToRender.forEach(account => {
-      const timeInfo = account.timestamp ? formatTimeDifference(account.timestamp) : { text: 'N/A', color: 'text-gray-500' };
-      const div = document.createElement('div');
-      div.className = 'account-list-item';
-      div.innerHTML = `
-        <a href="https://www.instagram.com/${account.username}/" target="_blank" rel="noopener noreferrer" class="font-medium text-blue-400 hover:underline">
-          ${account.username}
-        </a>
-        <span class="time-col ${timeInfo.color}">${timeInfo.text}</span>
-        <div class="flex space-x-2 ml-4">
-          <button data-username="${account.username}" class="remove-from-following-btn text-red-500 hover:text-red-600 transition-colors duration-200" title="Remove from Following">
-            <i class="fas fa-trash-alt text-lg"></i>
-          </button>
-        </div>
-      `;
-      nonFollowersList.appendChild(div);
-    });
-
-    // Add event listeners for the new "Remove from Following" buttons
-    document.querySelectorAll('.remove-from-following-btn').forEach(button => {
-      button.addEventListener('click', (e) => {
-        const username = e.currentTarget.dataset.username;
-        handleRemoveFromFollowing(username);
-      });
-    });
-  }
-
-  // New function to handle removing a user from the 'following' list
-  async function handleRemoveFromFollowing(username) {
-    if (!currentFileData) {
-      showAlert('No data loaded. Please upload your Instagram data first.', 'info');
-      return;
-    }
-
-    // Remove from currentFileData.followingList
-    currentFileData.followingList = currentFileData.followingList.filter(user => user !== username);
-
-    // Add to manuallyUnfollowedList (this is key for correct stats calculation)
-    if (!manuallyUnfollowedList.includes(username)) {
-      manuallyUnfollowedList.push(username);
-      manuallyUnfollowedList.sort(); // Keep sorted
-    }
-
-    // Filter allNonFollowers based on updated followingList and manuallyUnfollowedList
-    // Re-calculate allNonFollowers based on the original data and current unfollowed list
-    const effectiveFollowingSet = new Set(currentFileData.followingList);
-    manuallyAddedFollowing.forEach(user => effectiveFollowingSet.add(user)); // ensure manually added are still considered
-    manuallyUnfollowedList.forEach(user => effectiveFollowingSet.delete(user)); // Remove manually unfollowed
-
-    const updatedFollowingList = Array.from(effectiveFollowingSet);
-
-    // Recalculate allNonFollowers based on the original followers and the effective following list
-    const followersUsernames = new Set(currentFileData.followersList); // Assuming followersList exists in currentFileData
-
-    allNonFollowers = updatedFollowingList.filter(user => !followersUsernames.has(user))
-                                          .map(user => ({ username: user, timestamp: currentFileData.followingMap ? currentFileData.followingMap[user] : null })); // Preserve timestamp if available
-
-    // Persist changes to manuallyUnfollowedList and followingList
-    await saveManuallyUnfollowedListAndFollowingToFirestore();
-
-    // Re-apply filters and render accounts to update the dashboard list
-    applyFiltersAndRenderAccounts();
-
-    // Update dashboard metrics
-    updateDashboardMetrics(
-      updatedFollowingList.length,
-      currentFileData.followersList ? currentFileData.followersList.length : 0,
-      allNonFollowers.length,
-      originalNotFollowingBack.length, // total not following back remains based on original
-      currentFileData.unfollowedProfilesList ? currentFileData.unfollowedProfilesList.length : 0
-    );
-
-    showNotification(`${username} has been removed from your following list (app-side) and stats updated.`, 'success');
-  }
-
-  // New function to save the manuallyUnfollowedList and updated followingList to Firestore
-  async function saveManuallyUnfollowedListAndFollowingToFirestore() {
-    if (currentUserId && authInstance.currentUser && dbInstance && currentFileData) {
-      try {
-        const userDocRef = doc(dbInstance, `artifacts/${appId}/users/${currentUserId}/userUploads`, currentFileData.id);
-        await setDoc(userDocRef, {
-          manuallyUnfollowedList: manuallyUnfollowedList,
-          followingList: currentFileData.followingList // Save the modified followingList
-        }, { merge: true });
-        console.log('Manually unfollowed list and updated following list saved to Firestore.');
-      } catch (error) {
-        console.error('Error saving manually unfollowed list and following list to Firestore:', error);
-        showAlert('Failed to save unfollowing changes to storage.', 'error');
-      }
-    } else {
-      console.warn('Cannot save unfollowing changes: User not authenticated or currentFileData not available.');
-    }
-  }
+    function renderAccounts(accountsToRender) {
+        nonFollowersList.innerHTML = ''; // Clear existing list
+        if (accountsToRender.length === 0) {
+            nonFollowersList.innerHTML = '<p id="no-data-message" class="text-gray-500 text-center">Upload your Instagram data to see who isn\'t following you back!</p>';
+            return;
+        }
+        accountsToRender.forEach(account => {
+            const timeInfo = account.timestamp ? formatTimeDifference(account.timestamp) : { text: 'N/A', color: 'text-gray-500' };
+            const div = document.createElement('div');
+            div.className = 'account-list-item';
+            div.innerHTML = `
+                <a href="https://www.instagram.com/${account.username}/" target="_blank" rel="noopener noreferrer" class="font-medium text-blue-400 hover:underline">
+                    ${account.username}
+                </a>
+                <div class="flex items-center space-x-2">
+                    <span class="time-col ${timeInfo.color}">${timeInfo.text}</span>
+                    <button data-username="${account.username}" class="safe-user-dashboard-btn text-green-400 hover:text-green-500 transition-colors" title="Add to Safe List">
+                        <i class="fas fa-user-plus"></i>
+                    </button>
+                    <button data-username="${account.username}" class="remove-from-following-dashboard-btn text-red-400 hover:text-red-500 transition-colors" title="Remove as Following">
+                        <i class="fas fa-user-minus"></i>
+                    </button>
+                </div>
+            `;
+            nonFollowersList.appendChild(div);
+        });
 
         // Add event listeners for new dashboard buttons
         document.querySelectorAll('.safe-user-dashboard-btn').forEach(button => {
@@ -1899,7 +1822,7 @@ async function loadDataForUpload(uploadId) {
                 handleRemoveFromFollowingFromDashboard(username);
             });
         });
-    
+    }
 
     // Function to render unfollowed accounts list (these are people who unfollowed you)
     function renderUnfollowedAccountsList(accounts) {
