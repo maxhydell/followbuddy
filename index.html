@@ -1121,6 +1121,21 @@
     let functionsInstance; // NEW: For Cloud Functions
     let addInstagramAccountCallable; // NEW: The callable function reference
 
+    let followersListModal;
+    let closeFollowersListModal;
+    let followersListContainer;
+    let followersSearchInput;
+
+    let followingListModal;
+    let closeFollowingListModal;
+    let followingListContainer;
+    let followingSearchInput;
+
+    // New: Dashboard Metric Card elements (Add these global declarations)
+    let followersCard;
+    let followingCard;
+
+
     // New global variables for Accounts Management
     let accountsManuallyAddedForReview = []; // List of accounts manually added for review in accounts management
     let approvedAccountsList = []; // List of approved usernames
@@ -4108,6 +4123,20 @@ const handleAddBulkAccounts = async () => {
         unfollowedProfilesModal = document.getElementById('unfollowed-profiles-modal');
         closeUnfollowedProfilesModal = document.getElementById('close-unfollowed-profiles-modal');
         unfollowedProfilesListElem = document.getElementById('unfollowed-profiles-list');
+        followersCard = document.getElementById('followers-card');
+        followingCard = document.getElementById('following-card');
+
+        // Modals for Followers and Following Lists
+        followersListModal = document.getElementById('followers-list-modal');
+        closeFollowersListModal = document.getElementById('close-followers-list-modal');
+        followersListContainer = document.getElementById('followers-list-container');
+        followersSearchInput = document.getElementById('followers-search-input');
+
+        followingListModal = document.getElementById('following-list-modal');
+        closeFollowingListModal = document.getElementById('close-following-list-modal');
+        followingListContainer = document.getElementById('following-list-container');
+        followingSearchInput = document.getElementById('following-search-input');
+        // *** END OF NEW ASSIGNMENTS ***
 
 
         // Now that elements are assigned, proceed with Firebase init and event listeners
@@ -4316,6 +4345,57 @@ const handleAddBulkAccounts = async () => {
         // New: Event listeners for "People You Unfollowed" modal
         youDontFollowBackCard.addEventListener('click', openUnfollowedProfilesModal);
         closeUnfollowedProfilesModal.addEventListener('click', closeUnfollowedProfilesModalFunc);
+// Inside window.onload = async function() { ... }
+
+// Existing Event Listeners (example from your file):
+// addBulkAccountsBtn.addEventListener('click', handleAddBulkAccounts);
+// youDontFollowBackCard.addEventListener('click', openUnfollowedProfilesModal);
+// closeUnfollowedProfilesModal.addEventListener('click', closeUnfollowedProfilesModalFunc); // This is the line you'll find
+
+// --- INSERT NEW EVENT LISTENERS BELOW THIS LINE ---
+
+// Event listeners for clickable metric cards
+if (followersCard) { // Always check if element exists before adding listener
+    followersCard.addEventListener('click', openFollowersListModal);
+}
+if (followingCard) { // Always check if element exists before adding listener
+    followingCard.addEventListener('click', openFollowingListModal);
+}
+
+// Event listeners for closing the new modals
+if (closeFollowersListModal) {
+    closeFollowersListModal.addEventListener('click', closeFollowersListModalFunc);
+}
+if (closeFollowingListModal) {
+    closeFollowingListModal.addEventListener('click', closeFollowingListModalFunc);
+}
+
+// Event listeners for search inputs in new modals
+if (followersSearchInput) {
+    followersSearchInput.addEventListener('input', (e) => {
+        if (currentFileData && currentFileData.followersList) {
+            renderAccountList(followersListContainer, currentFileData.followersList, e.target.value);
+        }
+    });
+}
+
+if (followingSearchInput) {
+    followingSearchInput.addEventListener('input', (e) => {
+        if (currentFileData && currentFileData.followingList) {
+            // Re-calculate effective list for search
+            const effectiveFollowingSet = new Set(currentFileData.followingList);
+            manuallyAddedFollowing.forEach(user => effectiveFollowingSet.add(user));
+            manuallyUnfollowedList.forEach(user => effectiveFollowingSet.delete(user));
+            const effectiveFollowingList = Array.from(effectiveFollowingSet);
+
+            renderAccountList(followingListContainer, effectiveFollowingList, e.target.value);
+        }
+    });
+}
+// --- END OF NEW EVENT LISTENERS ---
+
+
+// (Your existing code continues here, e.g., initial render of accounts)
 
 
         // Initial render of accounts (will show "No data" message)
