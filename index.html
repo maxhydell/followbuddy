@@ -3223,7 +3223,7 @@ async function loadDataForUpload(uploadId) {
                 </a>
                 <span class="time-col ${timeInfo.color}">${timeInfo.text}</span>
                 <div class="flex space-x-2 ml-4">
-                    ${currentAccountsViewMode === 'toRemove' ? `
+                    ${currentAccountsViewMode === 'toReview' ? `
                         <button data-username="${account.username}" class="btn-remove remove-account-btn">REMOVE</button>
                         <button data-username="${account.username}" class="btn-approve approve-account-btn">APPROVE</button>
                     ` : ''}
@@ -3233,7 +3233,7 @@ async function loadDataForUpload(uploadId) {
         });
 
         // Add event listeners for new buttons
-        if (currentAccountsViewMode === 'toRemove') {
+        if (currentAccountsViewMode === 'toReview') {
             document.querySelectorAll('.remove-account-btn').forEach(button => {
                 button.addEventListener('click', (e) => {
                     const username = e.currentTarget.dataset.username;
