@@ -3326,9 +3326,9 @@ function closeFollowingListModalFunc() {
             const div = document.createElement('div');
             div.className = 'account-list-item';
             div.innerHTML = `
-                <span class="font-medium text-blue-400 hover:underline">
+                <a href="https://www.instagram.com/${account.username}/" target="_blank" rel="noopener noreferrer" class="font-medium text-blue-400 hover:underline">
                     ${account.username}
-                </span>
+                </a>
                 <span class="time-col ${timeInfo.color}">${timeInfo.text}</span>
                 <div class="flex space-x-2 ml-4">
                     ${currentAccountsViewMode === 'toReview' ? `
