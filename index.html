@@ -812,9 +812,9 @@
             <p class="label">Total Accounts Removed</p>
             <p class="value" id="total-accounts-removed-count">0</p>
           </div>
-          <div class="metric-card" id="approved-accounts-card">
-            <p class="label">Approved Accounts</p>
-            <p class="value" id="approved-accounts-count">0</p>
+          <div id="approved-accounts-metric-card" class="metric-card bg-gray-800 p-6 rounded-lg shadow-lg hover:bg-gray-700 transition duration-300 ease-in-out cursor-pointer flex flex-col items-center justify-center text-center">
+              <div class="text-3xl font-bold text-green-400" id="approvedAccountsCount">0</div>
+              <div class="text-sm font-semibold text-gray-400 mt-2">Approved Accounts</div>
           </div>
           <div class="metric-card">
             <p class="label">Oldest Account to Remove</p>
@@ -964,6 +964,18 @@
         <p class="text-gray-500 text-center">No safe users added yet.</p>
       </div>
     </div>
+  </div>
+
+
+  <div id="approved-accounts-modal" class="modal">
+      <div class="modal-content">
+          <span class="close-button" id="close-approved-accounts-modal">&times;</span>
+          <h3 class="text-xl font-bold mb-4 text-gray-100">Approved Accounts</h3>
+          <input type="text" id="approved-accounts-search-input" placeholder="Search approved accounts..."
+                 class="border border-gray-600 rounded-lg px-4 py-2 mb-4 w-full focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-700 text-gray-100">
+          <div id="approved-accounts-list-container" class="max-h-64 overflow-y-auto custom-scrollbar">
+              </div>
+      </div>
   </div>
 
   <!-- New Banned Users Add Modal (for adding/removing from the permanent banned list) -->
@@ -1356,6 +1368,14 @@
     let safeUsersListElem;
     let unfollowedListElem; // New: Unfollowed list element
     let newFollowersListElem; // New: New Followers list element
+
+
+    // New variables for Approved Accounts modal
+    let approvedAccountsListModal;
+    let closeApprovedAccountsListModalBtn;
+    let approvedAccountsListContainer;
+    let approvedAccountsSearchInput;
+
 
     let authModal;
     let closeAuthModal;
@@ -2051,6 +2071,23 @@ function openFollowingListModal() {
 // New: Close Following List Modal
 function closeFollowingListModalFunc() {
     followingListModal.style.display = 'none';
+}
+
+
+function openApprovedAccountsListModal() {
+    if (!approvedAccountsList || approvedAccountsList.length === 0) {
+        showAlert('No approved accounts found.', 'info');
+        return;
+    }
+    approvedAccountsListModal.style.display = 'flex';
+    renderAccountList(approvedAccountsListContainer, approvedAccountsList);
+    approvedAccountsSearchInput.value = ''; // Clear search input
+    approvedAccountsSearchInput.focus();
+}
+
+// New: Close Approved Accounts List Modal
+function closeApprovedAccountsListModalFunc() {
+    approvedAccountsListModal.style.display = 'none';
 }
 
 // --- END OF NEW MODAL-RELATED FUNCTIONS ---
@@ -4162,6 +4199,12 @@ const handleAddBulkAccounts = async () => {
         unfollowedListElem = document.getElementById('unfollowed-list'); // Assign unfollowed list element
         newFollowersListElem = document.getElementById('new-followers-list'); // Assign new followers list element
 
+        approvedAccountsListModal = document.getElementById('approved-accounts-modal');
+        closeApprovedAccountsListModalBtn = document.getElementById('close-approved-accounts-modal');
+        approvedAccountsListContainer = document.getElementById('approved-accounts-list-container');
+        approvedAccountsSearchInput = document.getElementById('approved-accounts-search-input');
+
+
         authModal = document.getElementById('auth-modal');
         closeAuthModal = document.getElementById('close-auth-modal');
         authEmailInput = document.getElementById('auth-email-input');
@@ -4461,6 +4504,24 @@ if (followingSearchInput) {
         }
     });
 }
+
+// Event listener for Approved Accounts Card
+if (approvedAccountsCard) {
+    approvedAccountsCard.addEventListener('click', openApprovedAccountsListModal);
+}
+// Event listeners for the new Approved Accounts modal
+if (closeApprovedAccountsListModalBtn) {
+    closeApprovedAccountsListModalBtn.addEventListener('click', closeApprovedAccountsListModalFunc);
+}
+if (approvedAccountsSearchInput) {
+    approvedAccountsSearchInput.addEventListener('input', (e) => {
+        if (approvedAccountsList) {
+            renderAccountList(approvedAccountsListContainer, approvedAccountsList, e.target.value);
+        }
+    });
+}
+
+
 // --- END OF NEW EVENT LISTENERS ---
 
 
