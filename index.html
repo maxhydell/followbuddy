@@ -634,6 +634,11 @@
             <p class="label">People You Unfollowed</p>
             <p class="value" id="you-dont-follow-back-count">0</p>
           </div>
+          <div class="metric-card" id="approved-accounts-card">
+            <p class="label">Approved Users</p>
+            <p class="value" id="approved-accounts-count">0</p>
+          </div>
+        </div>
         </div>
         <div class="bg-gray-800 p-6 rounded-xl shadow-lg">
           <div class="flex justify-between items-center mb-6">
@@ -989,6 +994,16 @@
     </div>
   </div>
   <!-- End New Banned Users Add Modal -->
+  <div id="approved-users-modal" class="modal">
+    <div class="modal-content">
+      <span class="close-button" id="close-approved-users-modal">&times;</span>
+      <h3 class="text-xl font-bold mb-4 text-gray-100">Approved Users</h3>
+      <div id="approved-users-list" class="space-y-2 max-h-80 overflow-y-auto custom-scroll">
+        <p class="text-gray-500 text-center">Loading approved users...</p>
+      </div>
+    </div>
+  </div>
+
 
   <!-- New Add Account Page Section (formerly a modal) -->
   <section id="add-account-page-section" class="hidden py-16 px-6 bg-gray-900">
@@ -1316,6 +1331,9 @@
     let accountsSearchInput;
     let accountsSortSelect;
     let accountsManagementList;
+    let approvedUsersModal;
+    let closeApprovedUsersModal;
+    let approvedUsersListElem;
 
     // New Banned Users Page elements
     let bannedUsersPageSection;
@@ -2099,6 +2117,54 @@ function closeFollowingListModalFunc() {
             oldestAccountToRemoveAge.textContent = 'N/A';
         }
     }
+
+
+// Function to render approved users list
+    function renderApprovedUsersList(users) {
+        approvedUsersListElem.innerHTML = ''; // Clear existing list
+        if (users.length === 0) {
+            approvedUsersListElem.innerHTML = '<p class="text-gray-500 text-center">No approved users found.</p>';
+            return;
+        }
+        users.sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase())); // Sort alphabetically
+        users.forEach(username => {
+            const div = document.createElement('div');
+            div.className = 'account-list-item justify-center'; // Center the link
+            div.innerHTML = `
+                <a href="https://www.instagram.com/${username}/" target="_blank" rel="noopener noreferrer" class="font-medium text-blue-400 hover:underline text-lg">
+                    ${username}
+                </a>
+            `;
+            approvedUsersListElem.appendChild(div);
+        });
+    }
+
+    // Event Listeners for Approved Users Modal
+    if (approvedAccountsCard) {
+        approvedAccountsCard.addEventListener('click', () => {
+            renderApprovedUsersList(approvedAccountsList); // Use the global approvedAccountsList
+            approvedUsersModal.style.display = 'flex';
+        });
+    }
+
+    if (closeApprovedUsersModal) {
+        closeApprovedUsersModal.addEventListener('click', () => {
+            approvedUsersModal.style.display = 'none';
+        });
+    }
+
+    // Close modal if clicking outside
+    if (approvedUsersModal) {
+        window.addEventListener('click', (event) => {
+            if (event.target === approvedUsersModal) {
+                approvedUsersModal.style.display = 'none';
+            }
+        });
+    }
+
+
+
+
 
     // Function to show dashboard and hide other sections
     function showDashboard() {
@@ -4195,6 +4261,13 @@ const handleAddBulkAccounts = async () => {
         followersCard = document.getElementById('followers-card');
         followingCard = document.getElementById('following-card');
 
+        // New: Initialize Approved Users Modal elements
+        approvedUsersModal = document.getElementById('approved-users-modal');
+        closeApprovedUsersModal = document.getElementById('close-approved-users-modal');
+        approvedUsersListElem = document.getElementById('approved-users-list');
+        approvedAccountsCard = document.getElementById('approved-accounts-card'); // Initialize the new card
+        approvedAccountsCount = document.getElementById('approved-accounts-count'); // Initialize the new count element
+
         // Modals for Followers and Following Lists
         followersListModal = document.getElementById('followers-list-modal');
         closeFollowersListModal = document.getElementById('close-followers-list-modal');
@@ -4462,9 +4535,6 @@ if (followingSearchInput) {
     });
 }
 // --- END OF NEW EVENT LISTENERS ---
-
-
-// (Your existing code continues here, e.g., initial render of accounts)
 
 
         // Initial render of accounts (will show "No data" message)
