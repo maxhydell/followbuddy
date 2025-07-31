@@ -3447,10 +3447,10 @@ async function handleRemoveFromFollowingFromDashboard(username) {
 
         const searchTerm = accountsSearchInput.value.toLowerCase();
         if (searchTerm) {
-            accountsToDisplay = accountsToDisplay.filter(account =>
-                account.username.toLowerCase().includes(searchTerm)
-            );
-        }
+            accountsToDisplay = accountsToDisplay.filter(account => {
+              return account && typeof account.username === 'string' && account.username.toLowerCase().includes(searchTerm);
+            });
+          }
 
         const sortOrder = accountsSortSelect.value;
         accountsToDisplay.sort((a, b) => {
