@@ -3366,13 +3366,12 @@ async function handleRemoveFromFollowingFromDashboard(username) {
     function applyFiltersAndRenderAccounts() {
         let filteredAccounts = [...allNonFollowers]; // Start with the list already filtered by safe users
 
-        const searchTerm = searchInput.value.toLowerCase();
-        if (searchTerm) {
-            filteredAccounts = filteredAccounts.filter(account =>
-                account.username.toLowerCase().includes(searchTerm)
-            );
-        }
-
+const searchTerm = searchInput.value.toLowerCase();
+if (searchTerm) {
+    filteredAccounts = filteredAccounts.filter(account =>
+        account && typeof account.username === 'string' && account.username.toLowerCase().includes(searchTerm)
+    );
+}
         const timeFilter = timeFilterSelect.value;
         if (timeFilter !== 'all') {
             filteredAccounts = filteredAccounts.filter(account => {
