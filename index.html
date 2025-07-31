@@ -2975,11 +2975,11 @@ async function handleRemoveFromFollowingFromDashboard(username) {
         applyFiltersAndRenderAccounts(); // UI refresh
 
         // 5. Final feedback
-        if (accountInAccountsManagement) {
-            showAlert(`Removed ${username} from following and the Accounts Management list.`, 'success');
-        } else {
-            showAlert(`Removed ${username} from following.`, 'success');
-        }
+        // if (accountInAccountsManagement) {
+        //    showAlert(`Removed ${username} from following and the Accounts Management list.`, 'success');
+        // } else {
+        //    showAlert(`Removed ${username} from following.`, 'success');
+        // }
 
     } catch (error) {
         console.error('Error removing user from following:', error);
