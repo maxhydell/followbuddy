@@ -3356,8 +3356,8 @@ function renderApprovedUsersList(users) {
             accountsToDisplay = [...accountsToRemoveList];
             listTitle = "Accounts to Review";
         } else if (currentAccountsViewMode === 'approved') {
-            // Filter accountsManuallyAddedForReview by approvedAccountsList
-            accountsToDisplay = accountsManuallyAddedForReview.filter(account => approvedAccountsList.includes(account.username));
+            // CORRECTED: Directly use approvedAccountsList and map to the expected object format
+            accountsToDisplay = approvedAccountsList.map(username => ({ username: username, timestamp: null })); // timestamp is null as approved accounts might not have one
             listTitle = "Approved Accounts";
         } else if (currentAccountsViewMode === 'removed') {
             // Filter accountsManuallyAddedForReview by removedAccountsList
