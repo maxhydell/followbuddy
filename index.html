@@ -2116,25 +2116,45 @@ function closeFollowingListModalFunc() {
     }
 
 
-// Function to render approved users list
-    function renderApprovedUsersList(users) {
-        approvedUsersListElem.innerHTML = ''; // Clear existing list
-        if (users.length === 0) {
-            approvedUsersListElem.innerHTML = '<p class="text-gray-500 text-center">No approved users found.</p>';
-            return;
-        }
-        users.sort((a, b) => a.toLowerCase().localeCompare(b.toLowerCase())); // Sort alphabetically
-        users.forEach(username => {
-            const div = document.createElement('div');
-            div.className = 'account-list-item justify-center'; // Center the link
-            div.innerHTML = `
-                <a href="https://www.instagram.com/${username}/" target="_blank" rel="noopener noreferrer" class="font-medium text-blue-400 hover:underline text-lg">
-                    ${username}
-                </a>
-            `;
-            approvedUsersListElem.appendChild(div);
-        });
+function renderApprovedUsersList(users) {
+    const listContainer = document.getElementById('approvedUsersList'); // Ensure this ID matches your HTML element for the list
+    if (!listContainer) {
+        console.error("Error: approvedUsersList element not found!");
+        return; // Exit if the container element doesn't exist
     }
+
+    listContainer.innerHTML = ''; // Clear existing content
+
+    console.log("Inside renderApprovedUsersList. Received users:", users);
+
+    if (users && Array.isArray(users) && users.length > 0) {
+        users.forEach(user => {
+            const li = document.createElement('li');
+            // Check if 'user' is an object and has a 'username' property, or if it's just a string
+            if (typeof user === 'object' && user !== null && user.username) {
+                li.textContent = user.username;
+                console.log("Rendering user (object):", user.username);
+            } else if (typeof user === 'string') {
+                li.textContent = user;
+                console.log("Rendering user (string):", user);
+            } else {
+                console.warn("Skipping unknown user format:", user);
+                return; // Skip this item if format is unexpected
+            }
+            // Add styling classes if needed (e.g., for TailwindCSS or your custom styles)
+            // li.classList.add('py-2', 'border-b', 'border-gray-200');
+
+            listContainer.appendChild(li);
+        });
+    } else {
+        const li = document.createElement('li');
+        li.textContent = 'No approved users found or data is malformed.';
+        // Add styling classes if needed
+        // li.classList.add('py-2', 'text-gray-500');
+        listContainer.appendChild(li);
+        console.log("No approved users to render or 'users' is not an array:", users);
+    }
+}
 
     // Event Listeners for Approved Users Modal
     if (approvedAccountsCard) {
