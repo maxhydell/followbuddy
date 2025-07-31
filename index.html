@@ -2915,6 +2915,44 @@ function renderApprovedUsersList(users) {
         return false; // Indicate already exists or invalid
     }
 
+
+// New function to handle removing a user from following from the dashboard
+// This function will also remove the user from the accounts management list if they are on it
+async function handleRemoveFromFollowingFromDashboard(username) {
+    if (!currentUserId || !currentFileData || !dbInstance) {
+        showAlert('User not authenticated or data not loaded.', 'error');
+        return;
+    }
+    showLoadingState();
+    try {
+        const uploadDocRef = doc(dbInstance, `artifacts/default-app-id/users/${currentUserId}/userUploads`, currentFileData.id);
+        const updates = {};
+        
+        // Add the username to the manuallyUnfollowedList
+        updates.manuallyUnfollowedList = arrayUnion(username);
+
+        // Check if the user exists in the accountsManuallyAddedForReview list
+        const accountInAccountsManagement = accountsManuallyAddedForReview.some(account => account.username === username);
+        if (accountInAccountsManagement) {
+            // If the user is in the accounts management list, add them to the removedAccountsList
+            updates.removedAccounts = arrayUnion(username);
+            showAlert(`Removed ${username} from following and the Accounts Management list.`, 'success');
+        } else {
+            showAlert(`Removed ${username} from following.`, 'success');
+        }
+        
+        await updateDoc(uploadDocRef, updates);
+
+        hideLoadingState();
+        // The real-time listener (onSnapshot) will handle the UI update
+    } catch (error) {
+        console.error('Error removing user from following:', error);
+        showAlert('Failed to remove user. Please try again.', 'error');
+        hideLoadingState();
+    }
+}
+
+
     async function processAndSaveSafeUsers(newUsersAdded = false) {
         if (newUsersAdded && currentFileData) {
             safeUsers.sort(); // Keep the list sorted
@@ -4567,7 +4605,7 @@ if (approvedUsersStatBox) {
     });
 }
 
-// --- END OF NEW EVENT LISTENERS --- working as of 7.31.25
+// --- END OF NEW EVENT LISTENERS ---
 
 
         // Initial render of accounts (will show "No data" message)
