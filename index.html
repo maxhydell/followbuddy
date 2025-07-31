@@ -1112,7 +1112,7 @@
     // Firebase SDK imports
     import { initializeApp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-app.js";
     import { getAuth, onAuthStateChanged, signOut, createUserWithEmailAndPassword, signInWithEmailAndPassword, signInWithCustomToken, signInAnonymously } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-auth.js";
-    import { getFirestore, doc, setDoc, getDoc, collection, query, orderBy, getDocs, onSnapshot, deleteDoc, addDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
+    import { getFirestore, doc, setDoc, getDoc, collection, query, orderBy, getDocs, onSnapshot, deleteDoc, addDoc, serverTimestamp, arrayUnion } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-firestore.js";
     // NEW: Import Firebase Functions SDK
     import { getFunctions, httpsCallable } from "https://www.gstatic.com/firebasejs/12.0.0/firebase-functions.js";
     
@@ -2984,11 +2984,9 @@ async function handleRemoveFromFollowingFromDashboard(username) {
     } catch (error) {
         console.error('Error removing user from following:', error);
         showAlert('Failed to remove user. Please try again.', 'error');
-    } finally {
-        hideLoadingState();
     }
 }
-
+    
 
 
     async function processAndSaveSafeUsers(newUsersAdded = false) {
