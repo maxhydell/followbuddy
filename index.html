@@ -2916,41 +2916,81 @@ function renderApprovedUsersList(users) {
     }
 
 
-// New function to handle removing a user from following from the dashboard
-// This function will also remove the user from the accounts management list if they are on it
+// Master function to handle removing a user from following from the dashboard
 async function handleRemoveFromFollowingFromDashboard(username) {
     if (!currentUserId || !currentFileData || !dbInstance) {
         showAlert('User not authenticated or data not loaded.', 'error');
         return;
     }
-    showLoadingState();
-    try {
-        const uploadDocRef = doc(dbInstance, `artifacts/default-app-id/users/${currentUserId}/userUploads`, currentFileData.id);
-        const updates = {};
-        
-        // Add the username to the manuallyUnfollowedList
-        updates.manuallyUnfollowedList = arrayUnion(username);
 
-        // Check if the user exists in the accountsManuallyAddedForReview list
+    showLoadingState();
+
+    try {
+        // 2. Firestore updates
+        const uploadDocRef = doc(dbInstance, `artifacts/default-app-id/users/${currentUserId}/userUploads`, currentFileData.id);
+        const updates = {
+            manuallyUnfollowedList: arrayUnion(username),
+        };
+
         const accountInAccountsManagement = accountsManuallyAddedForReview.some(account => account.username === username);
         if (accountInAccountsManagement) {
-            // If the user is in the accounts management list, add them to the removedAccountsList
             updates.removedAccounts = arrayUnion(username);
+        }
+
+        await updateDoc(uploadDocRef, updates);
+
+        // 3. Local list updates
+        if (!manuallyUnfollowedList.includes(username)) {
+            manuallyUnfollowedList.push(username);
+            manuallyUnfollowedList.sort();
+        }
+
+        manuallyAddedFollowing = manuallyAddedFollowing.filter(user => user !== username);
+
+        await saveFollowingAndUnfollowedLists();
+
+        // 4. Recalculate not-following-back metrics
+        const baseFollowingSet = new Set(currentFileData.followingList);
+        manuallyAddedFollowing.forEach(user => baseFollowingSet.add(user));
+        manuallyUnfollowedList.forEach(user => baseFollowingSet.delete(user));
+
+        originalNotFollowingBack = Array.from(baseFollowingSet).filter(user =>
+            !new Set(currentFileData.followersList).has(user)
+        ).map(user => {
+            const originalAccount = currentFileData.originalNotFollowingBack.find(acc => acc.username === user);
+            return {
+                username: user,
+                timestamp: originalAccount ? originalAccount.timestamp : null
+            };
+        });
+
+        allNonFollowers = originalNotFollowingBack.filter(account => !safeUsers.includes(account.username));
+
+        updateDashboardMetrics(
+            baseFollowingSet.size,
+            currentFileData.totalFollowers,
+            allNonFollowers.length,
+            originalNotFollowingBack.length,
+            (currentFileData.recentlyUnfollowedProfiles || []).length
+        );
+
+        applyFiltersAndRenderAccounts(); // UI refresh
+
+        // 5. Final feedback
+        if (accountInAccountsManagement) {
             showAlert(`Removed ${username} from following and the Accounts Management list.`, 'success');
         } else {
             showAlert(`Removed ${username} from following.`, 'success');
         }
-        
-        await updateDoc(uploadDocRef, updates);
 
-        hideLoadingState();
-        // The real-time listener (onSnapshot) will handle the UI update
     } catch (error) {
         console.error('Error removing user from following:', error);
         showAlert('Failed to remove user. Please try again.', 'error');
+    } finally {
         hideLoadingState();
     }
 }
+
 
 
     async function processAndSaveSafeUsers(newUsersAdded = false) {
@@ -3962,54 +4002,6 @@ const handleAddBulkAccounts = async () => {
             showNotification(`Account ${username} is already in the safe list.`, 'info');
         }
     }
-
-    // New: Handle "Remove" button click from dashboard (simulates unfollow)
-    async function handleRemoveFromFollowingFromDashboard(username) {
-        // Open Instagram link
-        window.open(`https://www.instagram.com/${username}/`, '_blank');
-
-        // Add to manuallyUnfollowedList
-        if (!manuallyUnfollowedList.includes(username)) {
-            manuallyUnfollowedList.push(username);
-            manuallyUnfollowedList.sort();
-        }
-        // Also remove from manuallyAddedFollowing if they were added there
-        manuallyAddedFollowing = manuallyAddedFollowing.filter(user => user !== username);
-
-        // Save updated lists
-        await saveFollowingAndUnfollowedLists();
-
-        // Recalculate originalNotFollowingBack and allNonFollowers
-        if (currentFileData) {
-            const baseFollowingSet = new Set(currentFileData.followingList); // From uploaded file
-            manuallyAddedFollowing.forEach(user => baseFollowingSet.add(user)); // Add manually added
-            manuallyUnfollowedList.forEach(user => baseFollowingSet.delete(user)); // Remove manually unfollowed
-
-            originalNotFollowingBack = Array.from(baseFollowingSet).filter(username => 
-                !new Set(currentFileData.followersList).has(username)
-            ).map(username => {
-                // Try to find original timestamp if available, otherwise use a placeholder
-                const originalAccount = currentFileData.originalNotFollowingBack.find(acc => acc.username === username);
-                return { username: username, timestamp: originalAccount ? originalAccount.timestamp : null };
-            });
-
-            allNonFollowers = originalNotFollowingBack.filter(account => !safeUsers.includes(account.username));
-
-            // Calculate current total following including manual additions and removals
-            const effectiveFollowingCount = baseFollowingSet.size;
-
-            updateDashboardMetrics(
-                effectiveFollowingCount,
-                currentFileData.totalFollowers,
-                allNonFollowers.length,
-                originalNotFollowingBack.length,
-                (currentFileData.recentlyUnfollowedProfiles || []).length
-            );
-            applyFiltersAndRenderAccounts(); // Re-render dashboard list
-        }
-        showNotification(`Account ${username} removed from your following list!`, 'success');
-    }
-
 
     // Mobile Menu Toggle
     // These event listeners will be set up in window.onload
