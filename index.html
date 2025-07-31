@@ -2139,6 +2139,10 @@ function closeFollowingListModalFunc() {
     // Event Listeners for Approved Users Modal
     if (approvedAccountsCard) {
         approvedAccountsCard.addEventListener('click', () => {
+            // Ensure the list container is completely clear before rendering
+            approvedUsersListElem.innerHTML = '';
+            // Log the content of approvedAccountsList to console for debugging
+            console.log("Approved Accounts List clicked. Data to render:", approvedAccountsList);
             renderApprovedUsersList(approvedAccountsList); // Use the global approvedAccountsList
             approvedUsersModal.style.display = 'flex';
         });
@@ -2158,10 +2162,6 @@ function closeFollowingListModalFunc() {
             }
         });
     }
-
-
-
-
 
     // Function to show dashboard and hide other sections
     function showDashboard() {
