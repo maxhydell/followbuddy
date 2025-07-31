@@ -2923,8 +2923,6 @@ async function handleRemoveFromFollowingFromDashboard(username) {
         return;
     }
 
-    showLoadingState();
-
     try {
         // 2. Firestore updates
         const uploadDocRef = doc(dbInstance, `artifacts/default-app-id/users/${currentUserId}/userUploads`, currentFileData.id);
