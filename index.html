@@ -1660,6 +1660,7 @@ async function loadDataForUpload(uploadId) {
                 manuallyAddedFollowing = currentFileData.manuallyAddedFollowing || []; // Load manually added following
                 accountsManuallyAddedForReview = currentFileData.accountsManuallyAddedForReview || []; // Load manually added for review
                 approvedAccountsList = currentFileData.approvedAccounts || [];
+                console.log("DEBUG: approvedAccountsList loaded from Firestore:", approvedAccountsList); // Added for verification
                 removedAccountsList = currentFileData.removedAccounts || [];
                 manuallyUnfollowedList = currentFileData.manuallyUnfollowedList || []; // Load manually unfollowed list
                 accountsToRemoveList = []; // Initialize accountsToRemoveList here before use
