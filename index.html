@@ -1824,6 +1824,14 @@ async function loadDataForUpload(uploadId) {
             `;
             nonFollowersList.appendChild(div);
         });
+        // Add event listeners for the new unfollow button on the dashboard
+        document.querySelectorAll('.unfollow-btn-dashboard').forEach(button => {
+            button.addEventListener('click', (e) => {
+                const username = e.currentTarget.dataset.username;
+                handleDashboardUnfollow(username);
+            });
+        });
+    }
 
         // Add event listeners for new dashboard buttons
         document.querySelectorAll('.safe-user-dashboard-btn').forEach(button => {
@@ -2270,6 +2278,39 @@ function renderApprovedUsersList(users) {
                 }
             }
         }
+
+
+async function handleDashboardUnfollow(username) {
+    // Add to manuallyUnfollowedList
+    if (!manuallyUnfollowedList.includes(username)) {
+        manuallyUnfollowedList.push(username);
+        manuallyUnfollowedList.sort();
+    }
+    // Also remove from manuallyAddedFollowing if they were added there
+    manuallyAddedFollowing = manuallyAddedFollowing.filter(user => user !== username);
+    // Update Firestore
+    await saveFollowingAndUnfollowedLists();
+    // Re-calculate and update dashboard metrics
+    if (currentFileData) {
+        const baseFollowingSet = new Set(currentFileData.followingList);
+        manuallyAddedFollowing.forEach(user => baseFollowingSet.add(user));
+        const effectiveFollowingSet = new Set(Array.from(baseFollowingSet).filter(user => !manuallyUnfollowedList.includes(user)));
+        originalNotFollowingBack = Array.from(effectiveFollowingSet).filter(username => !new Set(currentFileData.followersList).has(username)).map(username => {
+            const originalAccount = currentFileData.originalNotFollowingBack.find(acc => acc.username === username);
+            return { username: username, timestamp: originalAccount ? originalAccount.timestamp : Math.floor(Date.now() / 1000) };
+        });
+        allNonFollowers = originalNotFollowingBack.filter(account => !safeUsers.includes(account.username));
+        const effectiveFollowingCount = effectiveFollowingSet.size;
+        updateDashboardMetrics(
+            effectiveFollowingCount,
+            currentFileData.totalFollowers,
+            allNonFollowers.length,
+            originalNotFollowingBack.length,
+            (currentFileData.recentlyUnfollowedProfiles || []).length
+        );
+        applyFiltersAndRenderAccounts(); // Re-render dashboard list
+    }
+}
 
         // Load the data for the best period found
         await loadDataForUpload(bestUploadIdForAnalytics);
