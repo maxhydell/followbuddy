@@ -1657,7 +1657,6 @@ async function loadDataForUpload(uploadId) {
                 safeUsers = currentFileData.safeUsers || []; 
 
                 const normalize = (u) => u.toLowerCase().trim();
-                const cleanedFollowing = [...new Set((currentFileData.followingList || []).map(normalize).filter(Boolean))];
                 const cleanedFollowers = new Set((currentFileData.followersList || []).map(normalize).filter(Boolean));
 
                 originalNotFollowingBack = cleanedFollowing
@@ -2213,9 +2212,6 @@ function renderApprovedUsersList(users) {
         if (currentFileData) {
             // Recalculate allNonFollowers based on current safeUsers
             allNonFollowers = originalNotFollowingBack.filter(account => !safeUsers.includes(account.username)); // Filter by username
-            
-            // Calculate current total following including manual additions and removals
-            const effectiveFollowingCount = (currentFileData.followingList || []).length + manuallyAddedFollowing.length - manuallyUnfollowedList.length;
 
             updateDashboardMetrics(
                 effectiveFollowingCount,
