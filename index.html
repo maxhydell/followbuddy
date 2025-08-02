@@ -1654,7 +1654,7 @@ async function loadDataForUpload(uploadId) {
             if (docSnap.exists()) {
                 const data = docSnap.data();
                 currentFileData = { id: docSnap.id, ...data }; // Store the ID
-                originalNotFollowingBack = currentFileData.originalNotFollowingBack || [];
+                originalNotFollowingBack = [...(currentFileData.originalNotFollowingBack || []), ...(currentFileData.manuallyAddedFollowing || [])];
                 safeUsers = currentFileData.safeUsers || []; // Ensure safeUsers is loaded
                 bannedUsers = currentFileData.bannedUsers || []; // New: Load banned users
                 manuallyAddedFollowing = currentFileData.manuallyAddedFollowing || []; // Load manually added following
