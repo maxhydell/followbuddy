@@ -1839,6 +1839,41 @@ function renderAccounts(accountsToRender) {
         });
     });
 }
+
+
+// FIX: This function was missing from your script. Add it to handle the removal of users.
+async function handleRemoveFromFollowingFromDashboard(username) {
+    if (!currentUserId || !currentFileData || !dbInstance) {
+        showAlert('User data not loaded. Please upload your data first.', 'error');
+        return;
+    }
+    try {
+        // Add the username to the list of manually unfollowed users.
+        manuallyUnfollowedList.push(username);
+        
+        // Update the database to save this change.
+        await saveManuallyUnfollowedState();
+
+        // Filter the list to immediately remove the user from the view without a full page refresh.
+        allNonFollowers = allNonFollowers.filter(account => account.username !== username);
+
+        showNotification(`Removed: ${username}`, 'success');
+        
+        // Recalculate metrics and re-render the list to reflect the change.
+        updateDashboardMetrics(
+            currentFileData.followingList.length,
+            currentFileData.totalFollowers,
+            allNonFollowers.length,
+            originalNotFollowingBack.length,
+            (currentFileData.recentlyUnfollowedProfiles || []).length
+        );
+        applyFiltersAndRenderAccounts(); 
+    } catch (error) {
+        console.error("Error removing account:", error);
+        showAlert(`Failed to remove account: ${error.message}`, 'error');
+    }
+
+
     // Function to render unfollowed accounts list (these are people who unfollowed you)
     function renderUnfollowedAccountsList(accounts) {
         unfollowedListElem.innerHTML = '';
@@ -2196,8 +2231,10 @@ function renderApprovedUsersList(users) {
         
         // Ensure the dashboard displays the current data if available
         if (currentFileData) {
-            // Recalculate allNonFollowers based on current safeUsers
-            allNonFollowers = originalNotFollowingBack.filter(account => !safeUsers.includes(account.username)); // Filter by username
+            // FIX: Recalculate allNonFollowers based on all exclusion lists
+            allNonFollowers = originalNotFollowingBack.filter(account =>
+                !safeUsers.includes(account.username) &&
+                !manuallyUnfollowedList.includes(account.username)
             
             // Calculate current total following including manual additions and removals
             const effectiveFollowingCount = (currentFileData.followingList || []).length + manuallyAddedFollowing.length - manuallyUnfollowedList.length;
