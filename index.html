@@ -1654,8 +1654,18 @@ async function loadDataForUpload(uploadId) {
             if (docSnap.exists()) {
                 const data = docSnap.data();
                 currentFileData = { id: docSnap.id, ...data }; // Store the ID
-                originalNotFollowingBack = currentFileData.originalNotFollowingBack || [];
-                safeUsers = currentFileData.safeUsers || []; // Ensure safeUsers is loaded
+                safeUsers = currentFileData.safeUsers || []; 
+
+                const normalize = (u) => u.toLowerCase().trim();
+                const cleanedFollowing = [...new Set((currentFileData.followingList || []).map(normalize).filter(Boolean))];
+                const cleanedFollowers = new Set((currentFileData.followersList || []).map(normalize).filter(Boolean));
+
+                originalNotFollowingBack = cleanedFollowing
+                    .filter(username => !cleanedFollowers.has(username))
+                    .map(username => ({ username }));
+
+                allNonFollowers = originalNotFollowingBack.filter(account => !safeUsers.includes(account.username));
+
                 bannedUsers = currentFileData.bannedUsers || []; // New: Load banned users
                 manuallyAddedFollowing = currentFileData.manuallyAddedFollowing || []; // Load manually added following
                 accountsManuallyAddedForReview = currentFileData.accountsManuallyAddedForReview || []; // Load manually added for review
@@ -1665,18 +1675,19 @@ async function loadDataForUpload(uploadId) {
                 manuallyUnfollowedList = currentFileData.manuallyUnfollowedList || []; // Load manually unfollowed list
                 accountsToRemoveList = []; // Initialize accountsToRemoveList here before use
 
-                // Filter notFollowingBack based on current safeUsers
-                allNonFollowers = originalNotFollowingBack.filter(account => !safeUsers.includes(account.username));
-
                 // Accounts to Review logic: accounts manually added for review, that are NOT approved, NOT removed, AND NOT in the current (original + manually added - manually unfollowed) following list
                 const combinedFollowingSet = new Set(currentFileData.followingList); // Base from uploaded file
                 manuallyAddedFollowing.forEach(user => combinedFollowingSet.add(user)); // Add manually added
                 manuallyUnfollowedList.forEach(user => combinedFollowingSet.delete(user)); // Remove manually unfollowed
 
+                const normalize = (u) => u.toLowerCase().trim();
+
                 accountsToRemoveList = accountsManuallyAddedForReview.filter(account =>
-                    !approvedAccountsList.includes(account.username) &&
-                    !removedAccountsList.includes(account.username)
+                  !approvedAccountsList.some(u => normalize(u) === normalize(account.username)) &&
+                  !removedAccountsList.some(u => normalize(u) === normalize(account.username))
                 );
+
+
                 // Sort by oldest to newest by default for this list
                 accountsToRemoveList.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
 
@@ -1714,8 +1725,13 @@ async function loadDataForUpload(uploadId) {
                 }
                 console.log(`Analytics for upload ${uploadId}: Unfollowed (lost followers): ${unfollowedYou}, New Followers (gained followers): ${newFollowers}`);
 
-                // Calculate current total following including manual additions and removals
-                const effectiveFollowingCount = (currentFileData.followingList || []).length + manuallyAddedFollowing.length - manuallyUnfollowedList.length;
+                const cleanedFollowing = [...new Set((currentFileData.followingList || [])
+                    .map(u => u.trim().toLowerCase())
+                    .filter(u => u.length > 0 && !u.startsWith("@"))
+                )];
+
+                const effectiveFollowingCount = cleanedFollowing.length + manuallyAddedFollowing.length - manuallyUnfollowedList.length;
+
 
                 updateDashboardMetrics(
                     effectiveFollowingCount,
@@ -3880,6 +3896,10 @@ const handleAddSingleAccount = async () => {
   if (!username) {
     showAlert('Please enter an Instagram username.', 'error');
     return;
+  }
+
+  if (typeof username === "string" && username.trim()) {
+    allAdded.set(username.trim(), { approved: false });
   }
 
   if (!currentUserId || !currentFileData || !dbInstance) {
