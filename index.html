@@ -1735,13 +1735,6 @@ async function loadDataForUpload(uploadId) {
                 }
                 console.log(`Analytics for upload ${uploadId}: Unfollowed (lost followers): ${unfollowedYou}, New Followers (gained followers): ${newFollowers}`);
 
-                const cleanedFollowing = [...new Set((currentFileData.followingList || [])
-                    .map(u => u.trim().toLowerCase())
-                    .filter(u => u.length > 0 && !u.startsWith("@"))
-                )];
-
-
-
                 updateDashboardMetrics(
                     effectiveFollowingCount,
                     currentFileData.totalFollowers,
