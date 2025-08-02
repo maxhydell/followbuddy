@@ -2235,7 +2235,7 @@ function renderApprovedUsersList(users) {
             allNonFollowers = originalNotFollowingBack.filter(account =>
                 !safeUsers.includes(account.username) &&
                 !manuallyUnfollowedList.includes(account.username));
-            );
+            )
 
             // Calculate current total following including manual additions and removals
             const effectiveFollowingCount = (currentFileData.followingList || []).length + manuallyAddedFollowing.length - manuallyUnfollowedList.length;
