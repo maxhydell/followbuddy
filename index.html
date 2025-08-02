@@ -1680,8 +1680,6 @@ async function loadDataForUpload(uploadId) {
                 manuallyAddedFollowing.forEach(user => combinedFollowingSet.add(user)); // Add manually added
                 manuallyUnfollowedList.forEach(user => combinedFollowingSet.delete(user)); // Remove manually unfollowed
 
-                const normalize = (u) => u.toLowerCase().trim();
-
                 accountsToRemoveList = accountsManuallyAddedForReview.filter(account =>
                   !approvedAccountsList.some(u => normalize(u) === normalize(account.username)) &&
                   !removedAccountsList.some(u => normalize(u) === normalize(account.username))
