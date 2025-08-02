@@ -1657,11 +1657,24 @@ async function loadDataForUpload(uploadId) {
                 safeUsers = currentFileData.safeUsers || []; 
 
                 const normalize = (u) => u.toLowerCase().trim();
-                const cleanedFollowers = new Set((currentFileData.followersList || []).map(normalize).filter(Boolean));
+
+                const cleanedFollowing = [...new Set((currentFileData.followingList || [])
+                  .map(normalize)
+                  .filter(Boolean))];
+
+                const cleanedFollowers = new Set((currentFileData.followersList || [])
+                  .map(normalize)
+                  .filter(Boolean));
 
                 originalNotFollowingBack = cleanedFollowing
-                    .filter(username => !cleanedFollowers.has(username))
-                    .map(username => ({ username }));
+                  .filter(username => !cleanedFollowers.has(username))
+                  .map(username => ({ username }));
+
+                allNonFollowers = originalNotFollowingBack.filter(account =>
+                  !safeUsers.includes(account.username)
+                );
+
+                const effectiveFollowingCount = cleanedFollowing.length + manuallyAddedFollowing.length - manuallyUnfollowedList.length;
 
                 allNonFollowers = originalNotFollowingBack.filter(account => !safeUsers.includes(account.username));
 
@@ -1727,7 +1740,6 @@ async function loadDataForUpload(uploadId) {
                     .filter(u => u.length > 0 && !u.startsWith("@"))
                 )];
 
-                const effectiveFollowingCount = cleanedFollowing.length + manuallyAddedFollowing.length - manuallyUnfollowedList.length;
 
 
                 updateDashboardMetrics(
@@ -2470,8 +2482,6 @@ function renderApprovedUsersList(users) {
             // Ensure allNonFollowers is updated based on current safeUsers
             allNonFollowers = originalNotFollowingBack.filter(account => !safeUsers.includes(account.username)); // Filter by username
             
-            // Calculate current total following including manual additions and removals
-            const effectiveFollowingCount = (currentFileData.followingList || []).length + manuallyAddedFollowing.length - manuallyUnfollowedList.length;
 
             updateDashboardMetrics(
                 effectiveFollowingCount,
@@ -3008,8 +3018,6 @@ async function handleRemoveFromFollowingFromDashboard(username) {
             allNonFollowers = originalNotFollowingBack.filter(account => !safeUsers.includes(account.username)); // Filter by username
             applyFiltersAndRenderAccounts(); // Re-apply filters and render
             
-            // Calculate current total following including manual additions and removals
-            const effectiveFollowingCount = (currentFileData.followingList || []).length + manuallyAddedFollowing.length - manuallyUnfollowedList.length;
 
             // Update dashboard metrics to reflect the change in filtered non-followers count
             updateDashboardMetrics(
