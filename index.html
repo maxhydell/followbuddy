@@ -1654,30 +1654,8 @@ async function loadDataForUpload(uploadId) {
             if (docSnap.exists()) {
                 const data = docSnap.data();
                 currentFileData = { id: docSnap.id, ...data }; // Store the ID
-                safeUsers = currentFileData.safeUsers || []; 
-
-                const normalize = (u) => u.toLowerCase().trim();
-
-                const cleanedFollowing = [...new Set((currentFileData.followingList || [])
-                  .map(normalize)
-                  .filter(Boolean))];
-
-                const cleanedFollowers = new Set((currentFileData.followersList || [])
-                  .map(normalize)
-                  .filter(Boolean));
-
-                originalNotFollowingBack = cleanedFollowing
-                  .filter(username => !cleanedFollowers.has(username))
-                  .map(username => ({ username }));
-
-                allNonFollowers = originalNotFollowingBack.filter(account =>
-                  !safeUsers.includes(account.username)
-                );
-
-                const effectiveFollowingCount = cleanedFollowing.length + manuallyAddedFollowing.length - manuallyUnfollowedList.length;
-
-                allNonFollowers = originalNotFollowingBack.filter(account => !safeUsers.includes(account.username));
-
+                originalNotFollowingBack = currentFileData.originalNotFollowingBack || [];
+                safeUsers = currentFileData.safeUsers || []; // Ensure safeUsers is loaded
                 bannedUsers = currentFileData.bannedUsers || []; // New: Load banned users
                 manuallyAddedFollowing = currentFileData.manuallyAddedFollowing || []; // Load manually added following
                 accountsManuallyAddedForReview = currentFileData.accountsManuallyAddedForReview || []; // Load manually added for review
@@ -1687,17 +1665,18 @@ async function loadDataForUpload(uploadId) {
                 manuallyUnfollowedList = currentFileData.manuallyUnfollowedList || []; // Load manually unfollowed list
                 accountsToRemoveList = []; // Initialize accountsToRemoveList here before use
 
+                // Filter notFollowingBack based on current safeUsers
+                allNonFollowers = originalNotFollowingBack.filter(account => !safeUsers.includes(account.username));
+
                 // Accounts to Review logic: accounts manually added for review, that are NOT approved, NOT removed, AND NOT in the current (original + manually added - manually unfollowed) following list
                 const combinedFollowingSet = new Set(currentFileData.followingList); // Base from uploaded file
                 manuallyAddedFollowing.forEach(user => combinedFollowingSet.add(user)); // Add manually added
                 manuallyUnfollowedList.forEach(user => combinedFollowingSet.delete(user)); // Remove manually unfollowed
 
                 accountsToRemoveList = accountsManuallyAddedForReview.filter(account =>
-                  !approvedAccountsList.some(u => normalize(u) === normalize(account.username)) &&
-                  !removedAccountsList.some(u => normalize(u) === normalize(account.username))
+                    !approvedAccountsList.includes(account.username) &&
+                    !removedAccountsList.includes(account.username)
                 );
-
-
                 // Sort by oldest to newest by default for this list
                 accountsToRemoveList.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
 
@@ -1734,6 +1713,9 @@ async function loadDataForUpload(uploadId) {
                     }
                 }
                 console.log(`Analytics for upload ${uploadId}: Unfollowed (lost followers): ${unfollowedYou}, New Followers (gained followers): ${newFollowers}`);
+
+                // Calculate current total following including manual additions and removals
+                const effectiveFollowingCount = (currentFileData.followingList || []).length + manuallyAddedFollowing.length - manuallyUnfollowedList.length;
 
                 updateDashboardMetrics(
                     effectiveFollowingCount,
@@ -2217,6 +2199,9 @@ function renderApprovedUsersList(users) {
         if (currentFileData) {
             // Recalculate allNonFollowers based on current safeUsers
             allNonFollowers = originalNotFollowingBack.filter(account => !safeUsers.includes(account.username)); // Filter by username
+            
+            // Calculate current total following including manual additions and removals
+            const effectiveFollowingCount = (currentFileData.followingList || []).length + manuallyAddedFollowing.length - manuallyUnfollowedList.length;
 
             updateDashboardMetrics(
                 effectiveFollowingCount,
@@ -2475,6 +2460,8 @@ function renderApprovedUsersList(users) {
             // Ensure allNonFollowers is updated based on current safeUsers
             allNonFollowers = originalNotFollowingBack.filter(account => !safeUsers.includes(account.username)); // Filter by username
             
+            // Calculate current total following including manual additions and removals
+            const effectiveFollowingCount = (currentFileData.followingList || []).length + manuallyAddedFollowing.length - manuallyUnfollowedList.length;
 
             updateDashboardMetrics(
                 effectiveFollowingCount,
@@ -3011,6 +2998,8 @@ async function handleRemoveFromFollowingFromDashboard(username) {
             allNonFollowers = originalNotFollowingBack.filter(account => !safeUsers.includes(account.username)); // Filter by username
             applyFiltersAndRenderAccounts(); // Re-apply filters and render
             
+            // Calculate current total following including manual additions and removals
+            const effectiveFollowingCount = (currentFileData.followingList || []).length + manuallyAddedFollowing.length - manuallyUnfollowedList.length;
 
             // Update dashboard metrics to reflect the change in filtered non-followers count
             updateDashboardMetrics(
@@ -3891,10 +3880,6 @@ const handleAddSingleAccount = async () => {
   if (!username) {
     showAlert('Please enter an Instagram username.', 'error');
     return;
-  }
-
-  if (typeof username === "string" && username.trim()) {
-    allAdded.set(username.trim(), { approved: false });
   }
 
   if (!currentUserId || !currentFileData || !dbInstance) {
