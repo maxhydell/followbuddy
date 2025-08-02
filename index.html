@@ -2235,7 +2235,8 @@ function renderApprovedUsersList(users) {
             allNonFollowers = originalNotFollowingBack.filter(account =>
                 !safeUsers.includes(account.username) &&
                 !manuallyUnfollowedList.includes(account.username));
-            
+            );
+
             // Calculate current total following including manual additions and removals
             const effectiveFollowingCount = (currentFileData.followingList || []).length + manuallyAddedFollowing.length - manuallyUnfollowedList.length;
 
@@ -4642,7 +4643,6 @@ if (approvedUsersStatBox) {
         renderUnfollowedProfilesList([]); // Initial render for unfollowed profiles list
     };
 }; // FIX: This is the missing curly brace to close the window.onload function.
-    
   </script>
 </body>
 </html>
