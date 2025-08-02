@@ -2235,7 +2235,7 @@ function renderApprovedUsersList(users) {
             allNonFollowers = originalNotFollowingBack.filter(account =>
                 !safeUsers.includes(account.username) &&
                 !manuallyUnfollowedList.includes(account.username));
-            )
+        }
 
             // Calculate current total following including manual additions and removals
             const effectiveFollowingCount = (currentFileData.followingList || []).length + manuallyAddedFollowing.length - manuallyUnfollowedList.length;
@@ -4628,7 +4628,7 @@ if (approvedUsersStatBox) {
             followersListModal.classList.remove('hidden');
             if (currentFileData && currentFileData.followersList) {
                 renderAccountList(followersListContainer, currentFileData.followersList, ''); // Render all followers initially
-            }
+            };
         }
     });
 }
