@@ -2964,7 +2964,11 @@ async function handleRemoveFromFollowingFromDashboard(username) {
             };
         });
 
-        allNonFollowers = originalNotFollowingBack.filter(account => !safeUsers.includes(account.username));
+        allNonFollowers = originalNotFollowingBack.filter(account => 
+            !safeUsers.includes(account.username) && 
+            !manuallyUnfollowedList.includes(account.username) &&
+            !removedAccountsList.includes(account.username)
+        );
 
         updateDashboardMetrics(
             baseFollowingSet.size,
