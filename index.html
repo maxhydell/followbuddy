@@ -28,7 +28,7 @@
             flex-direction: column;
         }
 
-        /* Hide scrollbar for a cleaner look */ 
+        /* Hide scrollbar for a cleaner look */
         body::-webkit-scrollbar {
             display: none;
         }
@@ -4010,15 +4010,26 @@
 
             // Add from manuallyAddedFollowing (these are "real" follows)
             manuallyAddedFollowing.forEach(username => {
-                allAdded.set(username, {type: 'Following', timestamp: null}); // No timestamp for this list
+                if (username && typeof username === 'string') {
+                    allAdded.set(username, {type: 'Following', timestamp: Math.floor(Date.now() / 1000)}); // Current Unix timestamp
+                }
             });
-
+            
             // Add from accountsManuallyAddedForReview (these are for review)
             accountsManuallyAddedForReview.forEach(account => {
-                allAdded.set(account.username, {type: 'For Review', timestamp: account.timestamp});
+                if (account && account.username && typeof account.username === 'string') {
+                    allAdded.set(account.username, {type: 'For Review', timestamp: account.timestamp});
+                }
             });
 
-            Array.from(allAdded.entries()).sort((a, b) => a[0].localeCompare(b[0])).forEach(([username, info]) => {
+            Array.from(allAdded.entries()).sort((a, b) => {
+                const usernameA = a[0];
+                const usernameB = b[0];
+                if (typeof usernameA === 'string' && typeof usernameB === 'string') {
+                    return usernameA.localeCompare(usernameB);
+                }
+                return 0;
+            }).forEach(([username, info]) => {
                 const div = document.createElement('div');
                 div.className = 'flex justify-between items-center py-2 px-3 border-b border-gray-600 last:border-b-0 text-gray-200';
 
@@ -4916,7 +4927,7 @@
                 });
             }
 
-            // working 8.3.25 yay
+            // working 8.3.25
 
 
             // Initial render of accounts (will show "No data" message)
