@@ -1918,6 +1918,8 @@
                         accountsToRemoveList = []; // Initialize accountsToRemoveList here before use
 
                         allNonFollowers = originalNotFollowingBack.filter(account =>
+                            account &&
+                            account.username &&
                             !safeUsers.includes(account.username) &&
                             !manuallyUnfollowedList.includes(account.username) &&
                             !removedAccountsList.includes(account.username)
@@ -2452,6 +2454,8 @@
             // Ensure the dashboard displays the current data if available
             if (currentFileData) {
                 allNonFollowers = originalNotFollowingBack.filter(account =>
+                    account &&
+                    account.username &&
                     !safeUsers.includes(account.username) &&
                     !manuallyUnfollowedList.includes(account.username) &&
                     !removedAccountsList.includes(account.username)
@@ -2715,8 +2719,10 @@
         const findNonFollowersButtonClickHandler = () => {
             if (currentFileData) {
                 // Ensure allNonFollowers is updated based on current safeUsers
-                allNonFollowers = originalNotFollowingBack.filter(account => 
-                    !safeUsers.includes(account.username) && 
+                allNonFollowers = originalNotFollowingBack.filter(account =>
+                    account &&
+                    account.username &&
+                    !safeUsers.includes(account.username) &&
                     !manuallyUnfollowedList.includes(account.username) &&
                     !removedAccountsList.includes(account.username)
                 );
@@ -3009,8 +3015,10 @@
 
 
                 // Filter notFollowingBack based on current safeUsers
-                allNonFollowers = originalNotFollowingBack.filter(account => 
-                    !safeUsers.includes(account.username) && 
+                allNonFollowers = originalNotFollowingBack.filter(account =>
+                    account &&
+                    account.username &&
+                    !safeUsers.includes(account.username) &&
                     !manuallyUnfollowedList.includes(account.username) &&
                     !removedAccountsList.includes(account.username)
                 );
@@ -3227,6 +3235,8 @@
                 });
 
                 allNonFollowers = originalNotFollowingBack.filter(account =>
+                    account &&
+                    account.username &&
                     !safeUsers.includes(account.username) &&
                     !manuallyUnfollowedList.includes(account.username) &&
                     !removedAccountsList.includes(account.username)
@@ -3264,6 +3274,8 @@
                 await saveSafeUsersToFirestore();
                 // Re-render dashboard metrics and non-followers list
                 allNonFollowers = originalNotFollowingBack.filter(account =>
+                    account &&
+                    account.username &&
                     !safeUsers.includes(account.username) &&
                     !manuallyUnfollowedList.includes(account.username) &&
                     !removedAccountsList.includes(account.username)
@@ -3841,20 +3853,21 @@
                 // Re-calculate originalNotFollowingBack (people we follow who don't follow us back)
                 // This should compare the effective following set against the followers list from the file.
                 originalNotFollowingBack = Array.from(effectiveFollowingSet).filter(username =>
+                    username && // Ensure username is not null/undefined
                     !new Set(currentFileData.followersList).has(username)
                 ).map(username => {
                     // Try to find original timestamp if available, otherwise use a placeholder
-                    const originalAccount = currentFileData.originalNotFollowingBack.find(acc => acc.username === username);
+                    const originalAccount = currentFileData.originalNotFollowingBack.find(acc => acc && acc.username === username);
                     return {username: username, timestamp: originalAccount ? originalAccount.timestamp : Math.floor(Date.now() / 1000)};
                 });
-
                 // Filter by safe users for display
                 allNonFollowers = originalNotFollowingBack.filter(account =>
+                    account &&
+                    account.username &&
                     !safeUsers.includes(account.username) &&
                     !manuallyUnfollowedList.includes(account.username) &&
                     !removedAccountsList.includes(account.username)
                 );
-
                 // Calculate current total following including manual additions and removals
                 const effectiveFollowingCount = effectiveFollowingSet.size;
 
@@ -4054,11 +4067,12 @@
                     });
 
                     allNonFollowers = originalNotFollowingBack.filter(account =>
+                        account &&
+                        account.username &&
                         !safeUsers.includes(account.username) &&
                         !manuallyUnfollowedList.includes(account.username) &&
                         !removedAccountsList.includes(account.username)
                     );
-
                     // Calculate current total following including manual additions and removals
                     const effectiveFollowingCount = baseFollowingSet.size;
 
@@ -4114,6 +4128,8 @@
                     });
 
                     allNonFollowers = originalNotFollowingBack.filter(account =>
+                        account &&
+                        account.username &&
                         !safeUsers.includes(account.username) &&
                         !manuallyUnfollowedList.includes(account.username) &&
                         !removedAccountsList.includes(account.username)
