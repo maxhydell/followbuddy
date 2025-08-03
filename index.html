@@ -1665,9 +1665,10 @@ async function loadDataForUpload(uploadId) {
                 manuallyUnfollowedList = currentFileData.manuallyUnfollowedList || []; // Load manually unfollowed list
                 accountsToRemoveList = []; // Initialize accountsToRemoveList here before use
 
-                // Filter notFollowingBack based on current safeUsers
-                allNonFollowers = originalNotFollowingBack.filter(account => !safeUsers.includes(account.username));
-
+                allNonFollowers = originalNotFollowingBack.filter(account => 
+                    !safeUsers.includes(account.username) && 
+                    !manuallyUnfollowedList.includes(account.username)
+                );
                 // Accounts to Review logic: accounts manually added for review, that are NOT approved, NOT removed, AND NOT in the current (original + manually added - manually unfollowed) following list
                 const combinedFollowingSet = new Set(currentFileData.followingList); // Base from uploaded file
                 manuallyAddedFollowing.forEach(user => combinedFollowingSet.add(user)); // Add manually added
