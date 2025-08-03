@@ -4911,7 +4911,7 @@
                     if (followersListModal) {
                         followersListModal.classList.remove('hidden');
                         if (currentFileData && currentFileData.followersList) {
-                            renderAccountList(followersListContainer, curren                const baseFollowingSet = new Set(currentFileData.followingList);
+                            renderAccountList(followersListContainer, currentFileData.followersList, ''); // Render all followers initially
                                               manuallyAddedFollowing.forEach(user => baseFollowingSet.add(user));
                                               manuallyUnfollowedList.forEach(user => baseFollowingSet.delete(user));
 
