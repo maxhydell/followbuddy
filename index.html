@@ -3236,19 +3236,9 @@
                 await saveFollowingAndUnfollowedLists();
 
                 // 4. Recalculate not-following-back metrics
-                const baseFollowingSet = new Set(currentFileData.followingList);
-                manuallyAddedFollowing.forEach(user => baseFollowingSet.add(user));
-                manuallyUnfollowedList.forEach(user => baseFollowingSet.delete(user));
-
-                originalNotFollowingBack = Array.from(baseFollowingSet).filter(user =>
-                    !new Set(currentFileData.followersList).has(user)
-                ).map(user => {
-                    const originalAccount = currentFileData.originalNotFollowingBack.find(acc => acc.username === user);
-                    return {
-                        username: user,
-                        timestamp: originalAccount ? originalAccount.timestamp : null
-                    };
-                });
+                originalNotFollowingBack = originalNotFollowingBack.filter(account => 
+                    account && account.username !== username
+                );
 
                 allNonFollowers = originalNotFollowingBack.filter(account =>
                     account &&
@@ -4921,7 +4911,19 @@
                     if (followersListModal) {
                         followersListModal.classList.remove('hidden');
                         if (currentFileData && currentFileData.followersList) {
-                            renderAccountList(followersListContainer, currentFileData.followersList, ''); // Render all followers initially
+                            renderAccountList(followersListContainer, curren                const baseFollowingSet = new Set(currentFileData.followingList);
+                                              manuallyAddedFollowing.forEach(user => baseFollowingSet.add(user));
+                                              manuallyUnfollowedList.forEach(user => baseFollowingSet.delete(user));
+
+                                              originalNotFollowingBack = Array.from(baseFollowingSet).filter(user =>
+                                                  !new Set(currentFileData.followersList).has(user)
+                                              ).map(user => {
+                                                  const originalAccount = currentFileData.originalNotFollowingBack.find(acc => acc.username === user);
+                                                  return {
+                                                      username: user,
+                                                      timestamp: originalAccount ? originalAccount.timestamp : null
+                                                  };
+                                              });tFileData.followersList, ''); // Render all followers initially
                         }
                     }
                 });
