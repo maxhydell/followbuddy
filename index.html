@@ -3204,7 +3204,6 @@
         }
 
 
-        // Master function to handle removing a user from following from the dashboard
         async function handleRemoveFromFollowingFromDashboard(username) {
             if (!currentUserId || !currentFileData || !dbInstance) {
                 showAlert('User not authenticated or data not loaded.', 'error');
@@ -3214,9 +3213,8 @@
             try {
                 // Initialize baseFollowingSet here
                 const baseFollowingSet = new Set(currentFileData.followingList || []);
-            
-            try {
-                // 2. Firestore updates
+
+                // Firestore updates
                 const uploadDocRef = doc(dbInstance, `artifacts/default-app-id/users/${currentUserId}/userUploads`, currentFileData.id);
                 const updates = {
                     manuallyUnfollowedList: arrayUnion(username),
@@ -3229,7 +3227,7 @@
 
                 await updateDoc(uploadDocRef, updates);
 
-                // 3. Local list updates
+                // Local list updates
                 if (!manuallyUnfollowedList.includes(username)) {
                     manuallyUnfollowedList.push(username);
                     manuallyUnfollowedList.sort();
@@ -3239,7 +3237,7 @@
 
                 await saveFollowingAndUnfollowedLists();
 
-                // 4. Recalculate not-following-back metrics
+                // Recalculate originalNotFollowingBack metrics
                 originalNotFollowingBack = originalNotFollowingBack.filter(account => 
                     account && account.username !== username
                 );
@@ -3261,13 +3259,6 @@
                 );
 
                 applyFiltersAndRenderAccounts(); // UI refresh
-
-                // 5. Final feedback
-                // if (accountInAccountsManagement) {
-                //    showAlert(`Removed ${username} from following and the Accounts Management list.`, 'success');
-                // } else {
-                //    showAlert(`Removed ${username} from following.`, 'success');
-                // }
 
             } catch (error) {
                 console.error('Error removing user from following:', error);
