@@ -3212,6 +3212,10 @@
             }
 
             try {
+                // Initialize baseFollowingSet here
+                const baseFollowingSet = new Set(currentFileData.followingList || []);
+            
+            try {
                 // 2. Firestore updates
                 const uploadDocRef = doc(dbInstance, `artifacts/default-app-id/users/${currentUserId}/userUploads`, currentFileData.id);
                 const updates = {
