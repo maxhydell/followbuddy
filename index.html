@@ -1881,7 +1881,6 @@
                 manuallyUnfollowedList = []; // Reset manually unfollowed list
                 accountsToRemoveList = []; // Initialize accountsToRemoveList
                 manuallyAddedFollowing = []; // Reset manually added following
-                bannedUsers = currentFileData.bannedUsers || []; // New: Load banned users
                 updateDashboardMetrics(0, 0, 0, 0, 0);
                 updateAnalyticsMetrics(0, 0, [], []); // Reset analytics metrics and lists
                 updateAccountsManagementMetrics(); // Reset accounts management metrics
@@ -1916,6 +1915,38 @@
                         removedAccountsList = currentFileData.removedAccounts || [];
                         manuallyUnfollowedList = currentFileData.manuallyUnfollowedList || []; // Load manually unfollowed list
                         accountsToRemoveList = []; // Initialize accountsToRemoveList here before use
+
+                        // [!code focus]
+                        // CORRECT: Load all necessary lists from the database first.
+                        safeUsers = currentFileData.safeUsers || [];
+                        bannedUsers = currentFileData.bannedUsers || [];
+                        manuallyAddedFollowing = currentFileData.manuallyAddedFollowing || [];
+                        manuallyUnfollowedList = currentFileData.manuallyUnfollowedList || [];
+                        removedAccountsList = currentFileData.removedAccounts || [];
+                        approvedAccountsList = currentFileData.approvedAccounts || [];
+                        accountsManuallyAddedForReview = currentFileData.accountsManuallyAddedForReview || [];
+
+
+                        // Load master lists from the uploaded file.
+                        const followingFromFile = currentFileData.followingList || [];
+                        const followersFromFileSet = new Set(currentFileData.followersList || []);
+                        const followingTimestamps = new Map(
+                            (currentFileData.originalNotFollowingBack || []).map(acc => [acc.username, acc.timestamp])
+                        );
+
+                        // Create the "effective" following list by applying manual additions and removals.
+                        const effectiveFollowingSet = new Set(followingFromFile);
+                        manuallyAddedFollowing.forEach(user => effectiveFollowingSet.add(user));
+                        manuallyUnfollowedList.forEach(user => effectiveFollowingSet.delete(user));
+
+                        // Recalculate the list of users who don't follow back from scratch.
+                        originalNotFollowingBack = [];
+                        effectiveFollowingSet.forEach(username => {
+                            if (!followersFromFileSet.has(username)) {
+                                const timestamp = followingTimestamps.get(username) || null;
+                                originalNotFollowingBack.push({ username: username, timestamp: timestamp });
+                    }
+                });
 
                         allNonFollowers = originalNotFollowingBack.filter(account =>
                             account &&
