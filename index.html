@@ -1667,7 +1667,8 @@ async function loadDataForUpload(uploadId) {
 
                 allNonFollowers = originalNotFollowingBack.filter(account => 
                     !safeUsers.includes(account.username) && 
-                    !manuallyUnfollowedList.includes(account.username)
+                    !manuallyUnfollowedList.includes(account.username) &&
+                    !removedAccountsList.includes(account.username)
                 );
                 // Accounts to Review logic: accounts manually added for review, that are NOT approved, NOT removed, AND NOT in the current (original + manually added - manually unfollowed) following list
                 const combinedFollowingSet = new Set(currentFileData.followingList); // Base from uploaded file
