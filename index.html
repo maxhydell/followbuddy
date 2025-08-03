@@ -4903,18 +4903,37 @@
                 });
             }
 
-            // Add event listener for the approved users (followers) stat box to open the modal and render the list
-            const approvedUsersStatBox = document.getElementById('approvedUsersStatBox'); // Assuming you have an ID for this stat box
-            if (approvedUsersStatBox) {
-                approvedUsersStatBox.addEventListener('click', () => {
-                    const followersListModal = document.getElementById('followersListModal'); // The modal for followers/approved users
-                    if (followersListModal) {
-                        followersListModal.classList.remove('hidden');
-                        if (currentFileData && currentFileData.followersList) {
-                            renderAccountList(followersListContainer, currentFileData.followersList, ''); // Render all followers initially
-
-            // working 8.3.25
-
+            // Close any existing modal windows when clicking outside
+            window.addEventListener('click', (event) => {
+                // Close followers list modal
+                if (event.target === followersListModal) {
+                    closeFollowersListModalFunc();
+                }
+                // Close following list modal
+                if (event.target === followingListModal) {
+                    closeFollowingListModalFunc();
+                }
+                // Close unfollowed profiles modal
+                if (event.target === unfollowedProfilesModal) {
+                    closeUnfollowedProfilesModalFunc();
+                }
+                // Close safe users modal
+                if (event.target === safeUsersModal) {
+                    closeSafeUsersModalFunc();
+                }
+                // Close banned users add modal
+                if (event.target === bannedUsersAddModal) {
+                    closeBannedUsersAddModalFunc();
+                }
+                // Close auth modal
+                if (event.target === authModal) {
+                    closeAuthModalFunc();
+                }
+                // Close upload data modal
+                if (event.target === uploadDataModal) {
+                    closeUploadDataModalFunc();
+                }
+            });
 
             // Initial render of accounts (will show "No data" message)
             renderAccounts([]);
