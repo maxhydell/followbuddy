@@ -3078,7 +3078,11 @@
                     accountsToRemoveList = []; // Initialize accountsToRemoveList for unauthenticated user
 
                     // Calculate current total following including manual additions and removals
-                    const effectiveFollowingCountForUnauth = (currentFileData.followingList || []).length + manuallyAddedFollowing.length - manuallyUnfollowedList.length;
+                    const baseFollowingSetForUnauth = new Set(currentFileData.followingList || []);
+                    manuallyAddedFollowing.forEach(user => baseFollowingSetForUnauth.add(user));
+                    manuallyUnfollowedList.forEach(user => baseFollowingSetForUnauth.delete(user));
+                    removedAccountsList.forEach(user => baseFollowingSetForUnauth.delete(user));
+                    const effectiveFollowingCountForUnauth = baseFollowingSetForUnauth.size;
 
                     updateDashboardMetrics(
                         effectiveFollowingCountForUnauth,
