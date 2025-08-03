@@ -1971,8 +1971,12 @@
                         console.log(`Analytics for upload ${uploadId}: Unfollowed (lost followers): ${unfollowedYou}, New Followers (gained followers): ${newFollowers}`);
 
                         // Calculate current total following including manual additions and removals
-                        const effectiveFollowingCount = (currentFileData.followingList || []).length + manuallyAddedFollowing.length - manuallyUnfollowedList.length;
-
+                        const baseFollowingSet = new Set(currentFileData.followingList || []);
+                        manuallyAddedFollowing.forEach(user => baseFollowingSet.add(user));
+                        manuallyUnfollowedList.forEach(user => baseFollowingSet.delete(user));
+                        removedAccountsList.forEach(user => baseFollowingSet.delete(user));
+                        const effectiveFollowingCount = baseFollowingSet.size;
+                        
                         updateDashboardMetrics(
                             effectiveFollowingCount,
                             currentFileData.totalFollowers,
@@ -2462,7 +2466,11 @@
                 );
 
                 // Calculate current total following including manual additions and removals
-                const effectiveFollowingCount = (currentFileData.followingList || []).length + manuallyAddedFollowing.length - manuallyUnfollowedList.length;
+                const baseFollowingSet = new Set(currentFileData.followingList || []);
+                manuallyAddedFollowing.forEach(user => baseFollowingSet.add(user));
+                manuallyUnfollowedList.forEach(user => baseFollowingSet.delete(user));
+                removedAccountsList.forEach(user => baseFollowingSet.delete(user));
+                const effectiveFollowingCount = baseFollowingSet.size;
 
                 updateDashboardMetrics(
                     effectiveFollowingCount,
@@ -2727,7 +2735,11 @@
                     !removedAccountsList.includes(account.username)
                 );
                 // Calculate current total following including manual additions and removals
-                const effectiveFollowingCount = (currentFileData.followingList || []).length + manuallyAddedFollowing.length - manuallyUnfollowedList.length;
+                const baseFollowingSet = new Set(currentFileData.followingList || []);
+                manuallyAddedFollowing.forEach(user => baseFollowingSet.add(user));
+                manuallyUnfollowedList.forEach(user => baseFollowingSet.delete(user));
+                removedAccountsList.forEach(user => baseFollowingSet.delete(user));
+                const effectiveFollowingCount = baseFollowingSet.size;
 
                 updateDashboardMetrics(
                     effectiveFollowingCount,
@@ -3292,7 +3304,7 @@
                 manuallyUnfollowedList.forEach(user => baseFollowingSet.delete(user));
                 removedAccountsList.forEach(user => baseFollowingSet.delete(user));
                 const effectiveFollowingCount = baseFollowingSet.size;
-                
+
                 // Update dashboard metrics to reflect the change in filtered non-followers count
                 updateDashboardMetrics(
                     effectiveFollowingCount,
@@ -4146,6 +4158,8 @@
                     );
 
                     // Calculate current total following including manual additions and removals
+                    // Calculate current total following including manual additions and removals
+                    removedAccountsList.forEach(user => baseFollowingSet.delete(user));
                     const effectiveFollowingCount = baseFollowingSet.size;
 
                     updateDashboardMetrics(
@@ -4902,7 +4916,7 @@
                 });
             }
 
-            // working 8.2.25
+            // working 8.3.25
 
 
             // Initial render of accounts (will show "No data" message)
