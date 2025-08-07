@@ -1866,94 +1866,15 @@
         }
 
 
-async function loadDataForUpload(uploadId) {
-    if (!uploadId) {
-        console.warn('No upload ID provided.');
-        return;
-    }
-    const uploadDocRef = doc(dbInstance, `artifacts/${appId}/users/${currentUserId}/userUploads`, uploadId);
-    let unsubscribe;
-
-    try {
-        unsubscribe = onSnapshot(uploadDocRef, async (docSnap) => {
-            if (docSnap.exists()) {
-                currentFileData = docSnap.data();
-                console.log('Successfully loaded data for upload ID:', uploadId);
-
-                // Normalize all lists to a consistent format (usernames only as strings)
-                const normalizedFollowingList = (currentFileData.followingList || []).map(item =>
-                    typeof item === 'object' && item !== null ? item.username : item
-                );
-                const normalizedManuallyAddedFollowing = (manuallyAddedFollowing || []).map(item =>
-                    typeof item === 'object' && item !== null ? item.username : item
-                );
-                const normalizedManuallyUnfollowedList = (manuallyUnfollowedList || []).map(item =>
-                    typeof item === 'object' && item !== null ? item.username : item
-                );
-                const normalizedRemovedAccountsList = (removedAccountsList || []).map(item =>
-                    typeof item === 'object' && item !== null ? item.username : item
-                );
-
-                // Create the Set with the normalized lists
-                const baseFollowingSet = new Set(normalizedFollowingList);
-                normalizedManuallyAddedFollowing.forEach(user => baseFollowingSet.add(user));
-                normalizedManuallyUnfollowedList.forEach(user => baseFollowingSet.delete(user));
-                normalizedRemovedAccountsList.forEach(user => baseFollowingSet.delete(user));
-
-                const followingFromFile = (currentFileData.followingList || []).map(item => typeof item === 'object' && item !== null ? item.username : item);
-                const followersFromFileSet = new Set(currentFileData.followersList || []);
-                const followingTimestamps = new Map(
-                    (currentFileData.originalNotFollowingBack || []).map(acc => [acc.username, acc.timestamp])
-                );
-
-                const effectiveFollowingSet = new Set(followingFromFile);
-                (manuallyAddedFollowing || []).map(item => typeof item === 'object' && item !== null ? item.username : item).forEach(user => effectiveFollowingSet.add(user));
-                (manuallyUnfollowedList || []).map(item => typeof item === 'object' && item !== null ? item.username : item).forEach(user => effectiveFollowingSet.delete(user));
-                (removedAccountsList || []).map(item => typeof item === 'object' && item !== null ? item.username : item).forEach(user => effectiveFollowingSet.delete(user));
-
-                originalNotFollowingBack = [];
-                effectiveFollowingSet.forEach(username => {
-                    if (!followersFromFileSet.has(username)) {
-                        const timestamp = followingTimestamps.get(username) || null;
-                        originalNotFollowingBack.push({ username: username, timestamp: timestamp });
-                    }
-                });
-
-                allNonFollowers = originalNotFollowingBack.filter(account =>
-                    account && account.username &&
-                    !safeUsers.includes(account.username) &&
-                    !manuallyUnfollowedList.includes(account.username) &&
-                    !removedAccountsList.includes(account.username)
-                );
-
-                const combinedFollowingSet = new Set(normalizedFollowingList);
-                normalizedManuallyAddedFollowing.forEach(user => combinedFollowingSet.add(user));
-                normalizedManuallyUnfollowedList.forEach(user => combinedFollowingSet.delete(user));
-                accountsToRemoveList = accountsManuallyAddedForReview.filter(account =>
-                    !approvedAccountsList.includes(account.username) &&
-                    !removedAccountsList.includes(account.username) &&
-                    !combinedFollowingSet.has(account.username)
-                );
-                accountsToRemoveList.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
-
-                const effectiveFollowingCount = baseFollowingSet.size;
-
-                updateDashboardMetrics(
-                    effectiveFollowingCount,
-                    currentFileData.totalFollowers,
-                    allNonFollowers.length,
-                    originalNotFollowingBack.length,
-                    (currentFileData.recentlyUnfollowedProfiles || []).length
-                );
-                showDashboard();
-            } else {
-                console.log('No data found for the selected upload ID:', uploadId);
-                showAlert('No data found for the selected upload. Please try another or upload new data.', 'info');
+        // Line 528: Replace the entire existing loadDataForUpload function
+        async function loadDataForUpload(uploadId) {
+            if (!currentUserId || !dbInstance || !uploadId) {
+                console.log("No upload ID provided or user not authenticated. Resetting UI.");
                 currentFileData = null;
                 allNonFollowers = [];
                 originalNotFollowingBack = [];
                 safeUsers = [];
-                bannedUsers = []; // Reset banned users
+                bannedUsers = []; // Reset banned users on data load
                 accountsManuallyAddedForReview = []; // Reset accounts management list
                 approvedAccountsList = [];
                 removedAccountsList = [];
@@ -1961,23 +1882,180 @@ async function loadDataForUpload(uploadId) {
                 accountsToRemoveList = []; // Initialize accountsToRemoveList
                 manuallyAddedFollowing = []; // Reset manually added following
                 updateDashboardMetrics(0, 0, 0, 0, 0);
-                updateAnalyticsMetrics(0, 0, [], []);
-                updateAccountsManagementMetrics();
-                renderAccounts([]);
-                renderAccountsToRemove([]);
-                renderOrangeListUsers([]); // Clear orange list
+                updateAnalyticsMetrics(0, 0, [], []); // Reset analytics metrics and lists
+                updateAccountsManagementMetrics(); // Reset accounts management metrics
+                renderAccounts([]); // Dashboard non-followers
+                renderAccountsToRemove([]); // Accounts management list
+                renderOrangeListUsers([]); // New: Clear orange list
                 renderUnfollowedProfilesList([]); // Clear unfollowed profiles list
+                return;
             }
-        }, (error) => {
-            console.error('Error listening to document:', error);
-            showAlert('Failed to load data for the selected upload. Error: ' + error.message, 'error');
-        });
-    } catch (error) {
-        console.error('Error setting up listener for upload:', error);
-        showAlert('Failed to set up real-time data listener. Error: ' + error.message, 'error');
-    }
-}
 
+            // New: Unsubscribe from previous listener if it exists
+            if (unsubscribeFromFirebase) {
+                unsubscribeFromFirebase();
+                console.log("Unsubscribed from previous Firebase listener.");
+            }
+
+            try {
+                const uploadDocRef = doc(dbInstance, `artifacts/default-app-id/users/${currentUserId}/userUploads`, uploadId);
+
+                // New: Set up a real-time listener using onSnapshot
+                unsubscribeFromFirebase = onSnapshot(uploadDocRef, async (docSnap) => {
+                    if (docSnap.exists()) {
+                        const data = docSnap.data();
+                        currentFileData = {id: docSnap.id, ...data}; // Store the ID
+                        originalNotFollowingBack = [...(currentFileData.originalNotFollowingBack || []), ...(currentFileData.manuallyAddedFollowing || [])];
+                        safeUsers = currentFileData.safeUsers || []; // Ensure safeUsers is loaded
+                        bannedUsers = currentFileData.bannedUsers || []; // New: Load banned users
+                        manuallyAddedFollowing = currentFileData.manuallyAddedFollowing || []; // Load manually added following
+                        accountsManuallyAddedForReview = currentFileData.accountsManuallyAddedForReview || []; // Load manually added for review
+                        approvedAccountsList = currentFileData.approvedAccounts || [];
+                        console.log("DEBUG: approvedAccountsList loaded from Firestore:", approvedAccountsList); // Added for verification
+                        removedAccountsList = currentFileData.removedAccounts || [];
+                        manuallyUnfollowedList = currentFileData.manuallyUnfollowedList || []; // Load manually unfollowed list
+                        accountsToRemoveList = []; // Initialize accountsToRemoveList here before use
+
+                        // [!code focus]
+                        // CORRECT: Load all necessary lists from the database first.
+                        safeUsers = currentFileData.safeUsers || [];
+                        bannedUsers = currentFileData.bannedUsers || [];
+                        manuallyAddedFollowing = currentFileData.manuallyAddedFollowing || [];
+                        manuallyUnfollowedList = currentFileData.manuallyUnfollowedList || [];
+                        removedAccountsList = currentFileData.removedAccounts || [];
+                        approvedAccountsList = currentFileData.approvedAccounts || [];
+                        accountsManuallyAddedForReview = currentFileData.accountsManuallyAddedForReview || [];
+
+
+                        // Load master lists from the uploaded file.
+                        const followingFromFile = currentFileData.followingList || [];
+                        const followersFromFileSet = new Set(currentFileData.followersList || []);
+                        const followingTimestamps = new Map(
+                            (currentFileData.originalNotFollowingBack || []).map(acc => [acc.username, acc.timestamp])
+                        );
+
+                        // Create the "effective" following list by applying manual additions and removals.
+                        const effectiveFollowingSet = new Set(followingFromFile);
+                        manuallyAddedFollowing.forEach(user => effectiveFollowingSet.add(user));
+                        manuallyUnfollowedList.forEach(user => effectiveFollowingSet.delete(user));
+
+                        // Recalculate the list of users who don't follow back from scratch.
+                        originalNotFollowingBack = [];
+                        effectiveFollowingSet.forEach(username => {
+                            if (!followersFromFileSet.has(username)) {
+                                const timestamp = followingTimestamps.get(username) || null;
+                                originalNotFollowingBack.push({ username: username, timestamp: timestamp });
+                    }
+                });
+
+                        allNonFollowers = originalNotFollowingBack.filter(account =>
+                            account &&
+                            account.username &&
+                            !safeUsers.includes(account.username) &&
+                            !manuallyUnfollowedList.includes(account.username) &&
+                            !removedAccountsList.includes(account.username)
+                        );
+                        // Accounts to Review logic: accounts manually added for review, that are NOT approved, NOT removed, AND NOT in the current (original + manually added - manually unfollowed) following list
+                        const combinedFollowingSet = new Set(currentFileData.followingList); // Base from uploaded file
+                        manuallyAddedFollowing.forEach(user => combinedFollowingSet.add(user)); // Add manually added
+                        manuallyUnfollowedList.forEach(user => combinedFollowingSet.delete(user)); // Remove manually unfollowed
+
+                        accountsToRemoveList = accountsManuallyAddedForReview.filter(account =>
+                            !approvedAccountsList.includes(account.username) &&
+                            !removedAccountsList.includes(account.username)
+                        );
+                        // Sort by oldest to newest by default for this list
+                        accountsToRemoveList.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+
+
+                        // Find the previous upload for analytics calculation
+                        const currentIndex = allUserUploadsMetadata.findIndex(upload => upload.id === uploadId);
+                        let unfollowedYou = 0; // This is actually "lost followers"
+                        let newFollowers = 0; // This is actually "gained followers"
+                        let unfollowedAccounts = []; // Accounts that unfollowed you (lost followers)
+                        let newFollowerAccounts = []; // Accounts that newly followed you (gained followers)
+
+                        // Only calculate analytics if there is a previous upload to compare against
+                        if (currentIndex < allUserUploadsMetadata.length - 1) { // Check if there's an older upload
+                            const previousUploadMetadata = allUserUploadsMetadata[currentIndex + 1]; // This is the older upload
+                            const previousUploadDocRef = doc(dbInstance, `artifacts/${appId}/users/${currentUserId}/userUploads`, previousUploadMetadata.id);
+                            const prevDocSnap = await getDoc(previousUploadDocRef); // Still use getDoc for historical data
+
+                            if (prevDocSnap.exists()) {
+                                const prevData = prevDocSnap.data();
+                                const currentFollowersSet = new Set(currentFileData.followersList);
+                                const previousFollowersSet = new Set(prevData.followersList);
+
+                                // Calculate unfollowed (lost followers)
+                                unfollowedAccounts = Array.from(previousFollowersSet).filter(
+                                    follower => !currentFollowersSet.has(follower)
+                                );
+                                unfollowedYou = unfollowedAccounts.length;
+
+                                // Calculate new followers (gained followers)
+                                newFollowerAccounts = Array.from(currentFollowersSet).filter(
+                                    follower => !previousFollowersSet.has(follower)
+                                );
+                                newFollowers = newFollowerAccounts.length;
+                            }
+                        }
+                        console.log(`Analytics for upload ${uploadId}: Unfollowed (lost followers): ${unfollowedYou}, New Followers (gained followers): ${newFollowers}`);
+
+                        // Calculate current total following including manual additions and removals
+                        const baseFollowingSet = new Set(currentFileData.followingList || []);
+                        manuallyAddedFollowing.forEach(user => baseFollowingSet.add(user));
+                        manuallyUnfollowedList.forEach(user => baseFollowingSet.delete(user));
+                        removedAccountsList.forEach(user => baseFollowingSet.delete(user));
+                        const effectiveFollowingCount = baseFollowingSet.size;
+                        
+                        updateDashboardMetrics(
+                            effectiveFollowingCount,
+                            currentFileData.totalFollowers,
+                            allNonFollowers.length,
+                            originalNotFollowingBack.length,
+                            (currentFileData.recentlyUnfollowedProfiles || []).length // Use the length of this list for the count
+                        );
+                        // Correctly pass newFollowers (gained) and unfollowedYou (lost) to their respective elements
+                        // The user requested to swap the display, so:
+                        // "New Followers" label displays `unfollowedYou` (lost followers)
+                        // "Unfollowed You" label displays `newFollowers` (gained followers)
+                        updateAnalyticsMetrics(unfollowedYou, newFollowers, unfollowedAccounts, newFollowerAccounts);
+                        updateAccountsManagementMetrics(); // Update new metrics for accounts management
+                        renderAccounts(allNonFollowers); // Render dashboard non-followers
+                        applyAccountsManagementFiltersAndRender(); // Render accounts management list
+                        renderOrangeListUsers(originalNotFollowingBack); // New: Render orange list users
+                        renderUnfollowedProfilesList(currentFileData.recentlyUnfollowedProfiles || []); // Render unfollowed profiles list
+                    } else {
+                        console.log('No data found for the selected upload ID:', uploadId);
+                        showAlert('No data found for the selected upload. Please try another or upload new data.', 'info');
+                        currentFileData = null;
+                        allNonFollowers = [];
+                        originalNotFollowingBack = [];
+                        safeUsers = [];
+                        bannedUsers = []; // Reset banned users
+                        accountsManuallyAddedForReview = []; // Reset accounts management list
+                        approvedAccountsList = [];
+                        removedAccountsList = [];
+                        manuallyUnfollowedList = []; // Reset manually unfollowed list
+                        accountsToRemoveList = []; // Initialize accountsToRemoveList
+                        manuallyAddedFollowing = []; // Reset manually added following
+                        updateDashboardMetrics(0, 0, 0, 0, 0);
+                        updateAnalyticsMetrics(0, 0, [], []);
+                        updateAccountsManagementMetrics();
+                        renderAccounts([]);
+                        renderAccountsToRemove([]);
+                        renderOrangeListUsers([]); // New: Clear orange list
+                        renderUnfollowedProfilesList([]); // Clear unfollowed profiles list
+                    }
+                }, (error) => {
+                    console.error('Error listening to document:', error);
+                    showAlert('Failed to load data for the selected upload. Error: ' + error.message, 'error');
+                });
+            } catch (error) {
+                console.error('Error setting up listener for upload:', error);
+                showAlert('Failed to set up real-time data listener. Error: ' + error.message, 'error');
+            }
+        }
         // Load the latest data by default when user logs in or app starts
         async function loadLatestData() {
             if (allUserUploadsMetadata.length > 0) {
@@ -2423,7 +2501,6 @@ async function loadDataForUpload(uploadId) {
                 manuallyAddedFollowing.forEach(user => baseFollowingSet.add(user));
                 manuallyUnfollowedList.forEach(user => baseFollowingSet.delete(user));
                 removedAccountsList.forEach(user => baseFollowingSet.delete(user));
-                console.log('Final list of users in baseFollowingSet:', Array.from(baseFollowingSet));
                 const effectiveFollowingCount = baseFollowingSet.size;
 
                 updateDashboardMetrics(
@@ -2676,42 +2753,25 @@ async function loadDataForUpload(uploadId) {
             uploadSection.scrollIntoView({behavior: 'smooth'});
         }
 
+        // Handle "Find My Non-Followers" button click (on landing page upload success state)
+        // This event listener will be set up in window.onload
         const findNonFollowersButtonClickHandler = () => {
             if (currentFileData) {
-                // Step 1: Normalize all lists to a consistent format (usernames only as strings)
-                const normalizedFollowingList = (currentFileData.followingList || []).map(item => {
-                    return typeof item === 'object' && item !== null ? item.username : item;
-                });
-                const normalizedManuallyAddedFollowing = (manuallyAddedFollowing || []).map(item => {
-                    return typeof item === 'object' && item !== null ? item.username : item;
-                });
-                const normalizedManuallyUnfollowedList = (manuallyUnfollowedList || []).map(item => {
-                    return typeof item === 'object' && item !== null ? item.username : item;
-                });
-                const normalizedRemovedAccountsList = (removedAccountsList || []).map(item => {
-                    return typeof item === 'object' && item !== null ? item.username : item;
-                });
-
-                // Step 2: Create a single, unique Set from the normalized lists
-                const baseFollowingSet = new Set(normalizedFollowingList);
-                normalizedManuallyAddedFollowing.forEach(user => baseFollowingSet.add(user));
-                normalizedManuallyUnfollowedList.forEach(user => baseFollowingSet.delete(user));
-                normalizedRemovedAccountsList.forEach(user => baseFollowingSet.delete(user));
-
-                // Log the final list of users in the Set
-                console.log('Final list of users in baseFollowingSet:', Array.from(baseFollowingSet));
-
-                const effectiveFollowingCount = baseFollowingSet.size;
-
-                // Ensure allNonFollowers is updated based on current safeUsers, banned users, etc.
+                // Ensure allNonFollowers is updated based on current safeUsers
                 allNonFollowers = originalNotFollowingBack.filter(account =>
-                    account && account.username &&
+                    account &&
+                    account.username &&
                     !safeUsers.includes(account.username) &&
                     !manuallyUnfollowedList.includes(account.username) &&
                     !removedAccountsList.includes(account.username)
                 );
+                // Calculate current total following including manual additions and removals
+                const baseFollowingSet = new Set(currentFileData.followingList || []);
+                manuallyAddedFollowing.forEach(user => baseFollowingSet.add(user));
+                manuallyUnfollowedList.forEach(user => baseFollowingSet.delete(user));
+                removedAccountsList.forEach(user => baseFollowingSet.delete(user));
+                const effectiveFollowingCount = baseFollowingSet.size;
 
-                // Update the dashboard with the correct count
                 updateDashboardMetrics(
                     effectiveFollowingCount,
                     currentFileData.totalFollowers,
@@ -2724,46 +2784,6 @@ async function loadDataForUpload(uploadId) {
                 showAlert('No data processed yet. Please upload a file.', 'info');
             }
         };
-
-// Calculate current total following including manual additions and removals
-if (currentFileData) {
-    const normalizedFollowingList = (currentFileData.followingList || []).map(item => {
-        // If the item is an object, use its 'username' property, otherwise use the item itself
-        return typeof item === 'object' && item !== null ? item.username : item;
-    });
-    const normalizedManuallyAddedFollowing = (manuallyAddedFollowing || []).map(item => {
-        return typeof item === 'object' && item !== null ? item.username : item;
-    });
-    const normalizedManuallyUnfollowedList = (manuallyUnfollowedList || []).map(item => {
-        return typeof item === 'object' && item !== null ? item.username : item;
-    });
-    const normalizedRemovedAccountsList = (removedAccountsList || []).map(item => {
-        return typeof item === 'object' && item !== null ? item.username : item;
-    });
-
-    // Create the Set using the normalized lists to prevent duplicates
-    const baseFollowingSet = new Set(normalizedFollowingList);
-    normalizedManuallyAddedFollowing.forEach(user => baseFollowingSet.add(user));
-    normalizedManuallyUnfollowedList.forEach(user => baseFollowingSet.delete(user));
-    normalizedRemovedAccountsList.forEach(user => baseFollowingSet.delete(user));
-
-    // Log the final list of users in the Set
-    console.log('Final list of users in baseFollowingSet:', Array.from(baseFollowingSet));
-
-    const effectiveFollowingCount = baseFollowingSet.size;
-
-    updateDashboardMetrics(
-        effectiveFollowingCount,
-        currentFileData.totalFollowers,
-        allNonFollowers.length, // Filtered count
-        originalNotFollowingBack.length, // Total count
-        (currentFileData.recentlyUnfollowedProfiles || []).length
-    );
-    showDashboard();
-} else {
-    showAlert('No data processed yet. Please upload a file.', 'info');
-}
-
 
 
         // Handle "Remove File" button click
@@ -3221,10 +3241,6 @@ if (currentFileData) {
                 return;
             }
 
-
-
-
-
             try {
                 // Initialize baseFollowingSet here
                 const baseFollowingSet = new Set(currentFileData.followingList || []);
@@ -3242,16 +3258,17 @@ if (currentFileData) {
 
                 await updateDoc(uploadDocRef, updates);
 
-                // --- All local list updates must happen here ---
-
                 // Local list updates
                 if (!manuallyUnfollowedList.includes(username)) {
                     manuallyUnfollowedList.push(username);
                     manuallyUnfollowedList.sort();
                 }
 
-                // Recalculate originalNotFollowingBack metrics
                 manuallyAddedFollowing = manuallyAddedFollowing.filter(user => user !== username);
+
+                await saveFollowingAndUnfollowedLists();
+
+                // Recalculate originalNotFollowingBack metrics
                 originalNotFollowingBack = originalNotFollowingBack.filter(account => 
                     account && account.username !== username
                 );
@@ -3264,8 +3281,6 @@ if (currentFileData) {
                     !removedAccountsList.includes(account.username)
                 );
 
-                await saveFollowingAndUnfollowedLists();
-
                 updateDashboardMetrics(
                     baseFollowingSet.size,
                     currentFileData.totalFollowers,
@@ -3273,22 +3288,14 @@ if (currentFileData) {
                     originalNotFollowingBack.length,
                     (currentFileData.recentlyUnfollowedProfiles || []).length
                 );
+
                 applyFiltersAndRenderAccounts(); // UI refresh
-
-
-                showNotification(`${username} removed!`, 'success');
-
 
             } catch (error) {
                 console.error('Error removing user from following:', error);
                 showAlert('Failed to remove user. Please try again.', 'error');
             }
         }
-
-
-
-
-
 
 
 
@@ -3717,77 +3724,73 @@ if (currentFileData) {
             renderAccounts(filteredAccounts);
         }
 
-// New function to apply search and sort filters for Accounts Management list
-function applyAccountsManagementFiltersAndRender() {
-    let accountsToDisplay = [];
-    let listTitle = "";
+        // New function to apply search and sort filters for Accounts Management list
+        function applyAccountsManagementFiltersAndRender() {
+            let accountsToDisplay = [];
+            let listTitle = "";
 
-    // Re-calculate accountsToRemoveList based on current state
-    if (currentFileData) {
-        // CORRECTED: Normalize all lists to strings before using them in the Set
-        const normalizedFollowingList = (currentFileData.followingList || []).map(item => {
-            return typeof item === 'object' && item !== null ? item.username : item;
-        });
-        const normalizedManuallyAddedFollowing = (manuallyAddedFollowing || []).map(item => {
-            return typeof item === 'object' && item !== null ? item.username : item;
-        });
-        const normalizedManuallyUnfollowedList = (manuallyUnfollowedList || []).map(item => {
-            return typeof item === 'object' && item !== null ? item.username : item;
-        });
+            // Re-calculate accountsToRemoveList based on current state
+            if (currentFileData) {
+                const combinedFollowingSet = new Set(currentFileData.followingList); // Base from uploaded file
+                manuallyAddedFollowing.forEach(user => combinedFollowingSet.add(user)); // Add manually added
+                manuallyUnfollowedList.forEach(user => combinedFollowingSet.delete(user)); // Remove manually unfollowed
 
-        // CORRECTED: Create the Set with the normalized lists
-        const combinedFollowingSet = new Set(normalizedFollowingList);
-        normalizedManuallyAddedFollowing.forEach(user => combinedFollowingSet.add(user));
-        normalizedManuallyUnfollowedList.forEach(user => combinedFollowingSet.delete(user));
+                accountsToRemoveList = accountsManuallyAddedForReview.filter(account =>
+                    !approvedAccountsList.includes(account.username) &&
+                    !removedAccountsList.includes(account.username)
+                );
+                accountsToRemoveList.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+            } else {
+                accountsToRemoveList = [];
+            }
 
-        accountsToRemoveList = accountsManuallyAddedForReview.filter(account =>
-            !approvedAccountsList.includes(account.username) &&
-            !removedAccountsList.includes(account.username) &&
-            // CRITICAL FIX: The check below was missing, causing duplicates to show
-            !combinedFollowingSet.has(account.username)
-        );
 
-        accountsToRemoveList.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
-    } else {
-        accountsToRemoveList = [];
-    }
+            if (currentAccountsViewMode === 'toReview') {
+                accountsToDisplay = [...accountsToRemoveList];
+                listTitle = "Accounts to Review";
+            } else if (currentAccountsViewMode === 'approved') {
+                // CORRECTED: Directly use approvedAccountsList and map to the expected object format
+                accountsToDisplay = approvedAccountsList.map(username => ({username: username, timestamp: null})); // timestamp is null as approved accounts might not have one
+                listTitle = "Approved Accounts";
+            } else if (currentAccountsViewMode === 'removed') {
+                // Filter accountsManuallyAddedForReview by removedAccountsList
+                accountsToDisplay = accountsManuallyAddedForReview.filter(account => removedAccountsList.includes(account.username));
+                listTitle = "Removed Accounts";
+            }
 
-    if (currentAccountsViewMode === 'toReview') {
-        accountsToDisplay = [...accountsToRemoveList];
-        listTitle = "Accounts to Review";
-    } else if (currentAccountsViewMode === 'approved') {
-        accountsToDisplay = approvedAccountsList.map(username => ({ username: username, timestamp: null }));
-        listTitle = "Approved Accounts";
-    } else if (currentAccountsViewMode === 'removed') {
-        accountsToDisplay = accountsManuallyAddedForReview.filter(account => removedAccountsList.includes(account.username));
-        listTitle = "Removed Accounts";
-    }
+            accountsListTitle.textContent = listTitle; // Update the title
+            console.log(`Accounts Management is reading from: /artifacts/${appId}/users/${currentUserId}/userUploads/${currentFileData ? currentFileData.id : 'N/A'}. Data source:`, accountsToDisplay);
+            console.log(`Rendering Accounts Management list in mode: ${currentAccountsViewMode}. Accounts to display:`, accountsToDisplay);
 
-    accountsListTitle.textContent = listTitle;
 
-    const searchTerm = accountsSearchInput.value.toLowerCase();
-    if (searchTerm) {
-        accountsToDisplay = accountsToDisplay.filter(account => {
-            return account && typeof account.username === 'string' && account.username.toLowerCase().includes(searchTerm);
-        });
-    }
 
-    const sortOrder = accountsSortSelect.value;
-    accountsToDisplay.sort((a, b) => {
-        if (sortOrder === 'newest') {
-            return (b.timestamp || 0) - (a.timestamp || 0);
-        } else if (sortOrder === 'oldest') {
-            return (a.timestamp || 0) - (b.timestamp || 0);
-        } else if (sortOrder === 'alpha-asc') {
-            return a.username.localeCompare(b.username);
-        } else if (sortOrder === 'alpha-desc') {
-            return b.username.localeCompare(a.username);
+            const searchTerm = accountsSearchInput.value.toLowerCase();
+            if (searchTerm) {
+                accountsToDisplay = accountsToDisplay.filter(account => {
+                    return account && typeof account.username === 'string' && account.username.toLowerCase().includes(searchTerm);
+                });
+            }
+
+            const sortOrder = accountsSortSelect.value;
+            accountsToDisplay.sort((a, b) => {
+                if (sortOrder === 'newest') {
+                    return (b.timestamp || 0) - (a.timestamp || 0);
+                } else if (sortOrder === 'oldest') {
+                    return (a.timestamp || 0) - (b.timestamp || 0);
+                } else if (sortOrder === 'alpha-asc') {
+                    return a.username.localeCompare(b.username);
+                } else if (sortOrder === 'alpha-desc') {
+                    return b.username.localeCompare(a.username);
+                }
+                return 0;
+            });
+            // NEW CONSOLE LOG: Check the final array after all filters and sorts
+            console.log(`Accounts Management final array for rendering:`, accountsToDisplay);
+
+            renderAccountsToRemove(accountsToDisplay);
         }
-        return 0;
-    });
 
-    renderAccountsToRemove(accountsToDisplay);
-}
+
         // New function to render accounts for Accounts Management list
         function renderAccountsToRemove(accountsToRender) {
             accountsManagementList.innerHTML = ''; // Clear existing list
