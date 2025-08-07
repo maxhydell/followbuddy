@@ -3284,6 +3284,8 @@
                     !removedAccountsList.includes(account.username)
                 );
 
+                await saveFollowingAndUnfollowedLists();
+
                 updateDashboardMetrics(
                     baseFollowingSet.size,
                     currentFileData.totalFollowers,
@@ -3293,7 +3295,7 @@
                 );
                 applyFiltersAndRenderAccounts(); // UI refresh
 
-                await saveFollowingAndUnfollowedLists();
+
                 showNotification(`${username} removed!`, 'success');
 
 
