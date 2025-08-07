@@ -3241,6 +3241,10 @@
                 return;
             }
 
+
+
+
+
             try {
                 // Initialize baseFollowingSet here
                 const baseFollowingSet = new Set(currentFileData.followingList || []);
@@ -3258,17 +3262,16 @@
 
                 await updateDoc(uploadDocRef, updates);
 
+                // --- All local list updates must happen here ---
+
                 // Local list updates
                 if (!manuallyUnfollowedList.includes(username)) {
                     manuallyUnfollowedList.push(username);
                     manuallyUnfollowedList.sort();
                 }
 
-                manuallyAddedFollowing = manuallyAddedFollowing.filter(user => user !== username);
-
-                await saveFollowingAndUnfollowedLists();
-
                 // Recalculate originalNotFollowingBack metrics
+                manuallyAddedFollowing = manuallyAddedFollowing.filter(user => user !== username);
                 originalNotFollowingBack = originalNotFollowingBack.filter(account => 
                     account && account.username !== username
                 );
@@ -3288,14 +3291,22 @@
                     originalNotFollowingBack.length,
                     (currentFileData.recentlyUnfollowedProfiles || []).length
                 );
-
                 applyFiltersAndRenderAccounts(); // UI refresh
+
+                await saveFollowingAndUnfollowedLists();
+                showNotification(`${username} removed!`, 'success');
+
 
             } catch (error) {
                 console.error('Error removing user from following:', error);
                 showAlert('Failed to remove user. Please try again.', 'error');
             }
         }
+
+
+
+
+
 
 
 
