@@ -1907,7 +1907,7 @@
                         currentFileData = {id: docSnap.id, ...data}; // Store the ID
                         originalNotFollowingBack = [...(currentFileData.originalNotFollowingBack || []), ...(currentFileData.manuallyAddedFollowing || [])];
                         safeUsers = currentFileData.safeUsers || []; // Ensure safeUsers is loaded
-                        bannedUsers = currentFileData.bannedUsers || []; // New: Load banned users
+                        bannedUsers = Array.from(new Set([...bannedUsers, ...(currentFileData.bannedUsers || [])])).sort();
                         manuallyAddedFollowing = currentFileData.manuallyAddedFollowing || []; // Load manually added following
                         accountsManuallyAddedForReview = currentFileData.accountsManuallyAddedForReview || []; // Load manually added for review
                         approvedAccountsList = currentFileData.approvedAccounts || [];
@@ -1920,6 +1920,7 @@
                         // CORRECT: Load all necessary lists from the database first.
                         safeUsers = currentFileData.safeUsers || [];
                         bannedUsers = currentFileData.bannedUsers || [];
+                        await automaticallyAddOrangeUsersToBanned();
                         manuallyAddedFollowing = currentFileData.manuallyAddedFollowing || [];
                         manuallyUnfollowedList = currentFileData.manuallyUnfollowedList || [];
                         removedAccountsList = currentFileData.removedAccounts || [];
@@ -3446,29 +3447,28 @@
             });
         }
 
-        function populateBannedUserSuggestions() {
-            bannedUserSuggestionsDatalist.innerHTML = '';
+        async function automaticallyAddOrangeUsersToBanned() {
             if (!originalNotFollowingBack || originalNotFollowingBack.length === 0) {
                 return;
             }
 
-            const currentInput = bannedUserInput.value.toLowerCase();
-            const suggestedUsers = new Set();
+            const newBannedUsers = [];
 
-            // Suggest users who are currently in the "orange" category and not already banned
             originalNotFollowingBack.forEach(account => {
                 const username = account.username;
                 const timeInfo = formatTimeDifference(account.timestamp);
-                if (timeInfo.category === 'orange' && !bannedUsers.includes(username) && username.toLowerCase().includes(currentInput)) {
-                    suggestedUsers.add(username);
+                // Check if the user is in the orange category and not already on the banned list
+                if (timeInfo.category === 'orange' && !bannedUsers.includes(username)) {
+                    newBannedUsers.push(username);
                 }
             });
 
-            Array.from(suggestedUsers).sort().forEach(username => {
-                const option = document.createElement('option');
-                option.value = username;
-                bannedUserSuggestionsDatalist.appendChild(option);
-            });
+            if (newBannedUsers.length > 0) {
+                bannedUsers.push(...newBannedUsers);
+                // Sort the list and save it to the database
+                await processAndSaveBannedUsers(true);
+                console.log(`Automatically added ${newBannedUsers.length} users from orange category to banned list.`);
+            }
         }
 
         const bannedUserInputHandler = () => {
