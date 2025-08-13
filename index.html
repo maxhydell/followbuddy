@@ -574,6 +574,7 @@
         </button>
     </header>
 
+
     <div id="mobile-menu"
         class="hidden fixed inset-0 bg-gray-900 z-40 flex flex-col items-center justify-center space-y-6 md:hidden">
         <button id="close-mobile-menu"
@@ -585,17 +586,18 @@
         <a href="#upload" class="text-gray-100 text-2xl hover:text-blue-400 transition-colors duration-200"
             onclick="document.getElementById('mobile-menu').classList.add('hidden')">Upload</a>
         <a href="#dashboard-section" id="dashboard-nav-link-mobile"
-            class="text-gray-100 text-2xl hover:text-blue-400 transition-colors duration-200 flex items-center">
+            class="text-gray-100 text-2xl hover:text-blue-400 transition-colors duration-200 flex items-center"
+            onclick="document.getElementById('mobile-menu').classList.add('hidden')">
             <i class="fas fa-tachometer-alt mr-2"></i><span>Dashboard</span>
         </a>
-        <!-- New Banned Users Page Link in Mobile Menu -->
         <a href="#banned-users-page-section" id="banned-users-nav-link-mobile"
-            class="text-gray-100 text-2xl hover:text-blue-400 transition-colors duration-200 flex items-center">
+            class="text-gray-100 text-2xl hover:text-blue-400 transition-colors duration-200 flex items-center"
+            onclick="document.getElementById('mobile-menu').classList.add('hidden')">
             <i class="fas fa-ban mr-2"></i><span>Banned Users</span>
         </a>
-        <!-- New Add Account Link in Mobile Menu -->
         <a href="#add-account-page-section" id="add-account-nav-link-mobile"
-            class="text-gray-100 text-2xl hover:text-blue-400 transition-colors duration-200 flex items-center">
+            class="text-gray-100 text-2xl hover:text-blue-400 transition-colors duration-200 flex items-center"
+            onclick="document.getElementById('mobile-menu').classList.add('hidden')">
             <i class="fas fa-user-plus mr-2"></i><span>Add Account</span>
         </a>
         <button id="login-btn-mobile"
