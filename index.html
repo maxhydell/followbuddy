@@ -28,7 +28,7 @@
             flex-direction: column;
         }
 
-        /* Hide scrollbar for a working 8.12 cleaner look */
+        /* Hide scrollbar for a cleaner look */
         body::-webkit-scrollbar {
             display: none;
         }
@@ -4970,7 +4970,57 @@
             renderUnfollowedProfilesList([]); // Initial render for unfollowed profiles list
         };
 
-    </script>
-</body>
+  </script>
 
+<script>
+    console.log("FollowBuddy Hide Script: Initializing optimized MutationObserver.");
+
+    const hideBadElements = (node) => {
+        // We only care about element nodes
+        if (node.nodeType !== Node.ELEMENT_NODE) {
+            return;
+        }
+
+        // Find all buttons inside the new node that have a data-username attribute containing "[object Object]"
+        const buttonsToHide = node.querySelectorAll('button[data-username*="[object Object]"]');
+        
+        buttonsToHide.forEach(button => {
+            const parentDiv = button.closest('.account-list-item');
+            if (parentDiv) {
+                // If it's not already hidden, hide it and log
+                if (parentDiv.style.display !== 'none') {
+                    parentDiv.style.display = 'none';
+                    console.log("FollowBuddy Hide Script: Successfully hid a newly added element.");
+                }
+            }
+        });
+    };
+
+    // Create a new MutationObserver instance
+    const observer = new MutationObserver((mutationsList, observer) => {
+        for (const mutation of mutationsList) {
+            if (mutation.type === 'childList') {
+                mutation.addedNodes.forEach(node => {
+                    hideBadElements(node);
+                });
+            }
+        }
+    });
+
+    // Find the specific container element to observe
+    const containerToObserve = document.getElementById('non-followers-list');
+    
+    // Check if the container exists before observing
+    if (containerToObserve) {
+        // Start observing the container for changes
+        observer.observe(containerToObserve, { childList: true, subtree: true });
+
+        // Also run the function once on page load to catch any initial elements
+        hideBadElements(containerToObserve);
+        
+    } else {
+        console.error("FollowBuddy Hide Script: Could not find the '#non-followers-list' container to observe. Script may not work as intended.");
+    }
+</script>
+</body>
 </html>
