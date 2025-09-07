@@ -1126,13 +1126,17 @@
                         class="bg-gray-700 p-4 rounded-lg border border-gray-600 text-left hidden">
                         <p class="font-semibold text-gray-100 mb-2" id="matches-count-text"></p>
                         <ul id="matches-list" class="list-disc list-inside text-gray-300 space-y-1"></ul>
-                        <p class="font-semibold text-gray-100 mb-2" id="duplicates-count-text"></p>
-                        <ul id="duplicates-list" class="list-disc list-inside text-gray-300 space-y-1"></ul>
+
+                        <div id="duplicates-section" class="mt-4">
+                            <p class="font-semibold text-gray-100 mb-2" id="duplicates-count-text"></p>
+                            <ul id="duplicates-list" class="list-disc list-inside text-gray-300 space-y-1"></ul>
+                        </div>
                     </div>
                 </div>
             </div>
         </div>
     </section>
+
 
 
     <footer class="bg-gray-900 text-white py-8 px-6 text-center mt-auto">
@@ -3588,13 +3592,12 @@ async function handleCheckBannedUsers() {
                 for (const pre of preElements) {
                     try {
                         const jsonData = JSON.parse(pre.textContent);
-                        // Check for structure that might contain usernames
                         if (Array.isArray(jsonData) && jsonData.every(item => item.string_list_data)) {
                             inputUsernames = inputUsernames.concat(jsonData.map(item => item.string_list_data[0].value));
                             foundData = true;
                             break;
                         }
-                    } catch (e) { /* not JSON or not the right structure */ }
+                    } catch (e) { }
                 }
                 if (!foundData) {
                     const scriptElements = doc.querySelectorAll('script[type="application/json"]');
@@ -3606,14 +3609,14 @@ async function handleCheckBannedUsers() {
                                 foundData = true;
                                 break;
                             }
-                        } catch (e) { /* not JSON or not the right structure */ }
+                        } catch (e) { }
                     }
                 }
                 if (!foundData) {
                     showAlert('Could not extract usernames from the HTML file. Ensure it contains Instagram data in expected JSON format within <pre> or <script> tags.', 'error');
                     return;
                 }
-            } else { // .txt file
+            } else { // txt file
                 inputUsernames = parseUsernamesFromText(fileContent);
             }
         } catch (error) {
@@ -3621,56 +3624,50 @@ async function handleCheckBannedUsers() {
             return;
         }
     } else if (bannedUsersTextInput.value.trim()) {
-        // Handle text area input
         inputUsernames = parseUsernamesFromText(bannedUsersTextInput.value);
     } else {
         showAlert('Please upload a .txt or .html file or enter usernames/links in the text area.', 'info');
         return;
     }
 
-// ✅ Duplicate detection (new functionality)
-const seenUsernames = new Set();
-const duplicates = new Set();
-const normalizedInput = inputUsernames.map(name => name.toLowerCase());
+    // -----------------------------
+    // 1️⃣ Duplicate detection (before normalization)
+    // -----------------------------
+    const seenUsernames = new Set();
+    const duplicates = new Set();
 
-normalizedInput.forEach(username => {
-    if (seenUsernames.has(username)) {
-        duplicates.add(username);
-    }
-    seenUsernames.add(username);
-});
+    inputUsernames.forEach(name => {
+        const username = name.toLowerCase();
+        if (seenUsernames.has(username)) duplicates.add(username);
+        seenUsernames.add(username);
+    });
 
-const duplicatesListElem = document.getElementById('duplicates-list');
-const duplicatesCountTextElem = document.getElementById('duplicates-count-text');
-const duplicateUsersDisplayElem = document.getElementById('banned-users-matches-display');
+    const duplicatesListElem = document.getElementById('duplicates-list');
+    const duplicatesCountTextElem = document.getElementById('duplicates-count-text');
+    const duplicateUsersDisplayElem = document.getElementById('banned-users-matches-display');
 
+    if (duplicatesListElem && duplicatesCountTextElem && duplicateUsersDisplayElem) {
+        duplicatesListElem.innerHTML = '';
 
-if (duplicatesListElem && duplicatesCountTextElem && duplicateUsersDisplayElem) {
-    duplicatesListElem.innerHTML = '';
-
-    if (duplicates.size > 0) {
-        duplicatesCountTextElem.textContent = `${duplicates.size} duplicate username${duplicates.size === 1 ? '' : 's'} found:`;
-
-        duplicates.forEach(username => {
-            const li = document.createElement('li');
-            li.innerHTML = `<a href="https://www.instagram.com/${username}/" target="_blank" rel="noopener noreferrer" class="font-medium text-yellow-400 hover:underline">${username}</a>`;
-            duplicatesListElem.appendChild(li);
-        });
+        if (duplicates.size > 0) {
+            duplicatesCountTextElem.textContent = `${duplicates.size} duplicate username${duplicates.size === 1 ? '' : 's'} found:`;
+            duplicates.forEach(username => {
+                const li = document.createElement('li');
+                li.innerHTML = `<a href="https://www.instagram.com/${username}/" target="_blank" rel="noopener noreferrer" class="font-medium text-yellow-400 hover:underline">${username}</a>`;
+                duplicatesListElem.appendChild(li);
+            });
+        } else {
+            duplicatesCountTextElem.textContent = 'No duplicate usernames found.';
+        }
 
         duplicateUsersDisplayElem.classList.remove('hidden');
-    } else {
-        duplicatesCountTextElem.textContent = 'No duplicate usernames found.';
-        duplicateUsersDisplayElem.classList.remove('hidden');
     }
-}
 
+    // -----------------------------
+    // 2️⃣ Normalize for banned users check
+    // -----------------------------
+    inputUsernames = Array.from(new Set(inputUsernames.map(name => name.toLowerCase())));
 
-    // ✅ Normalize input usernames (remove duplicates for banned check)
-    inputUsernames = Array.from(new Set(normalizedInput));
-    console.log("Input Usernames for check:", inputUsernames);
-    console.log("Current Banned Users list:", bannedUsers);
-
-    // Compare against the lowercase version of the bannedUsers list
     const bannedUsersLower = bannedUsers.map(user => user.toLowerCase());
     const matchedUsers = inputUsernames.filter(username => bannedUsersLower.includes(username));
 
@@ -3687,6 +3684,7 @@ if (duplicatesListElem && duplicatesCountTextElem && duplicateUsersDisplayElem) 
         li.textContent = 'No matches found.';
         matchesList.appendChild(li);
     }
+
     bannedUsersMatchesDisplay.classList.remove('hidden');
 }
 
