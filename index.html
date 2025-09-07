@@ -96,7 +96,7 @@
         #safe-users-modal .modal-content,
         #banned-users-add-modal .modal-content,
         #unfollowed-profiles-modal .modal-content {
-            /* Apply to banned users add modal and new add  working account modal too */
+            /* Apply to banned users add modal and new add account modal too */
             max-width: 600px;
             /* Wider for bulk input */
         }
@@ -1126,6 +1126,8 @@
                         class="bg-gray-700 p-4 rounded-lg border border-gray-600 text-left hidden">
                         <p class="font-semibold text-gray-100 mb-2" id="matches-count-text"></p>
                         <ul id="matches-list" class="list-disc list-inside text-gray-300 space-y-1"></ul>
+                        <p class="font-semibold text-gray-100 mb-2" id="duplicates-count-text"></p>
+                        <ul id="duplicates-list" class="list-disc list-inside text-gray-300 space-y-1"></ul>
                     </div>
                 </div>
             </div>
@@ -3563,168 +3565,193 @@
             }
         }
 
-        async function handleCheckBannedUsers() {
-            let inputUsernames = [];
+async function handleCheckBannedUsers() {
+    let inputUsernames = [];
 
-            // Handle file input
-            if (bannedUsersFileInput.files.length > 0) {
-                const file = bannedUsersFileInput.files[0];
-                const fileExtension = file.name.split('.').pop().toLowerCase();
+    // Handle file input
+    if (bannedUsersFileInput.files.length > 0) {
+        const file = bannedUsersFileInput.files[0];
+        const fileExtension = file.name.split('.').pop().toLowerCase();
 
-                if (!['txt', 'html'].includes(fileExtension)) {
-                    showAlert('Invalid file type. Please upload a .txt or .html file.', 'error');
-                    return;
-                }
+        if (!['txt', 'html'].includes(fileExtension)) {
+            showAlert('Invalid file type. Please upload a .txt or .html file.', 'error');
+            return;
+        }
 
-                try {
-                    const fileContent = await file.text();
-                    if (fileExtension === 'html') {
-                        const parser = new DOMParser();
-                        const doc = parser.parseFromString(fileContent, 'text/html');
-                        const preElements = doc.querySelectorAll('pre');
-                        let foundData = false;
-                        for (const pre of preElements) {
-                            try {
-                                const jsonData = JSON.parse(pre.textContent);
-                                // Check for structure that might contain usernames
-                                if (Array.isArray(jsonData) && jsonData.every(item => item.string_list_data)) {
-                                    inputUsernames = inputUsernames.concat(jsonData.map(item => item.string_list_data[0].value));
-                                    foundData = true;
-                                    break;
-                                }
-                            } catch (e) { /* not JSON or not the right structure */}
+        try {
+            const fileContent = await file.text();
+            if (fileExtension === 'html') {
+                const parser = new DOMParser();
+                const doc = parser.parseFromString(fileContent, 'text/html');
+                const preElements = doc.querySelectorAll('pre');
+                let foundData = false;
+                for (const pre of preElements) {
+                    try {
+                        const jsonData = JSON.parse(pre.textContent);
+                        // Check for structure that might contain usernames
+                        if (Array.isArray(jsonData) && jsonData.every(item => item.string_list_data)) {
+                            inputUsernames = inputUsernames.concat(jsonData.map(item => item.string_list_data[0].value));
+                            foundData = true;
+                            break;
                         }
-                        if (!foundData) {
-                            const scriptElements = doc.querySelectorAll('script[type="application/json"]');
-                            for (const script of scriptElements) {
-                                try {
-                                    const jsonData = JSON.parse(script.textContent);
-                                    if (Array.isArray(jsonData) && jsonData.every(item => item.string_list_data)) {
-                                        inputUsernames = inputUsernames.concat(jsonData.map(item => item.string_list_data[0].value));
-                                        foundData = true;
-                                        break;
-                                    }
-                                } catch (e) { /* not JSON or not the right structure */}
+                    } catch (e) { /* not JSON or not the right structure */ }
+                }
+                if (!foundData) {
+                    const scriptElements = doc.querySelectorAll('script[type="application/json"]');
+                    for (const script of scriptElements) {
+                        try {
+                            const jsonData = JSON.parse(script.textContent);
+                            if (Array.isArray(jsonData) && jsonData.every(item => item.string_list_data)) {
+                                inputUsernames = inputUsernames.concat(jsonData.map(item => item.string_list_data[0].value));
+                                foundData = true;
+                                break;
                             }
-                        }
-                        if (!foundData) {
-                            showAlert('Could not extract usernames from the HTML file. Ensure it contains Instagram data in expected JSON format within <pre> or <script> tags.', 'error');
-                            return;
-                        }
-                    } else { // .txt file
-                        inputUsernames = parseUsernamesFromText(fileContent);
+                        } catch (e) { /* not JSON or not the right structure */ }
                     }
-                } catch (error) {
-                    showAlert('Error reading file: ' + error.message, 'error');
+                }
+                if (!foundData) {
+                    showAlert('Could not extract usernames from the HTML file. Ensure it contains Instagram data in expected JSON format within <pre> or <script> tags.', 'error');
                     return;
                 }
-            } else if (bannedUsersTextInput.value.trim()) {
-                // Handle text area input
-                inputUsernames = parseUsernamesFromText(bannedUsersTextInput.value);
-            } else {
-                showAlert('Please upload a .txt or .html file or enter usernames/links in the text area.', 'info');
-                return;
+            } else { // .txt file
+                inputUsernames = parseUsernamesFromText(fileContent);
             }
-
-            // Normalize input usernames (remove duplicates and ensure clean usernames)
-            inputUsernames = Array.from(new Set(inputUsernames.map(name => name.toLowerCase())));
-            console.log("Input Usernames for check:", inputUsernames);
-            console.log("Current Banned Users list:", bannedUsers);
-
-            // Compare against the lowercase version of the bannedUsers list
-            const bannedUsersLower = bannedUsers.map(user => user.toLowerCase());
-            const matchedUsers = inputUsernames.filter(username => bannedUsersLower.includes(username));
-
-            matchesCountText.textContent = `${matchedUsers.length} match${matchedUsers.length === 1 ? '' : 'es'} found:`;
-            matchesList.innerHTML = '';
-            if (matchedUsers.length > 0) {
-                matchedUsers.forEach(username => {
-                    const li = document.createElement('li');
-                    li.innerHTML = `<a href="https://www.instagram.com/${username}/" target="_blank" rel="noopener noreferrer" class="font-medium text-blue-400 hover:underline">${username}</a>`;
-                    matchesList.appendChild(li);
-                });
-            } else {
-                const li = document.createElement('li');
-                li.textContent = 'No matches found.';
-                matchesList.appendChild(li);
-            }
-            bannedUsersMatchesDisplay.classList.remove('hidden');
+        } catch (error) {
+            showAlert('Error reading file: ' + error.message, 'error');
+            return;
         }
+    } else if (bannedUsersTextInput.value.trim()) {
+        // Handle text area input
+        inputUsernames = parseUsernamesFromText(bannedUsersTextInput.value);
+    } else {
+        showAlert('Please upload a .txt or .html file or enter usernames/links in the text area.', 'info');
+        return;
+    }
 
-        function parseUsernamesFromText(text) {
-            const instagramLinkRegex = /(?:https?:\/\/)?(?:www\.)?instagram\.com\/([a-zA-Z0-9_.]+)(?:\/)?/g; // Added optional trailing slash
-            const atUsernameRegex = /(?<!\w)@([a-zA-Z0-9_.]+)(?!\w)/g;
-            const extractedUsernames = new Set();
+    // ✅ Duplicate detection (new functionality)
+    const seenUsernames = new Set();
+    const duplicates = new Set();
+    const normalizedInput = inputUsernames.map(name => name.toLowerCase());
 
-            // Extract from links
-            let match;
-            while ((match = instagramLinkRegex.exec(text)) !== null) {
-                extractedUsernames.add(match[1]);
-            }
-            instagramLinkRegex.lastIndex = 0; // Reset regex for next use
-
-            // Extract from @usernames
-            while ((match = atUsernameRegex.exec(text)) !== null) {
-                // Basic check to avoid common words, could be improved.
-                // Ensure it's not just a single character or common punctuation, and doesn't contain '.' which usually indicates a file extension or part of a URL.
-                if (match[1].length > 2 && !match[1].includes('.')) {
-                    extractedUsernames.add(match[1]);
-                }
-            }
-            atUsernameRegex.lastIndex = 0; // Reset regex for next use
-
-            // Also consider lines/comma-separated values as direct usernames
-            // Filter out anything that looks like a URL or an @mention already handled
-            const directUsernames = text.split(/[\n,]+/)
-                .map(name => name.trim())
-                .filter(name => name.length > 0 && !name.startsWith('http') && !name.startsWith('@'));
-            directUsernames.forEach(username => extractedUsernames.add(username));
-
-            return Array.from(extractedUsernames);
+    normalizedInput.forEach(username => {
+        if (seenUsernames.has(username)) {
+            duplicates.add(username);
         }
+        seenUsernames.add(username);
+    });
 
+    const duplicatesListElem = document.getElementById('duplicates-list');
+    const duplicatesCountTextElem = document.getElementById('duplicates-count-text');
+    const duplicateUsersDisplayElem = document.getElementById('duplicate-users-display');
 
-        // Function to apply search and time filters and render accounts
-        function applyFiltersAndRenderAccounts() {
-            let filteredAccounts = [...allNonFollowers]; // Start with the list already filtered by safe users
+    duplicatesListElem.innerHTML = '';
+    if (duplicates.size > 0) {
+        duplicatesCountTextElem.textContent = `${duplicates.size} duplicate username${duplicates.size === 1 ? '' : 's'} found:`;
+        duplicates.forEach(username => {
+            const li = document.createElement('li');
+            li.innerHTML = `<a href="https://www.instagram.com/${username}/" target="_blank" rel="noopener noreferrer" class="font-medium text-yellow-400 hover:underline">${username}</a>`;
+            duplicatesListElem.appendChild(li);
+        });
+        duplicateUsersDisplayElem.classList.remove('hidden');
+    } else {
+        duplicatesCountTextElem.textContent = 'No duplicate usernames found.';
+        duplicateUsersDisplayElem.classList.remove('hidden');
+    }
 
-            const searchTerm = searchInput.value.toLowerCase();
-            if (searchTerm) {
-                filteredAccounts = filteredAccounts.filter(account =>
-                    account && typeof account.username === 'string' && account.username.toLowerCase().includes(searchTerm)
-                );
-            }
-            const timeFilter = timeFilterSelect.value;
-            if (timeFilter !== 'all') {
-                filteredAccounts = filteredAccounts.filter(account => {
-                    if (!account.timestamp) return false; // Exclude if no timestamp
-                    const timeInfo = formatTimeDifference(account.timestamp);
-                    return timeInfo.category === timeFilter;
-                });
-            }
+    // ✅ Normalize input usernames (remove duplicates for banned check)
+    inputUsernames = Array.from(new Set(normalizedInput));
+    console.log("Input Usernames for check:", inputUsernames);
+    console.log("Current Banned Users list:", bannedUsers);
 
-            const sortOrder = sortSelect.value; // Get sort order
-            filteredAccounts.sort((a, b) => {
-                if (sortOrder === 'newest') {
-                    return (b.timestamp || 0) - (a.timestamp || 0); // Descending by timestamp
-                } else if (sortOrder === 'oldest') {
-                    return (a.timestamp || 0) - (b.timestamp || 0); // Ascending by timestamp
-                } else if (sortOrder === 'alpha-asc') {
-                    return a.username.localeCompare(b.username); // A-Z
-                } else if (sortOrder === 'alpha-desc') {
-                    return b.username.localeCompare(a.username); // Z-A
-                } else if (sortOrder === 'color') {
-                    // Sort by color category: Green, Orange, Red
-                    const categoryOrder = {'green': 1, 'orange': 2, 'red': 3, 'unknown': 4};
-                    const catA = a.timestamp ? formatTimeDifference(a.timestamp).category : 'unknown';
-                    const catB = b.timestamp ? formatTimeDifference(b.timestamp).category : 'unknown';
-                    return categoryOrder[catA] - categoryOrder[catB];
-                }
-                return 0; // No sort
-            });
+    // Compare against the lowercase version of the bannedUsers list
+    const bannedUsersLower = bannedUsers.map(user => user.toLowerCase());
+    const matchedUsers = inputUsernames.filter(username => bannedUsersLower.includes(username));
 
-            renderAccounts(filteredAccounts);
+    matchesCountText.textContent = `${matchedUsers.length} match${matchedUsers.length === 1 ? '' : 'es'} found:`;
+    matchesList.innerHTML = '';
+    if (matchedUsers.length > 0) {
+        matchedUsers.forEach(username => {
+            const li = document.createElement('li');
+            li.innerHTML = `<a href="https://www.instagram.com/${username}/" target="_blank" rel="noopener noreferrer" class="font-medium text-blue-400 hover:underline">${username}</a>`;
+            matchesList.appendChild(li);
+        });
+    } else {
+        const li = document.createElement('li');
+        li.textContent = 'No matches found.';
+        matchesList.appendChild(li);
+    }
+    bannedUsersMatchesDisplay.classList.remove('hidden');
+}
+
+function parseUsernamesFromText(text) {
+    const instagramLinkRegex = /(?:https?:\/\/)?(?:www\.)?instagram\.com\/([a-zA-Z0-9_.]+)(?:\/)?/g; // Added optional trailing slash
+    const atUsernameRegex = /(?<!\w)@([a-zA-Z0-9_.]+)(?!\w)/g;
+    const extractedUsernames = new Set();
+
+    // Extract from links
+    let match;
+    while ((match = instagramLinkRegex.exec(text)) !== null) {
+        extractedUsernames.add(match[1]);
+    }
+    instagramLinkRegex.lastIndex = 0; // Reset regex for next use
+
+    // Extract from @usernames
+    while ((match = atUsernameRegex.exec(text)) !== null) {
+        if (match[1].length > 2 && !match[1].includes('.')) {
+            extractedUsernames.add(match[1]);
         }
+    }
+    atUsernameRegex.lastIndex = 0; // Reset regex for next use
+
+    // Also consider lines/comma-separated values as direct usernames
+    const directUsernames = text.split(/[\n,]+/)
+        .map(name => name.trim())
+        .filter(name => name.length > 0 && !name.startsWith('http') && !name.startsWith('@'));
+    directUsernames.forEach(username => extractedUsernames.add(username));
+
+    return Array.from(extractedUsernames);
+}
+
+// Function to apply search and time filters and render accounts
+function applyFiltersAndRenderAccounts() {
+    let filteredAccounts = [...allNonFollowers]; // Start with the list already filtered by safe users
+
+    const searchTerm = searchInput.value.toLowerCase();
+    if (searchTerm) {
+        filteredAccounts = filteredAccounts.filter(account =>
+            account && typeof account.username === 'string' && account.username.toLowerCase().includes(searchTerm)
+        );
+    }
+    const timeFilter = timeFilterSelect.value;
+    if (timeFilter !== 'all') {
+        filteredAccounts = filteredAccounts.filter(account => {
+            if (!account.timestamp) return false;
+            const timeInfo = formatTimeDifference(account.timestamp);
+            return timeInfo.category === timeFilter;
+        });
+    }
+
+    const sortOrder = sortSelect.value;
+    filteredAccounts.sort((a, b) => {
+        if (sortOrder === 'newest') {
+            return (b.timestamp || 0) - (a.timestamp || 0);
+        } else if (sortOrder === 'oldest') {
+            return (a.timestamp || 0) - (b.timestamp || 0);
+        } else if (sortOrder === 'alpha-asc') {
+            return a.username.localeCompare(b.username);
+        } else if (sortOrder === 'alpha-desc') {
+            return b.username.localeCompare(a.username);
+        } else if (sortOrder === 'color') {
+            const categoryOrder = { 'green': 1, 'orange': 2, 'red': 3, 'unknown': 4 };
+            const catA = a.timestamp ? formatTimeDifference(a.timestamp).category : 'unknown';
+            const catB = b.timestamp ? formatTimeDifference(b.timestamp).category : 'unknown';
+            return categoryOrder[catA] - categoryOrder[catB];
+        }
+        return 0;
+    });
+
+    renderAccounts(filteredAccounts);
+}
 
         // New function to apply search and sort filters for Accounts Management list
         function applyAccountsManagementFiltersAndRender() {
