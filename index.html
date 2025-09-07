@@ -3628,35 +3628,41 @@ async function handleCheckBannedUsers() {
         return;
     }
 
-    // ✅ Duplicate detection (new functionality)
-    const seenUsernames = new Set();
-    const duplicates = new Set();
-    const normalizedInput = inputUsernames.map(name => name.toLowerCase());
+// ✅ Duplicate detection (new functionality)
+const seenUsernames = new Set();
+const duplicates = new Set();
+const normalizedInput = inputUsernames.map(name => name.toLowerCase());
 
-    normalizedInput.forEach(username => {
-        if (seenUsernames.has(username)) {
-            duplicates.add(username);
-        }
-        seenUsernames.add(username);
-    });
+normalizedInput.forEach(username => {
+    if (seenUsernames.has(username)) {
+        duplicates.add(username);
+    }
+    seenUsernames.add(username);
+});
 
-    const duplicatesListElem = document.getElementById('duplicates-list');
-    const duplicatesCountTextElem = document.getElementById('duplicates-count-text');
-    const duplicateUsersDisplayElem = document.getElementById('duplicate-users-display');
+const duplicatesListElem = document.getElementById('duplicates-list');
+const duplicatesCountTextElem = document.getElementById('duplicates-count-text');
+const duplicateUsersDisplayElem = document.getElementById('duplicate-users-display');
 
+if (duplicatesListElem && duplicatesCountTextElem && duplicateUsersDisplayElem) {
     duplicatesListElem.innerHTML = '';
+
     if (duplicates.size > 0) {
         duplicatesCountTextElem.textContent = `${duplicates.size} duplicate username${duplicates.size === 1 ? '' : 's'} found:`;
+
         duplicates.forEach(username => {
             const li = document.createElement('li');
             li.innerHTML = `<a href="https://www.instagram.com/${username}/" target="_blank" rel="noopener noreferrer" class="font-medium text-yellow-400 hover:underline">${username}</a>`;
             duplicatesListElem.appendChild(li);
         });
+
         duplicateUsersDisplayElem.classList.remove('hidden');
     } else {
         duplicatesCountTextElem.textContent = 'No duplicate usernames found.';
         duplicateUsersDisplayElem.classList.remove('hidden');
     }
+}
+
 
     // ✅ Normalize input usernames (remove duplicates for banned check)
     inputUsernames = Array.from(new Set(normalizedInput));
