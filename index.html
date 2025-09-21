@@ -6,7 +6,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>FollowBuddy</title>
 
-    <!-- Favicon. -->
+    <!-- Favicon -->
     <link rel="icon" href="/faviconfollowbuddy.ico" type="image/x-icon">
     <!-- Original .ico favicon (kept for reference, but SVG is recommended) -->
     <!-- <link rel="icon" href="faviconfollowbuddy.ico" type="image/x-icon"> -->
@@ -3574,18 +3574,19 @@
         }
 
 async function handleCheckBannedUsers() {
+    console.log("--- Starting handleCheckBannedUsers function ---");
     let inputUsernames = [];
+    const originalInput = [];
 
     // Handle file input
     if (bannedUsersFileInput.files.length > 0) {
+        // ... (File input parsing logic, no changes needed here)
         const file = bannedUsersFileInput.files[0];
         const fileExtension = file.name.split('.').pop().toLowerCase();
-
         if (!['txt', 'html'].includes(fileExtension)) {
             showAlert('Invalid file type. Please upload a .txt or .html file.', 'error');
             return;
         }
-
         try {
             const fileContent = await file.text();
             if (fileExtension === 'html') {
@@ -3601,7 +3602,8 @@ async function handleCheckBannedUsers() {
                             foundData = true;
                             break;
                         }
-                    } catch (e) { }
+                    } catch (e) {
+                    }
                 }
                 if (!foundData) {
                     const scriptElements = doc.querySelectorAll('script[type="application/json"]');
@@ -3613,7 +3615,8 @@ async function handleCheckBannedUsers() {
                                 foundData = true;
                                 break;
                             }
-                        } catch (e) { }
+                        } catch (e) {
+                        }
                     }
                 }
                 if (!foundData) {
@@ -3634,17 +3637,23 @@ async function handleCheckBannedUsers() {
         return;
     }
 
+    // Copy the original, case-sensitive input usernames before any modification
+    originalInput.push(...inputUsernames);
+    console.log("1. Original Input Users:", originalInput);
+
     // -----------------------------
-    // 1️⃣ Duplicate detection (before normalization)
+    // 1️⃣ Duplicate detection
     // -----------------------------
     const seenUsernames = new Set();
     const duplicates = new Set();
-
     inputUsernames.forEach(name => {
         const username = name.toLowerCase();
-        if (seenUsernames.has(username)) duplicates.add(username);
+        if (seenUsernames.has(username)) {
+            duplicates.add(username);
+        }
         seenUsernames.add(username);
     });
+    console.log("2. Duplicates Found (lowercase):", Array.from(duplicates));
 
     const duplicatesListElem = document.getElementById('duplicates-list');
     const duplicatesCountTextElem = document.getElementById('duplicates-count-text');
@@ -3652,7 +3661,6 @@ async function handleCheckBannedUsers() {
 
     if (duplicatesListElem && duplicatesCountTextElem && duplicateUsersDisplayElem) {
         duplicatesListElem.innerHTML = '';
-
         if (duplicates.size > 0) {
             duplicatesCountTextElem.textContent = `${duplicates.size} duplicate username${duplicates.size === 1 ? '' : 's'} found:`;
             duplicates.forEach(username => {
@@ -3663,17 +3671,19 @@ async function handleCheckBannedUsers() {
         } else {
             duplicatesCountTextElem.textContent = 'No duplicate usernames found.';
         }
-
         duplicateUsersDisplayElem.classList.remove('hidden');
     }
 
     // -----------------------------
-    // 2️⃣ Normalize for banned users check
+    // 2️⃣ Banned users check
     // -----------------------------
-    inputUsernames = Array.from(new Set(inputUsernames.map(name => name.toLowerCase())));
-
+    const uniqueInputUsernames = Array.from(new Set(inputUsernames.map(name => name.toLowerCase())));
     const bannedUsersLower = bannedUsers.map(user => user.toLowerCase());
-    const matchedUsers = inputUsernames.filter(username => bannedUsersLower.includes(username));
+    const matchedUsers = uniqueInputUsernames.filter(username => bannedUsersLower.includes(username));
+
+    console.log("3. Unique Input Users (for check):", uniqueInputUsernames);
+    console.log("4. Banned Users (from list):", bannedUsersLower);
+    console.log("5. Matched/Banned Users:", matchedUsers);
 
     matchesCountText.textContent = `${matchedUsers.length} match${matchedUsers.length === 1 ? '' : 'es'} found:`;
     matchesList.innerHTML = '';
@@ -3688,17 +3698,19 @@ async function handleCheckBannedUsers() {
         li.textContent = 'No matches found.';
         matchesList.appendChild(li);
     }
-
     bannedUsersMatchesDisplay.classList.remove('hidden');
 
     // -----------------------------
     // 3️⃣ Display final unique users
     // -----------------------------
-    const finalUniqueUsersListElem = document.getElementById('final-unique-users-list');
-    if (finalUniqueUsersListElem) {
+    const finalUniqueUsers = uniqueInputUsernames.filter(username => !bannedUsersLower.includes(username));
+  const finalUniqueUsersListElem = document.getElementById('unique-users-list');
+
+        console.log("6. Final Unique Users (before display):", finalUniqueUsers);
+
         finalUniqueUsersListElem.innerHTML = '';
-        if (inputUsernames.length > 0) {
-            inputUsernames.forEach(username => {
+        if (finalUniqueUsers.length > 0) {
+            finalUniqueUsers.forEach(username => {
                 const li = document.createElement('li');
                 li.innerHTML = `<a href="https://www.instagram.com/${username}/" target="_blank" rel="noopener noreferrer" class="font-medium text-gray-300 hover:underline">${username}</a>`;
                 finalUniqueUsersListElem.appendChild(li);
@@ -3709,7 +3721,9 @@ async function handleCheckBannedUsers() {
             finalUniqueUsersListElem.appendChild(li);
         }
     }
-}
+
+    console.log("--- Finished handleCheckBannedUsers function ---");
+
 
 function parseUsernamesFromText(text) {
     const instagramLinkRegex = /(?:https?:\/\/)?(?:www\.)?instagram\.com\/([a-zA-Z0-9_.]+)(?:\/)?/g;
