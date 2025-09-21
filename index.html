@@ -3712,7 +3712,7 @@ async function handleCheckBannedUsers() {
         if (finalUniqueUsers.length > 0) {
             finalUniqueUsers.forEach(username => {
                 const li = document.createElement('li');
-                li.innerHTML = `<a href="https://www.instagram.com/${username}/" target="_blank" rel="noopener noreferrer" class="font-medium text-gray-300 hover:underline">${username}</a>`;
+                li.innerHTML = `<a href="https://www.instagram.com/${username}/" target="_blank" rel="noopener noreferrer" class="font-medium text-gray-300 hover:underline">https://www.instagram.com/${username}/</a>`;
                 finalUniqueUsersListElem.appendChild(li);
             });
         } else {
