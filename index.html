@@ -1131,6 +1131,10 @@
                             <p class="font-semibold text-gray-100 mb-2" id="duplicates-count-text"></p>
                             <ul id="duplicates-list" class="list-disc list-inside text-gray-300 space-y-1"></ul>
                         </div>
+                        <div id="unique-users-section" class="mt-4">
+                            <p class="font-semibold text-gray-100 mb-2">Final Unique Users:</p>
+                            <ul id="unique-users-list" class="list-disc list-inside text-gray-300 space-y-1"></ul>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -3686,35 +3690,50 @@ async function handleCheckBannedUsers() {
     }
 
     bannedUsersMatchesDisplay.classList.remove('hidden');
+
+    // -----------------------------
+    // 3️⃣ Display final unique users
+    // -----------------------------
+    const finalUniqueUsersListElem = document.getElementById('final-unique-users-list');
+    if (finalUniqueUsersListElem) {
+        finalUniqueUsersListElem.innerHTML = '';
+        if (inputUsernames.length > 0) {
+            inputUsernames.forEach(username => {
+                const li = document.createElement('li');
+                li.innerHTML = `<a href="https://www.instagram.com/${username}/" target="_blank" rel="noopener noreferrer" class="font-medium text-gray-300 hover:underline">${username}</a>`;
+                finalUniqueUsersListElem.appendChild(li);
+            });
+        } else {
+            const li = document.createElement('li');
+            li.textContent = 'No users to display.';
+            finalUniqueUsersListElem.appendChild(li);
+        }
+    }
 }
 
 function parseUsernamesFromText(text) {
-    const instagramLinkRegex = /(?:https?:\/\/)?(?:www\.)?instagram\.com\/([a-zA-Z0-9_.]+)(?:\/)?/g; // Added optional trailing slash
+    const instagramLinkRegex = /(?:https?:\/\/)?(?:www\.)?instagram\.com\/([a-zA-Z0-9_.]+)(?:\/)?/g;
     const atUsernameRegex = /(?<!\w)@([a-zA-Z0-9_.]+)(?!\w)/g;
-    const extractedUsernames = new Set();
-
+    const extractedUsernames = []; // Change from Set() to []
     // Extract from links
     let match;
     while ((match = instagramLinkRegex.exec(text)) !== null) {
-        extractedUsernames.add(match[1]);
+        extractedUsernames.push(match[1]); // Change from .add() to .push()
     }
-    instagramLinkRegex.lastIndex = 0; // Reset regex for next use
-
+    instagramLinkRegex.lastIndex = 0;
     // Extract from @usernames
     while ((match = atUsernameRegex.exec(text)) !== null) {
         if (match[1].length > 2 && !match[1].includes('.')) {
-            extractedUsernames.add(match[1]);
+            extractedUsernames.push(match[1]); // Change from .add() to .push()
         }
     }
-    atUsernameRegex.lastIndex = 0; // Reset regex for next use
-
+    atUsernameRegex.lastIndex = 0;
     // Also consider lines/comma-separated values as direct usernames
     const directUsernames = text.split(/[\n,]+/)
         .map(name => name.trim())
         .filter(name => name.length > 0 && !name.startsWith('http') && !name.startsWith('@'));
-    directUsernames.forEach(username => extractedUsernames.add(username));
-
-    return Array.from(extractedUsernames);
+    directUsernames.forEach(username => extractedUsernames.push(username)); // Change from .add() to .push()
+    return extractedUsernames; // Change from Array.from(extractedUsernames) to extractedUsernames
 }
 
 // Function to apply search and time filters and render accounts
