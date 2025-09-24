@@ -820,7 +820,7 @@
                                 class="border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-700 text-gray-100">
                                 <option value="all">All Times</option>
                                 <option value="green">Green (Recent)</option>
-                                <option value="orange">Orange (1-7 Days)</option>
+                                <option value="orange">Orange (2-7 Days)</option>
                                 <option value="red">Red (>7 Days)</option>
                             </select>
                             <select id="sort-select"
@@ -2293,10 +2293,10 @@ unsubscribeFromFirebase = onSnapshot(uploadDocRef, async (docSnap) => {
             }
 
             // Color coding based on recency
-            if (diffMs <= 24 * 60 * 60 * 1000) { // Within 24 hours
+            if (diffMs <= 48 * 60 * 60 * 1000) { // Within 24 hours
                 color = 'text-green-500';
                 category = 'green';
-            } else if (diffMs > 24 * 60 * 60 * 1000 && diffMs <= 7 * 24 * 60 * 60 * 1000) { // 1 day to 7 days
+            } else if (diffMs > 48 * 60 * 60 * 1000 && diffMs <= 7 * 24 * 60 * 60 * 1000) { // 1 day to 7 days
                 color = 'text-orange-500';
                 category = 'orange';
             } else { // Older than 7 days
