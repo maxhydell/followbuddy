@@ -1920,31 +1920,18 @@ unsubscribeFromFirebase = onSnapshot(uploadDocRef, async (docSnap) => {
         // New: Load data from the new subcollections
         const safeUsersSnapshot = await getDocs(collection(dbInstance, `artifacts/${appId}/users/${currentUserId}/userUploads/${currentFileData.id}/safeUsers`));
         safeUsers = safeUsersSnapshot.docs.map(doc => doc.data().username);
-        // Fallback: If no data in subcollection, read from the old location
-        if (safeUsers.length === 0 && data.safeUsers) {
-            safeUsers = data.safeUsers;
-            console.log("Fallback: Loaded safeUsers from main document.");
-        }
+        
 
         const bannedUsersSnapshot = await getDocs(collection(dbInstance, `artifacts/${appId}/users/${currentUserId}/userUploads/${currentFileData.id}/bannedUsers`));
         bannedUsers = bannedUsersSnapshot.docs.map(doc => doc.data().username);
-        // Fallback: If no data in subcollection, read from the old location
-        if (bannedUsers.length === 0 && data.bannedUsers) {
-            bannedUsers = data.bannedUsers;
-            console.log("Fallback: Loaded bannedUsers from main document.");
-        }
+        
 
         const manuallyUnfollowedSnapshot = await getDocs(collection(dbInstance, `artifacts/${appId}/users/${currentUserId}/userUploads/${currentFileData.id}/manuallyUnfollowed`));
         manuallyUnfollowedList = manuallyUnfollowedSnapshot.docs.map(doc => doc.data().username);
-        if (manuallyUnfollowedList.length === 0 && data.manuallyUnfollowedList) {
-            manuallyUnfollowedList = data.manuallyUnfollowedList;
-        }
+
 
         const removedAccountsSnapshot = await getDocs(collection(dbInstance, `artifacts/${appId}/users/${currentUserId}/userUploads/${currentFileData.id}/removedAccounts`));
         removedAccountsList = removedAccountsSnapshot.docs.map(doc => doc.data().username);
-        if (removedAccountsList.length === 0 && data.removedAccounts) {
-            removedAccountsList = data.removedAccounts;
-        }
         
         // Load lists that are still in the main document (approvedAccounts, accountsManuallyAddedForReview, etc.)
         manuallyAddedFollowing = currentFileData.manuallyAddedFollowing || [];
