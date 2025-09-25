@@ -4107,7 +4107,7 @@ function applyFiltersAndRenderAccounts() {
                     const userDocRef = doc(dbInstance, `artifacts/${appId}/users/${currentUserId}/globalData`, 'userLists'); 
                     // Update only the relevant arrays
                     await setDoc(userDocRef, {
-                        accountsManuallyAddedForReview: accountsManuallyAddedForReview,are 
+                        accountsManuallyAddedForReview: accountsManuallyAddedForReview, 
                         approvedAccounts: approvedAccountsList,
                         removedAccounts: removedAccountsList,
                     }, {merge: true}); // Use merge: true to only update these fields
