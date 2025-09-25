@@ -1911,27 +1911,49 @@
 
             try {
                 const uploadDocRef = doc(dbInstance, `artifacts/default-app-id/users/${currentUserId}/userUploads`, uploadId);
+
 // New: Set up a real-time listener using onSnapshot
 unsubscribeFromFirebase = onSnapshot(uploadDocRef, async (docSnap) => {
     if (docSnap.exists()) {
         const data = docSnap.data();
         currentFileData = {id: docSnap.id, ...data}; // Store the ID
         
-        // New: Load data from the new subcollections
-        const safeUsersSnapshot = await getDocs(collection(dbInstance, `artifacts/${appId}/users/${currentUserId}/userUploads/${currentFileData.id}/safeUsers`));
+        // Load safe users from the global location
+        const safeUsersSnapshot = await getDocs(collection(dbInstance, `artifacts/${appId}/users/${currentUserId}/globalData/safeUsers`));
         safeUsers = safeUsersSnapshot.docs.map(doc => doc.data().username);
         
 
-        const bannedUsersSnapshot = await getDocs(collection(dbInstance, `artifacts/${appId}/users/${currentUserId}/userUploads/${currentFileData.id}/bannedUsers`));
+        const bannedUsersSnapshot = await getDocs(collection(dbInstance, `artifacts/${appId}/users/${currentUserId}/globalData/bannedUsers`));
         bannedUsers = bannedUsersSnapshot.docs.map(doc => doc.data().username);
-        
 
-        const manuallyUnfollowedSnapshot = await getDocs(collection(dbInstance, `artifacts/${appId}/users/${currentUserId}/userUploads/${currentFileData.id}/manuallyUnfollowed`));
+        // Load manually unfollowed users from the global location
+        const manuallyUnfollowedSnapshot = await getDocs(collection(dbInstance, `artifacts/${appId}/users/${currentUserId}/globalData/manuallyUnfollowed`));
         manuallyUnfollowedList = manuallyUnfollowedSnapshot.docs.map(doc => doc.data().username);
 
-
-        const removedAccountsSnapshot = await getDocs(collection(dbInstance, `artifacts/${appId}/users/${currentUserId}/userUploads/${currentFileData.id}/removedAccounts`));
+        // Load removed accounts from the global location
+        const removedAccountsSnapshot = await getDocs(collection(dbInstance, `artifacts/${appId}/users/${currentUserId}/globalData/removedAccounts`));
         removedAccountsList = removedAccountsSnapshot.docs.map(doc => doc.data().username);
+
+        // Load approved accounts from the global location
+        const approvedAccountsSnapshot = await getDocs(collection(dbInstance, `artifacts/${appId}/users/${currentUserId}/globalData/approvedAccounts`));
+        approvedAccountsList = approvedAccountsSnapshot.docs.map(doc => doc.data().username);
+
+        // Load accounts manually added for review from the global location
+        const accountsManuallyAddedForReviewSnapshot = await getDocs(collection(dbInstance, `artifacts/${appId}/users/${currentUserId}/globalData/accountsManuallyAddedForReview`));
+        accountsManuallyAddedForReview = accountsManuallyAddedForReviewSnapshot.docs.map(doc => ({
+            username: doc.data().username,
+            reason: doc.data().reason,
+            timestamp: doc.data().timestamp
+        }));
+
+        // Load manually added following from the global location
+        const manuallyAddedFollowingSnapshot = await getDocs(collection(dbInstance, `artifacts/${appId}/users/${currentUserId}/globalData/manuallyAddedFollowing`));
+        manuallyAddedFollowing = manuallyAddedFollowingSnapshot.docs.map(doc => ({
+            username: doc.data().username,
+            timestamp: doc.data().timestamp
+        }));
+
+
         
         // Load lists that are still in the main document (approvedAccounts, accountsManuallyAddedForReview, etc.)
         manuallyAddedFollowing = currentFileData.manuallyAddedFollowing || [];
@@ -3221,13 +3243,15 @@ unsubscribeFromFirebase = onSnapshot(uploadDocRef, async (docSnap) => {
             const currentInput = safeUserInput.value.toLowerCase();
             const suggestedUsers = new Set();
 
-            originalNotFollowingBack.forEach(account => {
-                const username = account.username;
-                // Suggest if not already safe and matches current input
-                if (!safeUsers.includes(username) && username.toLowerCase().includes(currentInput)) {
-                    suggestedUsers.add(username);
-                }
-            });
+            originalNotFollowingBack.forEach(account => {
+                // Add a check to ensure 'account' is a valid object and has a 'username' property.
+                if (account && typeof account.username === 'string') {
+                    const username = account.username;
+                    if (!safeUsers.includes(username) && username.toLowerCase().includes(currentInput)) {
+                        suggestedUsers.add(username);
+                    }
+                }
+            });
 
             Array.from(suggestedUsers).sort().forEach(username => {
                 const option = document.createElement('option');
@@ -4077,9 +4101,9 @@ function applyFiltersAndRenderAccounts() {
         }
 
         async function saveAccountsManagementState() {
-            if (currentUserId && authInstance.currentUser && dbInstance && currentFileData) {
+            if (currentUserId && authInstance.currentUser && dbInstance) { // Removed 'currentFileData' check as it's no longer needed for a global function
                 try {
-                    const userDocRef = doc(dbInstance, `artifacts/${appId}/users/${currentUserId}/userUploads`, currentFileData.id);
+                    const userDocRef = doc(dbInstance, `artifacts/${appId}/users/${currentUserId}/globalData/accountsManagementState`); // New global reference
                     // Update only the relevant arrays
                     await setDoc(userDocRef, {
                         accountsManuallyAddedForReview: accountsManuallyAddedForReview,
@@ -4342,7 +4366,7 @@ function applyFiltersAndRenderAccounts() {
         async function saveManuallyAddedState() {
             if (currentUserId && authInstance.currentUser && dbInstance && currentFileData) {
                 try {
-                    const userDocRef = doc(dbInstance, `artifacts/${appId}/users/${currentUserId}/userUploads`, currentFileData.id);
+                    const userDocRef = doc(dbInstance, `artifacts/${appId}/users/${currentUserId}/globalData/manuallyAddedState`); 
                     await setDoc(userDocRef, {
                         manuallyAddedFollowing: manuallyAddedFollowing,
                         accountsManuallyAddedForReview: accountsManuallyAddedForReview,
