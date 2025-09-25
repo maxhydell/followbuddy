@@ -1919,27 +1919,29 @@ unsubscribeFromFirebase = onSnapshot(uploadDocRef, async (docSnap) => {
         currentFileData = {id: docSnap.id, ...data}; // Store the ID
         
         // Load safe users from the global location
-        const safeUsersSnapshot = await getDocs(collection(dbInstance, `artifacts/${appId}/users/${currentUserId}/globalData/safeUsers`));
+        const globalDataDocRef = doc(dbInstance, `artifacts/${appId}/users/${currentUserId}/globalData`, 'userLists');
+        const safeUsersSnapshot = await getDocs(collection(globalDataDocRef, 'safeUsers'));
         safeUsers = safeUsersSnapshot.docs.map(doc => doc.data().username);
         
 
-        const bannedUsersSnapshot = await getDocs(collection(dbInstance, `artifacts/${appId}/users/${currentUserId}/globalData/bannedUsers`));
+        // Load banned users from the global location
+        const bannedUsersSnapshot = await getDocs(collection(globalDataDocRef, 'bannedUsers'));
         bannedUsers = bannedUsersSnapshot.docs.map(doc => doc.data().username);
 
         // Load manually unfollowed users from the global location
-        const manuallyUnfollowedSnapshot = await getDocs(collection(dbInstance, `artifacts/${appId}/users/${currentUserId}/globalData/manuallyUnfollowed`));
+        const manuallyUnfollowedSnapshot = await getDocs(collection(globalDataDocRef, 'manuallyUnfollowed'));
         manuallyUnfollowedList = manuallyUnfollowedSnapshot.docs.map(doc => doc.data().username);
 
         // Load removed accounts from the global location
-        const removedAccountsSnapshot = await getDocs(collection(dbInstance, `artifacts/${appId}/users/${currentUserId}/globalData/removedAccounts`));
+        const removedAccountsSnapshot = await getDocs(collection(globalDataDocRef, 'removedAccounts'));
         removedAccountsList = removedAccountsSnapshot.docs.map(doc => doc.data().username);
 
         // Load approved accounts from the global location
-        const approvedAccountsSnapshot = await getDocs(collection(dbInstance, `artifacts/${appId}/users/${currentUserId}/globalData/approvedAccounts`));
+        const approvedAccountsSnapshot = await getDocs(collection(globalDataDocRef, 'approvedAccounts'));
         approvedAccountsList = approvedAccountsSnapshot.docs.map(doc => doc.data().username);
 
         // Load accounts manually added for review from the global location
-        const accountsManuallyAddedForReviewSnapshot = await getDocs(collection(dbInstance, `artifacts/${appId}/users/${currentUserId}/globalData/accountsManuallyAddedForReview`));
+        const accountsManuallyAddedForReviewSnapshot = await getDocs(collection(globalDataDocRef, 'accountsManuallyAddedForReview'));
         accountsManuallyAddedForReview = accountsManuallyAddedForReviewSnapshot.docs.map(doc => ({
             username: doc.data().username,
             reason: doc.data().reason,
@@ -1947,12 +1949,11 @@ unsubscribeFromFirebase = onSnapshot(uploadDocRef, async (docSnap) => {
         }));
 
         // Load manually added following from the global location
-        const manuallyAddedFollowingSnapshot = await getDocs(collection(dbInstance, `artifacts/${appId}/users/${currentUserId}/globalData/manuallyAddedFollowing`));
+        const manuallyAddedFollowingSnapshot = await getDocs(collection(globalDataDocRef, 'manuallyAddedFollowing'));
         manuallyAddedFollowing = manuallyAddedFollowingSnapshot.docs.map(doc => ({
             username: doc.data().username,
             timestamp: doc.data().timestamp
         }));
-
 
         
         // Load lists that are still in the main document (approvedAccounts, accountsManuallyAddedForReview, etc.)
@@ -4103,10 +4104,10 @@ function applyFiltersAndRenderAccounts() {
         async function saveAccountsManagementState() {
             if (currentUserId && authInstance.currentUser && dbInstance) { // Removed 'currentFileData' check as it's no longer needed for a global function
                 try {
-                    const userDocRef = doc(dbInstance, `artifacts/${appId}/users/${currentUserId}/globalData/accountsManagementState`); // New global reference
+                    const userDocRef = doc(dbInstance, `artifacts/${appId}/users/${currentUserId}/globalData`, 'userLists'); 
                     // Update only the relevant arrays
                     await setDoc(userDocRef, {
-                        accountsManuallyAddedForReview: accountsManuallyAddedForReview,
+                        accountsManuallyAddedForReview: accountsManuallyAddedForReview,are 
                         approvedAccounts: approvedAccountsList,
                         removedAccounts: removedAccountsList,
                     }, {merge: true}); // Use merge: true to only update these fields
@@ -4366,7 +4367,7 @@ function applyFiltersAndRenderAccounts() {
         async function saveManuallyAddedState() {
             if (currentUserId && authInstance.currentUser && dbInstance && currentFileData) {
                 try {
-                    const userDocRef = doc(dbInstance, `artifacts/${appId}/users/${currentUserId}/globalData/manuallyAddedState`); 
+                    const userDocRef = doc(dbInstance, `artifacts/${appId}/users/${currentUserId}/globalData`, 'userLists');
                     await setDoc(userDocRef, {
                         manuallyAddedFollowing: manuallyAddedFollowing,
                         accountsManuallyAddedForReview: accountsManuallyAddedForReview,
