@@ -820,7 +820,7 @@
                                 class="border border-gray-600 rounded-lg px-4 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 bg-gray-700 text-gray-100">
                                 <option value="all">All Times</option>
                                 <option value="green">Green (Recent)</option>
-                                <option value="orange">Orange (2-7 Days)</option>
+                                <option value="orange">Orange (1-7 Days)</option>
                                 <option value="red">Red (>7 Days)</option>
                             </select>
                             <select id="sort-select"
@@ -1912,185 +1912,159 @@
             try {
                 const uploadDocRef = doc(dbInstance, `artifacts/default-app-id/users/${currentUserId}/userUploads`, uploadId);
 
-// New: Set up a real-time listener using onSnapshot
-unsubscribeFromFirebase = onSnapshot(uploadDocRef, async (docSnap) => {
-    if (docSnap.exists()) {
-        const data = docSnap.data();
-        currentFileData = {id: docSnap.id, ...data}; // Store the ID
-        
-        // Load safe users from the global location
-        const globalDataDocRef = doc(dbInstance, `artifacts/${appId}/users/${currentUserId}/globalData`, 'userLists');
-        const safeUsersSnapshot = await getDocs(collection(globalDataDocRef, 'safeUsers'));
-        safeUsers = safeUsersSnapshot.docs.map(doc => doc.data().username);
-        
+                // New: Set up a real-time listener using onSnapshot
+                unsubscribeFromFirebase = onSnapshot(uploadDocRef, async (docSnap) => {
+                    if (docSnap.exists()) {
+                        const data = docSnap.data();
+                        currentFileData = {id: docSnap.id, ...data}; // Store the ID
+                        originalNotFollowingBack = [...(currentFileData.originalNotFollowingBack || []), ...(currentFileData.manuallyAddedFollowing || [])];
+                        safeUsers = currentFileData.safeUsers || []; // Ensure safeUsers is loaded
+                        bannedUsers = Array.from(new Set([...bannedUsers, ...(currentFileData.bannedUsers || [])])).sort();
+                        manuallyAddedFollowing = currentFileData.manuallyAddedFollowing || []; // Load manually added following
+                        accountsManuallyAddedForReview = currentFileData.accountsManuallyAddedForReview || []; // Load manually added for review
+                        approvedAccountsList = currentFileData.approvedAccounts || [];
+                        console.log("DEBUG: approvedAccountsList loaded from Firestore:", approvedAccountsList); // Added for verification
+                        removedAccountsList = currentFileData.removedAccounts || [];
+                        manuallyUnfollowedList = currentFileData.manuallyUnfollowedList || []; // Load manually unfollowed list
+                        accountsToRemoveList = []; // Initialize accountsToRemoveList here before use
 
-        // Load banned users from the global location
-        const bannedUsersSnapshot = await getDocs(collection(globalDataDocRef, 'bannedUsers'));
-        bannedUsers = bannedUsersSnapshot.docs.map(doc => doc.data().username);
+                        // [!code focus]
+                        // CORRECT: Load all necessary lists from the database first.
+                        safeUsers = currentFileData.safeUsers || [];
+                        bannedUsers = currentFileData.bannedUsers || [];
+                        await automaticallyAddOrangeUsersToBanned();
+                        manuallyAddedFollowing = currentFileData.manuallyAddedFollowing || [];
+                        manuallyUnfollowedList = currentFileData.manuallyUnfollowedList || [];
+                        removedAccountsList = currentFileData.removedAccounts || [];
+                        approvedAccountsList = currentFileData.approvedAccounts || [];
+                        accountsManuallyAddedForReview = currentFileData.accountsManuallyAddedForReview || [];
 
-        // Load manually unfollowed users from the global location
-        const manuallyUnfollowedSnapshot = await getDocs(collection(globalDataDocRef, 'manuallyUnfollowed'));
-        manuallyUnfollowedList = manuallyUnfollowedSnapshot.docs.map(doc => doc.data().username);
 
-        // Load removed accounts from the global location
-        const removedAccountsSnapshot = await getDocs(collection(globalDataDocRef, 'removedAccounts'));
-        removedAccountsList = removedAccountsSnapshot.docs.map(doc => doc.data().username);
+                        // Load master lists from the uploaded file.
+                        const followingFromFile = currentFileData.followingList || [];
+                        const followersFromFileSet = new Set(currentFileData.followersList || []);
+                        const followingTimestamps = new Map(
+                            (currentFileData.originalNotFollowingBack || []).map(acc => [acc.username, acc.timestamp])
+                        );
 
-        // Load approved accounts from the global location
-        const approvedAccountsSnapshot = await getDocs(collection(globalDataDocRef, 'approvedAccounts'));
-        approvedAccountsList = approvedAccountsSnapshot.docs.map(doc => doc.data().username);
+                        // Create the "effective" following list by applying manual additions and removals.
+                        const effectiveFollowingSet = new Set(followingFromFile);
+                        manuallyAddedFollowing.forEach(user => effectiveFollowingSet.add(user));
+                        manuallyUnfollowedList.forEach(user => effectiveFollowingSet.delete(user));
 
-        // Load accounts manually added for review from the global location
-        const accountsManuallyAddedForReviewSnapshot = await getDocs(collection(globalDataDocRef, 'accountsManuallyAddedForReview'));
-        accountsManuallyAddedForReview = accountsManuallyAddedForReviewSnapshot.docs.map(doc => ({
-            username: doc.data().username,
-            reason: doc.data().reason,
-            timestamp: doc.data().timestamp
-        }));
+                        // Recalculate the list of users who don't follow back from scratch.
+                        originalNotFollowingBack = [];
+                        effectiveFollowingSet.forEach(username => {
+                            if (!followersFromFileSet.has(username)) {
+                                const timestamp = followingTimestamps.get(username) || null;
+                                originalNotFollowingBack.push({ username: username, timestamp: timestamp });
+                    }
+                });
 
-        // Load manually added following from the global location
-        const manuallyAddedFollowingSnapshot = await getDocs(collection(globalDataDocRef, 'manuallyAddedFollowing'));
-        manuallyAddedFollowing = manuallyAddedFollowingSnapshot.docs.map(doc => ({
-            username: doc.data().username,
-            timestamp: doc.data().timestamp
-        }));
+                        allNonFollowers = originalNotFollowingBack.filter(account =>
+                            account &&
+                            account.username &&
+                            !safeUsers.includes(account.username) &&
+                            !manuallyUnfollowedList.includes(account.username) &&
+                            !removedAccountsList.includes(account.username)
+                        );
+                        // Accounts to Review logic: accounts manually added for review, that are NOT approved, NOT removed, AND NOT in the current (original + manually added - manually unfollowed) following list
+                        const combinedFollowingSet = new Set(currentFileData.followingList); // Base from uploaded file
+                        manuallyAddedFollowing.forEach(user => combinedFollowingSet.add(user)); // Add manually added
+                        manuallyUnfollowedList.forEach(user => combinedFollowingSet.delete(user)); // Remove manually unfollowed
 
-        
-        // Load lists that are still in the main document (approvedAccounts, accountsManuallyAddedForReview, etc.)
-        manuallyAddedFollowing = currentFileData.manuallyAddedFollowing || [];
-        accountsManuallyAddedForReview = currentFileData.accountsManuallyAddedForReview || [];
-        approvedAccountsList = currentFileData.approvedAccounts || [];
-        
-        // The rest of your code can remain largely the same, but it will use the
-        // newly populated safeUsers, bannedUsers, etc. arrays.
-        console.log("DEBUG: approvedAccountsList loaded from Firestore:", approvedAccountsList); // Added for verification
-        
-        accountsToRemoveList = []; // Initialize accountsToRemoveList here before use
+                        accountsToRemoveList = accountsManuallyAddedForReview.filter(account =>
+                            !approvedAccountsList.includes(account.username) &&
+                            !removedAccountsList.includes(account.username)
+                        );
+                        // Sort by oldest to newest by default for this list
+                        accountsToRemoveList.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
 
-        // Load master lists from the uploaded file.
-        const followingFromFile = currentFileData.followingList || [];
-        const followersFromFileSet = new Set(currentFileData.followersList || []);
-        const followingTimestamps = new Map(
-            (currentFileData.originalNotFollowingBack || []).map(acc => [acc.username, acc.timestamp])
-        );
 
-        // Create the "effective" following list by applying manual additions and removals.
-        const effectiveFollowingSet = new Set(followingFromFile);
-        manuallyAddedFollowing.forEach(user => effectiveFollowingSet.add(user));
-        manuallyUnfollowedList.forEach(user => effectiveFollowingSet.delete(user));
+                        // Find the previous upload for analytics calculation
+                        const currentIndex = allUserUploadsMetadata.findIndex(upload => upload.id === uploadId);
+                        let unfollowedYou = 0; // This is actually "lost followers"
+                        let newFollowers = 0; // This is actually "gained followers"
+                        let unfollowedAccounts = []; // Accounts that unfollowed you (lost followers)
+                        let newFollowerAccounts = []; // Accounts that newly followed you (gained followers)
 
-        // Recalculate the list of users who don't follow back from scratch.
-        originalNotFollowingBack = [];
-        effectiveFollowingSet.forEach(username => {
-            if (!followersFromFileSet.has(username)) {
-                const timestamp = followingTimestamps.get(username) || null;
-                originalNotFollowingBack.push({ username: username, timestamp: timestamp });
-            }
-        });
-        
-        // The rest of the logic remains unchanged as it now uses the correct arrays.
-        allNonFollowers = originalNotFollowingBack.filter(account =>
-            account &&
-            account.username &&
-            !safeUsers.includes(account.username) &&
-            !manuallyUnfollowedList.includes(account.username) &&
-            !removedAccountsList.includes(account.username)
-        );
-        // Accounts to Review logic: accounts manually added for review, that are NOT approved, NOT removed, AND NOT in the current (original + manually added - manually unfollowed) following list
-        const combinedFollowingSet = new Set(currentFileData.followingList); // Base from uploaded file
-        manuallyAddedFollowing.forEach(user => combinedFollowingSet.add(user)); // Add manually added
-        manuallyUnfollowedList.forEach(user => combinedFollowingSet.delete(user)); // Remove manually unfollowed
+                        // Only calculate analytics if there is a previous upload to compare against
+                        if (currentIndex < allUserUploadsMetadata.length - 1) { // Check if there's an older upload
+                            const previousUploadMetadata = allUserUploadsMetadata[currentIndex + 1]; // This is the older upload
+                            const previousUploadDocRef = doc(dbInstance, `artifacts/${appId}/users/${currentUserId}/userUploads`, previousUploadMetadata.id);
+                            const prevDocSnap = await getDoc(previousUploadDocRef); // Still use getDoc for historical data
 
-        accountsToRemoveList = accountsManuallyAddedForReview.filter(account =>
-            !approvedAccountsList.includes(account.username) &&
-            !removedAccountsList.includes(account.username)
-        );
-        // Sort by oldest to newest by default for this list
-        accountsToRemoveList.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
+                            if (prevDocSnap.exists()) {
+                                const prevData = prevDocSnap.data();
+                                const currentFollowersSet = new Set(currentFileData.followersList);
+                                const previousFollowersSet = new Set(prevData.followersList);
 
-        // Find the previous upload for analytics calculation
-        const currentIndex = allUserUploadsMetadata.findIndex(upload => upload.id === uploadId);
-        let unfollowedYou = 0; // This is actually "lost followers"
-        let newFollowers = 0; // This is actually "gained followers"
-        let unfollowedAccounts = []; // Accounts that unfollowed you (lost followers)
-        let newFollowerAccounts = []; // Accounts that newly followed you (gained followers)
+                                // Calculate unfollowed (lost followers)
+                                unfollowedAccounts = Array.from(previousFollowersSet).filter(
+                                    follower => !currentFollowersSet.has(follower)
+                                );
+                                unfollowedYou = unfollowedAccounts.length;
 
-        // Only calculate analytics if there is a previous upload to compare against
-        if (currentIndex < allUserUploadsMetadata.length - 1) { // Check if there's an older upload
-            const previousUploadMetadata = allUserUploadsMetadata[currentIndex + 1]; // This is the older upload
-            const previousUploadDocRef = doc(dbInstance, `artifacts/${appId}/users/${currentUserId}/userUploads`, previousUploadMetadata.id);
-            const prevDocSnap = await getDoc(previousUploadDocRef); // Still use getDoc for historical data
+                                // Calculate new followers (gained followers)
+                                newFollowerAccounts = Array.from(currentFollowersSet).filter(
+                                    follower => !previousFollowersSet.has(follower)
+                                );
+                                newFollowers = newFollowerAccounts.length;
+                            }
+                        }
+                        console.log(`Analytics for upload ${uploadId}: Unfollowed (lost followers): ${unfollowedYou}, New Followers (gained followers): ${newFollowers}`);
 
-            if (prevDocSnap.exists()) {
-                const prevData = prevDocSnap.data();
-                const currentFollowersSet = new Set(currentFileData.followersList);
-                const previousFollowersSet = new Set(prevData.followersList);
-
-                // Calculate unfollowed (lost followers)
-                unfollowedAccounts = Array.from(previousFollowersSet).filter(
-                    follower => !currentFollowersSet.has(follower)
-                );
-                unfollowedYou = unfollowedAccounts.length;
-
-                // Calculate new followers (gained followers)
-                newFollowerAccounts = Array.from(currentFollowersSet).filter(
-                    follower => !previousFollowersSet.has(follower)
-                );
-                newFollowers = newFollowerAccounts.length;
-            }
-        }
-        console.log(`Analytics for upload ${uploadId}: Unfollowed (lost followers): ${unfollowedYou}, New Followers (gained followers): ${newFollowers}`);
-
-        // Calculate current total following including manual additions and removals
-        const baseFollowingSet = new Set(currentFileData.followingList || []);
-        manuallyAddedFollowing.forEach(user => baseFollowingSet.add(user));
-        manuallyUnfollowedList.forEach(user => baseFollowingSet.delete(user));
-        removedAccountsList.forEach(user => baseFollowingSet.delete(user));
-        const effectiveFollowingCount = baseFollowingSet.size;
-        
-        updateDashboardMetrics(
-            effectiveFollowingCount,
-            currentFileData.totalFollowers,
-            allNonFollowers.length,
-            originalNotFollowingBack.length,
-            (currentFileData.recentlyUnfollowedProfiles || []).length // Use the length of this list for the count
-        );
-        // Correctly pass newFollowers (gained) and unfollowedYou (lost) to their respective elements
-        // The user requested to swap the display, so:
-        // "New Followers" label displays `unfollowedYou` (lost followers)
-        // "Unfollowed You" label displays `newFollowers` (gained followers)
-        updateAnalyticsMetrics(unfollowedYou, newFollowers, unfollowedAccounts, newFollowerAccounts);
-        updateAccountsManagementMetrics(); // Update new metrics for accounts management
-        renderAccounts(allNonFollowers); // Render dashboard non-followers
-        applyAccountsManagementFiltersAndRender(); // Render accounts management list
-        renderOrangeListUsers(originalNotFollowingBack); // New: Render orange list users
-        renderUnfollowedProfilesList(currentFileData.recentlyUnfollowedProfiles || []); // Render unfollowed profiles list
-    } else {
-        console.log('No data found for the selected upload ID:', uploadId);
-        showAlert('No data found for the selected upload. Please try another or upload new data.', 'info');
-        currentFileData = null;
-        allNonFollowers = [];
-        originalNotFollowingBack = [];
-        safeUsers = [];
-        bannedUsers = []; // Reset banned users
-        accountsManuallyAddedForReview = []; // Reset accounts management list
-        approvedAccountsList = [];
-        removedAccountsList = [];
-        manuallyUnfollowedList = []; // Reset manually unfollowed list
-        accountsToRemoveList = []; // Initialize accountsToRemoveList
-        manuallyAddedFollowing = []; // Reset manually added following
-        updateDashboardMetrics(0, 0, 0, 0, 0);
-        updateAnalyticsMetrics(0, 0, [], []);
-        updateAccountsManagementMetrics();
-        renderAccounts([]);
-        renderAccountsToRemove([]);
-        renderOrangeListUsers([]); // New: Clear orange list
-        renderUnfollowedProfilesList([]); // Clear unfollowed profiles list
-    }
-}, (error) => {
-    console.error('Error listening to document:', error);
-    showAlert('Failed to load data for the selected upload. Error: ' + error.message, 'error');
-});            } catch (error) {
+                        // Calculate current total following including manual additions and removals
+                        const baseFollowingSet = new Set(currentFileData.followingList || []);
+                        manuallyAddedFollowing.forEach(user => baseFollowingSet.add(user));
+                        manuallyUnfollowedList.forEach(user => baseFollowingSet.delete(user));
+                        removedAccountsList.forEach(user => baseFollowingSet.delete(user));
+                        const effectiveFollowingCount = baseFollowingSet.size;
+                        
+                        updateDashboardMetrics(
+                            effectiveFollowingCount,
+                            currentFileData.totalFollowers,
+                            allNonFollowers.length,
+                            originalNotFollowingBack.length,
+                            (currentFileData.recentlyUnfollowedProfiles || []).length // Use the length of this list for the count
+                        );
+                        // Correctly pass newFollowers (gained) and unfollowedYou (lost) to their respective elements
+                        // The user requested to swap the display, so:
+                        // "New Followers" label displays `unfollowedYou` (lost followers)
+                        // "Unfollowed You" label displays `newFollowers` (gained followers)
+                        updateAnalyticsMetrics(unfollowedYou, newFollowers, unfollowedAccounts, newFollowerAccounts);
+                        updateAccountsManagementMetrics(); // Update new metrics for accounts management
+                        renderAccounts(allNonFollowers); // Render dashboard non-followers
+                        applyAccountsManagementFiltersAndRender(); // Render accounts management list
+                        renderOrangeListUsers(originalNotFollowingBack); // New: Render orange list users
+                        renderUnfollowedProfilesList(currentFileData.recentlyUnfollowedProfiles || []); // Render unfollowed profiles list
+                    } else {
+                        console.log('No data found for the selected upload ID:', uploadId);
+                        showAlert('No data found for the selected upload. Please try another or upload new data.', 'info');
+                        currentFileData = null;
+                        allNonFollowers = [];
+                        originalNotFollowingBack = [];
+                        safeUsers = [];
+                        bannedUsers = []; // Reset banned users
+                        accountsManuallyAddedForReview = []; // Reset accounts management list
+                        approvedAccountsList = [];
+                        removedAccountsList = [];
+                        manuallyUnfollowedList = []; // Reset manually unfollowed list
+                        accountsToRemoveList = []; // Initialize accountsToRemoveList
+                        manuallyAddedFollowing = []; // Reset manually added following
+                        updateDashboardMetrics(0, 0, 0, 0, 0);
+                        updateAnalyticsMetrics(0, 0, [], []);
+                        updateAccountsManagementMetrics();
+                        renderAccounts([]);
+                        renderAccountsToRemove([]);
+                        renderOrangeListUsers([]); // New: Clear orange list
+                        renderUnfollowedProfilesList([]); // Clear unfollowed profiles list
+                    }
+                }, (error) => {
+                    console.error('Error listening to document:', error);
+                    showAlert('Failed to load data for the selected upload. Error: ' + error.message, 'error');
+                });
+            } catch (error) {
                 console.error('Error setting up listener for upload:', error);
                 showAlert('Failed to set up real-time data listener. Error: ' + error.message, 'error');
             }
@@ -2303,10 +2277,10 @@ unsubscribeFromFirebase = onSnapshot(uploadDocRef, async (docSnap) => {
             }
 
             // Color coding based on recency
-            if (diffMs <= 48 * 60 * 60 * 1000) { // Within 24 hours
+            if (diffMs <= 24 * 60 * 60 * 1000) { // Within 24 hours
                 color = 'text-green-500';
                 category = 'green';
-            } else if (diffMs > 48 * 60 * 60 * 1000 && diffMs <= 7 * 24 * 60 * 60 * 1000) { // 1 day to 7 days
+            } else if (diffMs > 24 * 60 * 60 * 1000 && diffMs <= 7 * 24 * 60 * 60 * 1000) { // 1 day to 7 days
                 color = 'text-orange-500';
                 category = 'orange';
             } else { // Older than 7 days
@@ -3244,15 +3218,13 @@ unsubscribeFromFirebase = onSnapshot(uploadDocRef, async (docSnap) => {
             const currentInput = safeUserInput.value.toLowerCase();
             const suggestedUsers = new Set();
 
-            originalNotFollowingBack.forEach(account => {
-                // Add a check to ensure 'account' is a valid object and has a 'username' property.
-                if (account && typeof account.username === 'string') {
-                    const username = account.username;
-                    if (!safeUsers.includes(username) && username.toLowerCase().includes(currentInput)) {
-                        suggestedUsers.add(username);
-                    }
-                }
-            });
+            originalNotFollowingBack.forEach(account => {
+                const username = account.username;
+                // Suggest if not already safe and matches current input
+                if (!safeUsers.includes(username) && username.toLowerCase().includes(currentInput)) {
+                    suggestedUsers.add(username);
+                }
+            });
 
             Array.from(suggestedUsers).sort().forEach(username => {
                 const option = document.createElement('option');
@@ -3275,85 +3247,70 @@ unsubscribeFromFirebase = onSnapshot(uploadDocRef, async (docSnap) => {
             return false; // Indicate already exists or invalid
         }
 
-async function handleRemoveFromFollowingFromDashboard(username) {
-    if (!currentUserId || !currentFileData || !dbInstance) {
-        showAlert('User not authenticated or data not loaded.', 'error');
-        return;
-    }
 
-    try {
-        // This checks if the account is in the list of accounts that were manually added for review.
-        const accountInAccountsManagement = accountsManuallyAddedForReview.some(account => account.username === username);
+        async function handleRemoveFromFollowingFromDashboard(username) {
+            if (!currentUserId || !currentFileData || !dbInstance) {
+                showAlert('User not authenticated or data not loaded.', 'error');
+                return;
+            }
 
-        // This creates a new document for each unfollowed user in a subcollection.
-        const unfollowedSubcollectionRef = collection(dbInstance, `artifacts/${appId}/users/${currentUserId}/userUploads/${currentFileData.id}/manuallyUnfollowed`);
-        await addDoc(unfollowedSubcollectionRef, {
-            username: username,
-            timestamp: serverTimestamp()
-        });
+            try {
+                // Initialize baseFollowingSet here
+                const baseFollowingSet = new Set(currentFileData.followingList || []);
 
-        // This also creates a new document for each removed account, but only if the user was in the 'accounts management' list.
-        if (accountInAccountsManagement) {
-            const removedSubcollectionRef = collection(dbInstance, `artifacts/${appId}/users/${currentUserId}/userUploads/${currentFileData.id}/removedAccounts`);
-            await addDoc(removedSubcollectionRef, {
-                username: username,
-                timestamp: serverTimestamp()
-            });
+                // Firestore updates
+                const uploadDocRef = doc(dbInstance, `artifacts/default-app-id/users/${currentUserId}/userUploads`, currentFileData.id);
+                const updates = {
+                    manuallyUnfollowedList: arrayUnion(username),
+                };
+
+                const accountInAccountsManagement = accountsManuallyAddedForReview.some(account => account.username === username);
+                if (accountInAccountsManagement) {
+                    updates.removedAccounts = arrayUnion(username);
+                }
+
+                await updateDoc(uploadDocRef, updates);
+
+                // Local list updates
+                if (!manuallyUnfollowedList.includes(username)) {
+                    manuallyUnfollowedList.push(username);
+                    manuallyUnfollowedList.sort();
+                }
+
+                manuallyAddedFollowing = manuallyAddedFollowing.filter(user => user !== username);
+
+                await saveFollowingAndUnfollowedLists();
+
+                // Recalculate originalNotFollowingBack metrics
+                originalNotFollowingBack = originalNotFollowingBack.filter(account => 
+                    account && account.username !== username
+                );
+
+                allNonFollowers = originalNotFollowingBack.filter(account =>
+                    account &&
+                    account.username &&
+                    !safeUsers.includes(account.username) &&
+                    !manuallyUnfollowedList.includes(account.username) &&
+                    !removedAccountsList.includes(account.username)
+                );
+
+                updateDashboardMetrics(
+                    baseFollowingSet.size,
+                    currentFileData.totalFollowers,
+                    allNonFollowers.length,
+                    originalNotFollowingBack.length,
+                    (currentFileData.recentlyUnfollowedProfiles || []).length
+                );
+
+                applyFiltersAndRenderAccounts(); // UI refresh
+
+            } catch (error) {
+                console.error('Error removing user from following:', error);
+                showAlert('Failed to remove user. Please try again.', 'error');
+            }
         }
-        
-        // --- CORRECTED LOCAL LIST UPDATES ---
-        // Your old function also did these local list updates, which are needed for an immediate UI refresh.
-        
-        // Remove from the local manually added list if present
-        manuallyAddedFollowing = manuallyAddedFollowing.filter(user => user !== username);
 
-        // Remove from the local "original" non-followers list
-        originalNotFollowingBack = originalNotFollowingBack.filter(account =>
-            account && account.username !== username
-        );
 
-        // Add to the local unfollowed and removed lists
-        if (!manuallyUnfollowedList.includes(username)) {
-            manuallyUnfollowedList.push(username);
-            manuallyUnfollowedList.sort();
-        }
-        if (accountInAccountsManagement && !removedAccountsList.includes(username)) {
-            removedAccountsList.push(username);
-            removedAccountsList.sort();
-        }
-
-        // Recalculate allNonFollowers using the newly updated local lists
-        allNonFollowers = originalNotFollowingBack.filter(account =>
-            account &&
-            account.username &&
-            !safeUsers.includes(account.username) &&
-            !manuallyUnfollowedList.includes(account.username) &&
-            !removedAccountsList.includes(account.username)
-        );
-
-        // The dashboard metrics also need to be updated locally
-        const effectiveFollowingSet = new Set(currentFileData.followingList);
-        manuallyAddedFollowing.forEach(user => effectiveFollowingSet.add(user));
-        manuallyUnfollowedList.forEach(user => effectiveFollowingSet.delete(user));
-        removedAccountsList.forEach(user => effectiveFollowingSet.delete(user));
-
-        updateDashboardMetrics(
-            effectiveFollowingSet.size,
-            currentFileData.totalFollowers,
-            allNonFollowers.length,
-            originalNotFollowingBack.length,
-            (currentFileData.recentlyUnfollowedProfiles || []).length
-        );
-
-        // Now you can safely update the local dashboard views
-        applyFiltersAndRenderAccounts();
-
-        console.log(`Successfully removed ${username} and added to the 'manually unfollowed' list.`, 'success');
-    } catch (error) {
-        console.error('Error handling removal from following:', error);
-        showAlert('Failed to remove account. Please try again.', 'error');
-    }
-}        
 
         async function processAndSaveSafeUsers(newUsersAdded = false) {
             if (newUsersAdded && currentFileData) {
@@ -3449,33 +3406,9 @@ async function handleRemoveFromFollowingFromDashboard(username) {
                 try {
                     const userDocRef = doc(dbInstance, `artifacts/${appId}/users/${currentUserId}/userUploads`, currentFileData.id);
                     // Update only the safeUsers array
-                    // This function needs to be rewritten to add a new document instead of updating the list.
-                    async function addSafeUserToFirestore(username) {
-                        if (currentUserId && dbInstance && currentFileData) {
-                            try {
-                                const safeUsersSubcollectionRef = collection(dbInstance, `artifacts/${appId}/users/${currentUserId}/userUploads/${currentFileData.id}/safeUsers`);
-                                await addDoc(safeUsersSubcollectionRef, {
-                                    username: username,
-                                    timestamp: serverTimestamp()
-                                });
-                                console.log('Safe user saved to Firestore.');
-                            } catch (error) {
-                                console.error('Error saving safe user to Firestore:', error);
-                            }
-                        }                    
-                    }
-
-// And your addSafeUserButtonClickHandler should call this new function:
-const addSafeUserButtonClickHandler = async () => {
-    // ...
-    const added = await addSafeUser(username); // Keep this logic for local state
-    if (added) {
-        // Add a new document to the subcollection
-        await addSafeUserToFirestore(username);
-        // ... rest of the logic
-    }
-    // ...
-};
+                    await setDoc(userDocRef, {
+                        safeUsers: currentFileData.safeUsers,
+                    }, {merge: true}); // Use merge: true to only update the safeUsers field
                     console.log('Safe users saved to Firestore for current upload.');
                 } catch (error) {
                     console.error('Error saving safe users to Firestore:', error);
@@ -3627,33 +3560,9 @@ const addSafeUserButtonClickHandler = async () => {
             if (currentUserId && authInstance.currentUser && dbInstance && currentFileData) {
                 try {
                     const userDocRef = doc(dbInstance, `artifacts/${appId}/users/${currentUserId}/userUploads`, currentFileData.id);
-                    // This function needs to be rewritten to add a new document instead of updating the list.
-                    async function addBannedUserToFirestore(username) {
-                        if (currentUserId && dbInstance && currentFileData) {
-                            try {
-                                const bannedUsersSubcollectionRef = collection(dbInstance, `artifacts/${appId}/users/${currentUserId}/userUploads/${currentFileData.id}/bannedUsers`);
-                                await addDoc(bannedUsersSubcollectionRef, {
-                                    username: username,
-                                    timestamp: serverTimestamp()
-                                });
-                                console.log('Banned user saved to Firestore.');
-                            } catch (error) {
-                                console.error('Error saving banned user to Firestore:', error);
-                            }
-                        }
-                    }
-
-// And your addBannedUserButtonClickHandler should call this new function:
-const addBannedUserButtonClickHandler = async () => {
-    // ...
-    const added = await addBannedUser(username); // Keep this logic for local state
-    if (added) {
-        // Add a new document to the subcollection
-        await addBannedUserToFirestore(username);
-        // ... rest of the logic
-    }
-    // ...
-};
+                    await setDoc(userDocRef, {
+                        bannedUsers: currentFileData.bannedUsers,
+                    }, {merge: true});
                     console.log('Banned users saved to Firestore for current upload.');
                 } catch (error) {
                     console.error('Error saving banned users to Firestore:', error);
@@ -4102,12 +4011,12 @@ function applyFiltersAndRenderAccounts() {
         }
 
         async function saveAccountsManagementState() {
-            if (currentUserId && authInstance.currentUser && dbInstance) { // Removed 'currentFileData' check as it's no longer needed for a global function
+            if (currentUserId && authInstance.currentUser && dbInstance && currentFileData) {
                 try {
-                    const userDocRef = doc(dbInstance, `artifacts/${appId}/users/${currentUserId}/globalData`, 'userLists'); 
+                    const userDocRef = doc(dbInstance, `artifacts/${appId}/users/${currentUserId}/userUploads`, currentFileData.id);
                     // Update only the relevant arrays
                     await setDoc(userDocRef, {
-                        accountsManuallyAddedForReview: accountsManuallyAddedForReview, 
+                        accountsManuallyAddedForReview: accountsManuallyAddedForReview,
                         approvedAccounts: approvedAccountsList,
                         removedAccounts: removedAccountsList,
                     }, {merge: true}); // Use merge: true to only update these fields
@@ -4367,7 +4276,7 @@ function applyFiltersAndRenderAccounts() {
         async function saveManuallyAddedState() {
             if (currentUserId && authInstance.currentUser && dbInstance && currentFileData) {
                 try {
-                    const userDocRef = doc(dbInstance, `artifacts/${appId}/users/${currentUserId}/globalData`, 'userLists');
+                    const userDocRef = doc(dbInstance, `artifacts/${appId}/users/${currentUserId}/userUploads`, currentFileData.id);
                     await setDoc(userDocRef, {
                         manuallyAddedFollowing: manuallyAddedFollowing,
                         accountsManuallyAddedForReview: accountsManuallyAddedForReview,
