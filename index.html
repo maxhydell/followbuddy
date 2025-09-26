@@ -572,7 +572,14 @@
         <button id="mobile-menu-button" class="md:hidden text-gray-300 hover:text-blue-400 focus:outline-none">
             <i class="fas fa-bars text-xl"></i>
         </button>
+        <button id="chooseBannedUsersFileBtn" 
+          class="bg-gray-700 text-white px-3 py-1 rounded hover:bg-gray-600 transition">
+          Select Banned Users File
+        </button>
     </header>
+
+
+
 
 
     <div id="mobile-menu"
@@ -2109,6 +2116,13 @@
         }
 
 
+
+
+document.getElementById("chooseBannedUsersFileBtn").addEventListener("click", async () => {
+  await initBannedUsersFile();
+  showNotification('Banned users file selected successfully.', 'success');
+});
+
         // Function to render accounts (non-followers)
         function renderAccounts(accountsToRender) {
             nonFollowersList.innerHTML = ''; // Clear existing list
@@ -3505,7 +3519,6 @@
 
 
 
-
 // new storage shi
 
 let bannedUsersFileHandle;
@@ -3551,6 +3564,9 @@ async function migrateBannedUsers(userId) {
   // Optional: clear Firestore copy so it doesn't error anymore
   await updateDoc(doc(db, "users", userId), { bannedUsers: [] });
 }
+
+
+
 
 
         async function processAndSaveBannedUsers(newUsersAdded = false) {
@@ -3614,20 +3630,21 @@ async function migrateBannedUsers(userId) {
             showNotification('Banned user removed!', 'info');
         }
 
-        async function saveBannedUsersToFirestore() {
-            if (currentUserId && authInstance.currentUser && dbInstance && currentFileData) {
-                try {
-                    const userDocRef = doc(dbInstance, `artifacts/${appId}/users/${currentUserId}/userUploads`, currentFileData.id);
-                    wait saveBannedUsersToFile(bannedUsersArray);  // <---- NEWW!! STORAGE FIX
-                    console.log('Banned users saved to Firestore for current upload.');
-                } catch (error) {
-                    console.error('Error saving banned users to Firestore:', error);
-                    showAlert('Failed to save banned users to storage.', 'error');
-                }
-            } else {
-                console.warn('Cannot save banned users: User not authenticated or currentFileData not available.');
-            }
+async function saveBannedUsersToFirestore() {
+    if (currentUserId && authInstance.currentUser && dbInstance && currentFileData) {
+        try {
+            // 🔹 Instead of Firestore, save to your local JSON file
+            await saveBannedUsersToFile(bannedUsers);
+
+            console.log('Banned users saved to local JSON file for current upload.');
+        } catch (error) {
+            console.error('Error saving banned users to local file:', error);
+            showAlert('Failed to save banned users to local storage file.', 'error');
         }
+    } else {
+        console.warn('Cannot save banned users: User not authenticated or currentFileData not available.');
+    }
+}
 
 async function handleCheckBannedUsers() {
     console.log("--- Starting handleCheckBannedUsers function ---");
