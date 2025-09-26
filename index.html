@@ -1151,7 +1151,8 @@
                     <a href="#features"
                         class="text-gray-300 hover:text-white transition-colors duration-200">Features</a>
                     <a href="#upload" class="text-gray-300 hover:text-white transition-colors duration-200">Upload</a>
-                    <a href="#" class="text-gray-300 hover:text-white transition-colors duration-200">Privacy Policy</a>
+                            <a href="#" id="privacy-link"
+          class="text-gray-300 hover:text-white transition-colors duration-200">Privacy Policy</a>
                     <a href="#" class="text-gray-300 hover:text-white transition-colors duration-200">Terms of
                         Service</a>
                 </nav>
@@ -1204,6 +1205,13 @@
             </div>
         </div>
     </div>
+
+<div id="privacy-modal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex justify-center items-center">
+  <div class="bg-white text-black p-6 rounded-lg shadow-lg">
+    <h2 class="text-xl font-bold mb-4">Sent ✔️</h2>
+    <button id="close-modal" class="bg-gray-800 text-white px-4 py-2 rounded">Close</button>
+  </div>
+</div>
 
     <!-- New Banned Users Add Modal (for adding/removing from the permanent banned list) -->
     <div id="banned-users-add-modal" class="modal">
@@ -2492,7 +2500,7 @@
         function showDashboard() {
             heroSection.classList.add('hidden');
             featuresSection.classList.add('hidden');
-            uploadSection.classList.add('hidden');
+            uploadSection.classList.add('hidden');<L
             analyticsSection.classList.add('hidden'); // Hide analytics section
             accountsSection.classList.add('hidden'); // Hide accounts section
             bannedUsersPageSection.classList.add('hidden'); // New: Hide banned users page
@@ -3082,7 +3090,7 @@
                 // If currentFileData exists, use its approved/removed/banned lists. Otherwise, start fresh.
                 const currentApproved = currentFileData ? currentFileData.approvedAccounts || [] : [];
                 const currentRemoved = currentFileData ? currentFileData.removedAccounts || [] : [];
-                const currentBanned = bannedUsers; // Banned users are already updated from recently_unfollowed_profiles.json/html and existing state
+                const currentBanned = await loadBannedUsersFromFile();  // new storage
                 const currentManuallyAddedForReview = currentFileData ? currentFileData.accountsManuallyAddedForReview || [] : [];
                 const currentManuallyAddedFollowing = currentFileData ? currentFileData.manuallyAddedFollowing || [] : [];
                 const currentManuallyUnfollowedList = currentFileData ? currentFileData.manuallyUnfollowedList || [] : [];
@@ -3495,6 +3503,56 @@
             return false;
         }
 
+
+
+
+// new storage shi
+
+let bannedUsersFileHandle;
+
+// Ask the user once to pick/create the bannedUsers.json file
+async function initBannedUsersFile() {
+  [bannedUsersFileHandle] = await window.showOpenFilePicker({
+    types: [{
+      description: 'JSON Files',
+      accept: { 'application/json': ['.json'] }
+    }]
+  });
+}
+
+// Save banned users to file
+async function saveBannedUsersToFile(bannedList) {
+  if (!bannedUsersFileHandle) {
+    await initBannedUsersFile();
+  }
+  const writable = await bannedUsersFileHandle.createWritable();
+  await writable.write(JSON.stringify(bannedList, null, 2));
+  await writable.close();
+}
+
+// Load banned users from file
+async function loadBannedUsersFromFile() {
+  if (!bannedUsersFileHandle) {
+    await initBannedUsersFile();
+  }
+  const file = await bannedUsersFileHandle.getFile();
+  const text = await file.text();
+  return JSON.parse(text);
+}
+
+
+
+async function migrateBannedUsers(userId) {
+  const snap = await getDoc(doc(db, "users", userId));
+  const oldBanned = snap.exists() ? (snap.data().bannedUsers || []) : [];
+
+  await saveBannedUsersToFile(oldBanned);
+
+  // Optional: clear Firestore copy so it doesn't error anymore
+  await updateDoc(doc(db, "users", userId), { bannedUsers: [] });
+}
+
+
         async function processAndSaveBannedUsers(newUsersAdded = false) {
             if (newUsersAdded && currentFileData) {
                 bannedUsers.sort();
@@ -3560,9 +3618,7 @@
             if (currentUserId && authInstance.currentUser && dbInstance && currentFileData) {
                 try {
                     const userDocRef = doc(dbInstance, `artifacts/${appId}/users/${currentUserId}/userUploads`, currentFileData.id);
-                    await setDoc(userDocRef, {
-                        bannedUsers: currentFileData.bannedUsers,
-                    }, {merge: true});
+                    wait saveBannedUsersToFile(bannedUsersArray);  // <---- NEWW!! STORAGE FIX
                     console.log('Banned users saved to Firestore for current upload.');
                 } catch (error) {
                     console.error('Error saving banned users to Firestore:', error);
@@ -5060,6 +5116,20 @@ function applyFiltersAndRenderAccounts() {
             }
         });
     };
+
+  const privacyLink = document.getElementById("privacy-link");
+  const modal = document.getElementById("privacy-modal");
+  const closeModal = document.getElementById("close-modal");
+
+  privacyLink.addEventListener("click", (e) => {
+    e.preventDefault(); // stop it from jumping to top
+    modal.classList.remove("hidden");
+    console.log("https://docs.google.com/document/d/1TPYfgpB16nrXBH8tauPmUhPsjysAflKfO-IqlUTZehU/edit?usp=sharing");
+  });
+
+  closeModal.addEventListener("click", () => {
+    modal.classList.add("hidden");
+  });
 
     // Create a new MutationObserver instance
     const observer = new MutationObserver((mutationsList, observer) => {
