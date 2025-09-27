@@ -3261,6 +3261,9 @@
 
 
         async function handleRemoveFromFollowingFromDashboard(username) {
+            console.log('Start of handleRemoveFromFollowingFromDashboard. Banned users list:', bannedUsers);
+
+
             if (!currentUserId || !currentFileData || !dbInstance) {
                 showAlert('User not authenticated or data not loaded.', 'error');
                 return;
@@ -3289,9 +3292,17 @@
                     manuallyUnfollowedList.sort();
                 }
 
+
+               if (!bannedUsers.includes(username)) {
+                   bannedUsers.push(username);
+                   bannedUsers.sort();
+               }
+
                 manuallyAddedFollowing = manuallyAddedFollowing.filter(user => user !== username);
 
                 await saveFollowingAndUnfollowedLists();
+                await saveBannedUsers(bannedUsers);
+                console.log(`banned ${username}`)
 
                 // Recalculate originalNotFollowingBack metrics
                 originalNotFollowingBack = originalNotFollowingBack.filter(account => 
@@ -3531,6 +3542,7 @@
                 throw new Error(`HTTP error! status: ${response.status}`);
             }
             const data = await response.json();
+            console.log('Successfully fetched data from JSON blob:', data);
             return data;
         } catch (error) {
             console.error('Error fetching banned users:', error);
@@ -3538,30 +3550,29 @@
         }
     }
 
-    // Function to save the banned users back to the API
-    async function saveBannedUsers(bannedUsers) {
-        try {
-            const response = await fetch(API_URL, {
-                method: 'PUT', // Use PUT to update the entire blob
-                headers: {
-                    'Content-Type': 'application/json'
-                },
-                body: JSON.stringify(bannedUsers)
-            });
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            console.log('Banned users saved successfully!');
-        } catch (error) {
-            console.error('Error saving banned users:', error);
+async function saveBannedUsers(bannedUsers) {
+    try {
+        console.log('Attempting to save banned users to JSON blob:', bannedUsers);
+        const response = await fetch(API_URL, {
+            method: 'PUT',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(bannedUsers)
+        });
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
         }
+        console.log('Banned users saved successfully! ${bannedUsers} ${username}');
+    } catch (error) {
+        console.error('Error saving banned users:', error);
     }
+}
 
 
         async function processAndSaveBannedUsers(newUsersAdded = false) {
             if (newUsersAdded && currentFileData) {
                 bannedUsers.sort();
-                currentFileData.bannedUsers = bannedUsers;
                 await saveBannedUsers(bannedUsers);
             }
             renderBannedUsersList();
@@ -3966,95 +3977,87 @@ function applyFiltersAndRenderAccounts() {
             }
         }
 
-        async function handleRemoveAccount(username) {
-            // REMOVED: window.open(`https://www.instagram.com/${username}/`, '_blank');
-            // The line above that previously opened the user's profile has been removed.
 
-            // Remove from accountsManuallyAddedForReview (if it exists there)
-            accountsManuallyAddedForReview = accountsManuallyAddedForReview.filter(account => account.username !== username);
+async function handleRemoveAccount(username) {
+    if (!currentUserId || !currentFileData || !dbInstance) {
+        showAlert('User not authenticated or data not loaded.', 'error');
+        return;
+    }
+    
+    try {
+        // Remove from accountsManuallyAddedForReview (if it exists there)
+        accountsManuallyAddedForReview = accountsManuallyAddedForReview.filter(account => account.username !== username);
 
-            // Add to removedAccountsList
-            if (!removedAccountsList.includes(username)) {
-                removedAccountsList.push(username);
-                removedAccountsList.sort(); // Keep sorted
-            }
-
-            // Add to manuallyUnfollowedList (this is the key change for correct following count)
-            // This list helps track users you've effectively unfollowed within the app's logic,
-            // without altering the original 'followingList' from your uploaded data.
-            if (!manuallyUnfollowedList.includes(username)) {
-                manuallyUnfollowedList.push(username);
-                manuallyUnfollowedList.sort();
-            }
-            // Also remove from manuallyAddedFollowing if they were added there
-            manuallyAddedFollowing = manuallyAddedFollowing.filter(user => user !== username);
-
-            // NEW: Add to bannedUsers list
-            // This ensures the user is added to your permanent banned list.
-            if (!bannedUsers.includes(username)) {
-                bannedUsers.push(username);
-                bannedUsers.sort();
-            }
-
-
-            // Update Firestore
-            // Save the state of accounts management (approved, removed, accounts for review)
-            await saveAccountsManagementState();
-            // Save the manually added and manually unfollowed lists.
-            // Note: The original 'followingList' from your uploaded file is kept as is,
-            // and the 'manuallyUnfollowedList' is used to adjust counts for display.
-            await saveFollowingAndUnfollowedLists();
-            // NEW: Save the updated bannedUsers list to Firestore
-            await saveBannedUsers(bannedUsers);
-
-
-            // Recalculate dashboard metrics based on the updated lists
-            if (currentFileData) {
-                // Re-derive originalNotFollowingBack based on the current state of followingList (from file)
-                // and manuallyAddedFollowing, then filter by manuallyUnfollowedList
-                const baseFollowingSet = new Set(currentFileData.followingList); // From uploaded file
-                manuallyAddedFollowing.forEach(user => baseFollowingSet.add(user)); // Add manually added
-
-                // Filter out manually unfollowed from this combined set to get the effective following
-                const effectiveFollowingSet = new Set(Array.from(baseFollowingSet).filter(user => !manuallyUnfollowedList.includes(user)));
-
-                // Re-calculate originalNotFollowingBack (people we follow who don't follow us back)
-                // This should compare the effective following set against the followers list from the file.
-                originalNotFollowingBack = Array.from(effectiveFollowingSet).filter(username =>
-                    username && // Ensure username is not null/undefined
-                    !new Set(currentFileData.followersList).has(username)
-                ).map(username => {
-                    // Try to find original timestamp if available, otherwise use a placeholder
-                    const originalAccount = currentFileData.originalNotFollowingBack.find(acc => acc && acc.username === username);
-                    return {username: username, timestamp: originalAccount ? originalAccount.timestamp : Math.floor(Date.now() / 1000)};
-                });
-                // Filter by safe users for display
-                allNonFollowers = originalNotFollowingBack.filter(account =>
-                    account &&
-                    account.username &&
-                    !safeUsers.includes(account.username) &&
-                    !manuallyUnfollowedList.includes(account.username) &&
-                    !removedAccountsList.includes(account.username)
-                );
-                // Calculate current total following including manual additions and removals
-                removedAccountsList.forEach(user => effectiveFollowingSet.delete(user));
-                const effectiveFollowingCount = effectiveFollowingSet.size;
-
-                updateDashboardMetrics(
-                    effectiveFollowingCount,
-                    currentFileData.totalFollowers,
-                    allNonFollowers.length,
-                    originalNotFollowingBack.length,
-                    (currentFileData.recentlyUnfollowedProfiles || []).length
-                );
-                applyFiltersAndRenderAccounts(); // Re-render dashboard list
-            }
-
-            // Re-render and update metrics for accounts management
-            applyAccountsManagementFiltersAndRender();
-            updateAccountsManagementMetrics();
-            showNotification(`Account ${username} removed and unfollowed!`, 'success');
+        // Add to removedAccountsList and sort
+        if (!removedAccountsList.includes(username)) {
+            removedAccountsList.push(username);
+            removedAccountsList.sort();
         }
+
+        // Add to manuallyUnfollowedList and sort
+        if (!manuallyUnfollowedList.includes(username)) {
+            manuallyUnfollowedList.push(username);
+            manuallyUnfollowedList.sort();
+        }
+
+        // Remove from manuallyAddedFollowing if they were added there
+        manuallyAddedFollowing = manuallyAddedFollowing.filter(user => user !== username);
+
+        // Add to bannedUsers list and sort
+        if (!bannedUsers.includes(username)) {
+            bannedUsers.push(username);
+            bannedUsers.sort();
+        }
+
+        // Save to Firebase first, since it is still used for removedAccountsList
+        await saveAccountsManagementState();
+        await saveFollowingAndUnfollowedLists();
+
+        // This single line is correct and replaces the two old save lines for banned users
+        await processAndSaveBannedUsers(true);
+
+        // Recalculate dashboard metrics based on the updated lists
+        if (currentFileData) {
+            const baseFollowingSet = new Set(currentFileData.followingList);
+            manuallyAddedFollowing.forEach(user => baseFollowingSet.add(user));
+            const effectiveFollowingSet = new Set(Array.from(baseFollowingSet).filter(user => !manuallyUnfollowedList.includes(user)));
+            originalNotFollowingBack = Array.from(effectiveFollowingSet).filter(username =>
+                username && !new Set(currentFileData.followersList).has(username)
+            ).map(username => {
+                const originalAccount = currentFileData.originalNotFollowingBack.find(acc => acc && acc.username === username);
+                return {username: username, timestamp: originalAccount ? originalAccount.timestamp : Math.floor(Date.now() / 1000)};
+            });
+
+            allNonFollowers = originalNotFollowingBack.filter(account =>
+                account &&
+                account.username &&
+                !safeUsers.includes(account.username) &&
+                !manuallyUnfollowedList.includes(account.username) &&
+                !removedAccountsList.includes(account.username)
+            );
+            removedAccountsList.forEach(user => effectiveFollowingSet.delete(user));
+            const effectiveFollowingCount = effectiveFollowingSet.size;
+
+            updateDashboardMetrics(
+                effectiveFollowingCount,
+                currentFileData.totalFollowers,
+                allNonFollowers.length,
+                originalNotFollowingBack.length,
+                (currentFileData.recentlyUnfollowedProfiles || []).length
+            );
+            applyFiltersAndRenderAccounts();
+        }
+
+        // Re-render and update metrics for accounts management
+        applyAccountsManagementFiltersAndRender();
+        updateAccountsManagementMetrics();
+        showNotification(`Account ${username} removed and unfollowed!`, 'success');
+
+    } catch (error) {
+        console.error('Error removing user:', error);
+        showAlert('Failed to remove user. Please try again.', 'error');
+    }
+}
 
         async function handleApproveAccount(username) {
             // Remove from accountsManuallyAddedForReview (if it exists there)
