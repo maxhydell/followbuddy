@@ -1735,7 +1735,7 @@
                         allNonFollowers = [];
                         originalNotFollowingBack = [];
                         safeUsers = [];
-                        bannedUsers = []; // Reset banned users on logout
+                        bannedUsers = await getBannedUsers();
                         allUserUploadsMetadata = [];
                         accountsManuallyAddedForReview = []; // Reset accounts management list
                         approvedAccountsList = [];
@@ -1940,7 +1940,7 @@
                         // [!code focus]
                         // CORRECT: Load all necessary lists from the database first.
                         safeUsers = currentFileData.safeUsers || [];
-                        bannedUsers = currentFileData.bannedUsers || [];
+                        bannedUsers = await getBannedUsers();
                         await automaticallyAddOrangeUsersToBanned();
                         manuallyAddedFollowing = currentFileData.manuallyAddedFollowing || [];
                         manuallyUnfollowedList = currentFileData.manuallyUnfollowedList || [];
@@ -2735,7 +2735,7 @@
                 allNonFollowers = [];
                 originalNotFollowingBack = [];
                 safeUsers = [];
-                bannedUsers = []; // Clear banned users on logout
+                bannedUsers = await getBannedUsers();
                 allUserUploadsMetadata = []; // Clear upload metadata
                 accountsManuallyAddedForReview = []; // Reset accounts management list
                 approvedAccountsList = [];
@@ -3095,7 +3095,7 @@
                 // If currentFileData exists, use its approved/removed/banned lists. Otherwise, start fresh.
                 const currentApproved = currentFileData ? currentFileData.approvedAccounts || [] : [];
                 const currentRemoved = currentFileData ? currentFileData.removedAccounts || [] : [];
-                const currentBanned = await loadBannedUsersFromFile();  // new storage
+                const currentBanned = await getBannedUsers();
                 const currentManuallyAddedForReview = currentFileData ? currentFileData.accountsManuallyAddedForReview || [] : [];
                 const currentManuallyAddedFollowing = currentFileData ? currentFileData.manuallyAddedFollowing || [] : [];
                 const currentManuallyUnfollowedList = currentFileData ? currentFileData.manuallyUnfollowedList || [] : [];
@@ -3117,7 +3117,6 @@
                     youDontFollowBackCount: totalFollowers - new Set(Array.from(followingListFromFile).concat(manuallyAddedFollowing)).size, // This is the "followers I don't follow back" count based on combined following
                     recentlyUnfollowedProfiles: currentRecentlyUnfollowedProfiles, // New: Save the raw data for "People You Unfollowed"
                     safeUsers: safeUsers, // Current safe users
-                    bannedUsers: currentBanned, // New: Save current banned users
                     accountsManuallyAddedForReview: currentManuallyAddedForReview, // Save accounts manually added for review
                     approvedAccounts: currentApproved, // Save current approved accounts
                     removedAccounts: currentRemoved, // Save current removed accounts
@@ -3140,7 +3139,7 @@
                     // Update global lists for unauthenticated users
                     approvedAccountsList = currentApproved;
                     removedAccountsList = currentRemoved;
-                    bannedUsers = currentBanned; // New: Update global banned users for unauthenticated users
+                    bannedUsers = await getBannedUsers(); 
                     accountsManuallyAddedForReview = currentManuallyAddedForReview; // Update global manually added for review
                     manuallyAddedFollowing = currentManuallyAddedFollowing; // Update global manually added following
                     manuallyUnfollowedList = currentManuallyUnfollowedList; // Update global manually unfollowed list
@@ -4006,7 +4005,7 @@ function applyFiltersAndRenderAccounts() {
             // and the 'manuallyUnfollowedList' is used to adjust counts for display.
             await saveFollowingAndUnfollowedLists();
             // NEW: Save the updated bannedUsers list to Firestore
-            await saveBannedUsersToFirestore();
+            await saveBannedUsers(bannedUsers);
 
 
             // Recalculate dashboard metrics based on the updated lists
