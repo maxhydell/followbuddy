@@ -543,8 +543,6 @@
             <a href="#" class="text-2xl font-bold text-gray-100">FollowBuddy</a>
         </div>
         <nav class="hidden md:flex space-x-8">
-            <a href="#features" class="text-gray-300 hover:text-blue-400 transition-colors duration-200">Features</a>
-            <a href="#upload" class="text-gray-300 hover:text-blue-400 transition-colors duration-200">Upload</a>
             <a href="#dashboard-section" id="dashboard-nav-link"
                 class="text-gray-300 hover:text-blue-400 transition-colors duration-200 flex items-center">
                 <i class="fas fa-tachometer-alt mr-2"></i><span>Dashboard</span>
@@ -571,10 +569,6 @@
         </div>
         <button id="mobile-menu-button" class="md:hidden text-gray-300 hover:text-blue-400 focus:outline-none">
             <i class="fas fa-bars text-xl"></i>
-        </button>
-        <button id="chooseBannedUsersFileBtn" 
-          class="bg-gray-700 text-white px-3 py-1 rounded hover:bg-gray-600 transition">
-          Select Banned Users File
         </button>
     </header>
 
@@ -2118,10 +2112,7 @@
 
 
 
-document.getElementById("chooseBannedUsersFileBtn").addEventListener("click", async () => {
-  await initBannedUsersFile();
-  showNotification('Banned users file selected successfully.', 'success');
-});
+
 
         // Function to render accounts (non-followers)
         function renderAccounts(accountsToRender) {
@@ -3521,62 +3512,64 @@ document.getElementById("chooseBannedUsersFileBtn").addEventListener("click", as
 
 // new storage shi
 
-let bannedUsersFileHandle;
+//json storage online isntaed
 
-// Ask the user once to pick/create the bannedUsers.json file
-async function initBannedUsersFile() {
-  [bannedUsersFileHandle] = await window.showOpenFilePicker({
-    types: [{
-      description: 'JSON Files',
-      accept: { 'application/json': ['.json'] }
-    }]
-  });
-}
+    const BLOB_ID = '1421567775025061888';
+    const API_URL = `https://jsonblob.com/api/jsonBlob/${BLOB_ID}`;
+    console.log(`Reading from ${BLOB_ID}`)
 
-// Save banned users to file
-async function saveBannedUsersToFile(bannedList) {
-  if (!bannedUsersFileHandle) {
-    await initBannedUsersFile();
-  }
-  const writable = await bannedUsersFileHandle.createWritable();
-  await writable.write(JSON.stringify(bannedList, null, 2));
-  await writable.close();
-}
+   
+    // Function to get the banned users from the API
+    async function getBannedUsers() {
+        try {
+            const response = await fetch(API_URL, {
+                method: 'GET',
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            const data = await response.json();
+            return data;
+        } catch (error) {
+            console.error('Error fetching banned users:', error);
+            return []; // Return an empty array on error
+        }
+    }
 
-// Load banned users from file
-async function loadBannedUsersFromFile() {
-  if (!bannedUsersFileHandle) {
-    await initBannedUsersFile();
-  }
-  const file = await bannedUsersFileHandle.getFile();
-  const text = await file.text();
-  return JSON.parse(text);
-}
-
-
-
-async function migrateBannedUsers(userId) {
-  const snap = await getDoc(doc(db, "users", userId));
-  const oldBanned = snap.exists() ? (snap.data().bannedUsers || []) : [];
-
-  await saveBannedUsersToFile(oldBanned);
-
-  // Optional: clear Firestore copy so it doesn't error anymore
-  await updateDoc(doc(db, "users", userId), { bannedUsers: [] });
-}
-
-
-
+    // Function to save the banned users back to the API
+    async function saveBannedUsers(bannedUsers) {
+        try {
+            const response = await fetch(API_URL, {
+                method: 'PUT', // Use PUT to update the entire blob
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(bannedUsers)
+            });
+            if (!response.ok) {
+                throw new Error(`HTTP error! status: ${response.status}`);
+            }
+            console.log('Banned users saved successfully!');
+        } catch (error) {
+            console.error('Error saving banned users:', error);
+        }
+    }
 
 
         async function processAndSaveBannedUsers(newUsersAdded = false) {
             if (newUsersAdded && currentFileData) {
                 bannedUsers.sort();
                 currentFileData.bannedUsers = bannedUsers;
-                await saveBannedUsersToFirestore();
+                await saveBannedUsers(bannedUsers);
             }
             renderBannedUsersList();
         }
+
+
+// end of new shi
 
         const addBannedUserButtonClickHandler = async () => {
             const username = bannedUserInput.value.trim();
