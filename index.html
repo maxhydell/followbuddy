@@ -1047,7 +1047,6 @@
                                     class="fas fa-download mr-2"></i>Download CSV</button>
                         </div>
                     </div>
-
                     <div id="accounts-management-list" class="space-y-2">
                         <p class="text-gray-500 text-center">No accounts to display. Upload your Instagram data.</p>
                     </div>
@@ -1061,6 +1060,20 @@
                             Remove all Red
                         </button>
                     </div>
+                <div class="flex justify-center space-x-4 mt-8">
+                    <button id="open-green-remove-btn"
+                        class="bg-green-600 text-white px-6 py-3 rounded-lg shadow hover:bg-green-700 transition-colors duration-200 font-medium">
+                        Open All Green
+                    </button>
+                    <button id="open-orange-remove-btn"
+                        class="bg-orange-600 text-white px-6 py-3 rounded-lg shadow hover:bg-orange-700 transition-colors duration-200 font-medium">
+                        Open All Orange
+                    </button>
+                    <button id="open-red-remove-btn"
+                        class="bg-red-600 text-white px-6 py-3 rounded-lg shadow hover:bg-red-700 transition-colors duration-200 font-medium">
+                        Open All Red
+                    </button>
+                </div>
                 </div>
             </div>
         </div>
@@ -4174,6 +4187,80 @@ async function handleRemoveAllRedAccounts() {
     showNotification(`Removed ${redUsers.length} red accounts successfully!`, 'success');
 }
 
+document.addEventListener('DOMContentLoaded', () => {
+    // Function to determine the color category based on the timestamp
+    function formatTimeDifference(timestamp) {
+        const now = Date.now();
+        const timeDifference = now - (timestamp * 1000);
+        const daysDifference = timeDifference / (1000 * 60 * 60 * 24);
+
+        let category;
+        if (daysDifference < 1) {
+            category = 'green';
+        } else if (daysDifference >= 1 && daysDifference <= 7) {
+            category = 'orange';
+        } else {
+            category = 'red';
+        }
+
+        return { category };
+    }
+
+    // Function to handle opening users from the "Accounts to Review" list
+    // This version directly uses the accountsToRemoveList variable
+    function openAccountsToRemoveByColor(color) {
+        if (typeof accountsToRemoveList === 'undefined' || accountsToRemoveList.length === 0) {
+            console.error("accountsToRemoveList is not defined or is empty.");
+            return;
+        }
+
+        // Filter the list to get only accounts of the specified color
+        const accountsToOpen = accountsToRemoveList.filter(account => {
+            if (!account || !account.timestamp) {
+                return false;
+            }
+            const timeInfo = formatTimeDifference(account.timestamp);
+            return timeInfo.category === color;
+        });
+
+        if (accountsToOpen.length === 0) {
+            console.warn(`No ${color} accounts found to open.`);
+            return;
+        }
+
+        let delay = 0;
+        accountsToOpen.forEach(account => {
+            const username = account.username;
+            setTimeout(() => {
+                window.open(`https://www.instagram.com/${username}/`, '_blank');
+            }, delay);
+            delay += 500; // Add a 500ms delay between opening each tab
+        });
+    }
+
+    // Add event listeners for the new buttons
+    const greenBtn = document.getElementById('open-green-remove-btn');
+    const orangeBtn = document.getElementById('open-orange-remove-btn');
+    const redBtn = document.getElementById('open-red-remove-btn');
+
+    if (greenBtn) {
+        greenBtn.addEventListener('click', () => {
+            openAccountsToRemoveByColor('green');
+        });
+    }
+
+    if (orangeBtn) {
+        orangeBtn.addEventListener('click', () => {
+            openAccountsToRemoveByColor('orange');
+        });
+    }
+
+    if (redBtn) {
+        redBtn.addEventListener('click', () => {
+            openAccountsToRemoveByColor('red');
+        });
+    }
+});
 
         async function handleApproveAccount(username) {
             // Remove from accountsManuallyAddedForReview (if it exists there)
