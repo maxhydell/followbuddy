@@ -860,6 +860,16 @@
                         Open Red Users
                     </button>
                 </div>
+                <div class="flex justify-center space-x-4 mt-8">
+                    <button id="remove-all-orange-dashboard-btn"
+                        class="bg-orange-600 text-white px-6 py-3 rounded-lg shadow hover:bg-orange-700 transition-colors duration-200 font-medium">
+                        Remove all Orange
+                    </button>
+                    <button id="remove-all-red-dashboard-btn"
+                        class="bg-red-600 text-white px-6 py-3 rounded-lg shadow hover:bg-red-700 transition-colors duration-200 font-medium">
+                        Remove all Red
+                    </button>
+                </div>
             </div>
         </div>
     </section>
@@ -1041,6 +1051,16 @@
                     <div id="accounts-management-list" class="space-y-2">
                         <p class="text-gray-500 text-center">No accounts to display. Upload your Instagram data.</p>
                     </div>
+                    <div class="flex justify-center space-x-4 mt-8">
+                        <button id="remove-all-orange-btn"
+                            class="bg-orange-600 text-white px-6 py-3 rounded-lg shadow hover:bg-orange-700 transition-colors duration-200 font-medium">
+                            Remove all Orange
+                        </button>
+                        <button id="remove-all-red-btn"
+                            class="bg-red-600 text-white px-6 py-3 rounded-lg shadow hover:bg-red-700 transition-colors duration-200 font-medium">
+                            Remove all Red
+                        </button>
+                    </div>
                 </div>
             </div>
         </div>
@@ -1166,7 +1186,7 @@
                             class="fab fa-instagram"></i></a>
                 </div>
             </div>
-            <p class="text-gray-400 text-sm">&copy; 2025 FollowBudd. All rights reserved. Developed by Max Hydell.</p>
+            <p class="text-gray-400 text-sm">&copy; 2025 FollowBuddy. All rights reserved.</p>
         </div>
     </footer>
 
@@ -3333,7 +3353,53 @@
             }
         }
 
+async function handleRemoveAllOrangeFromDashboard() {
+    // Show a confirmation dialog
+    if (!confirm('Are you sure you want to remove all orange accounts from your following list?')) {
+        return;
+    }
 
+    const nonFollowers = JSON.parse(localStorage.getItem('nonFollowers'));
+    const orangeUsers = nonFollowers.filter(user => {
+        const timeInfo = formatTimeDifference(user.timestamp);
+        return timeInfo.category === 'orange';
+    });
+
+    if (orangeUsers.length === 0) {
+        showAlert('No orange accounts found to remove.', 'info');
+        return;
+    }
+
+    // Loop through all orange users and call the existing removal function
+    for (const user of orangeUsers) {
+        await handleRemoveFromFollowingFromDashboard(user.username);
+    }
+    showNotification(`Removed ${orangeUsers.length} orange non-followers successfully!`, 'success');
+}
+
+async function handleRemoveAllRedFromDashboard() {
+    // Show a confirmation dialog
+    if (!confirm('Are you sure you want to remove all red accounts from your following list?')) {
+        return;
+    }
+
+    const nonFollowers = JSON.parse(localStorage.getItem('nonFollowers'));
+    const redUsers = nonFollowers.filter(user => {
+        const timeInfo = formatTimeDifference(user.timestamp);
+        return timeInfo.category === 'red';
+    });
+
+    if (redUsers.length === 0) {
+        showAlert('No red accounts found to remove.', 'info');
+        return;
+    }
+
+    // Loop through all red users and call the existing removal function
+    for (const user of redUsers) {
+        await handleRemoveFromFollowingFromDashboard(user.username);
+    }
+    showNotification(`Removed ${redUsers.length} red non-followers successfully!`, 'success');
+}
 
         async function processAndSaveSafeUsers(newUsersAdded = false) {
             if (newUsersAdded && currentFileData) {
@@ -4010,11 +4076,11 @@ async function handleRemoveAccount(username) {
         }
 
         // Save to Firebase first, since it is still used for removedAccountsList
-        await saveAccountsManagementState();
+        await processAndSaveBannedUsers(true);
         await saveFollowingAndUnfollowedLists();
 
         // This single line is correct and replaces the two old save lines for banned users
-        await processAndSaveBannedUsers(true);
+
 
         // Recalculate dashboard metrics based on the updated lists
         if (currentFileData) {
@@ -4058,6 +4124,56 @@ async function handleRemoveAccount(username) {
         showAlert('Failed to remove user. Please try again.', 'error');
     }
 }
+
+
+// remove all 
+
+async function handleRemoveAllOrangeAccounts() {
+    // Show a confirmation dialog
+    if (!confirm('Are you sure you want to remove all orange accounts? This action cannot be undone.')) {
+        return;
+    }
+
+    const orangeUsers = accountsToRemoveList.filter(account => {
+        const timeInfo = formatTimeDifference(account.timestamp);
+        return timeInfo.category === 'orange';
+    });
+
+    if (orangeUsers.length === 0) {
+        showAlert('No orange accounts found to remove.', 'info');
+        return;
+    }
+
+    // Loop through all orange users and call the existing removal function
+    for (const account of orangeUsers) {
+        await handleRemoveAccount(account.username);
+    }
+    showNotification(`Removed ${orangeUsers.length} orange accounts successfully!`, 'success');
+}
+
+async function handleRemoveAllRedAccounts() {
+    // Show a confirmation dialog
+    if (!confirm('Are you sure you want to remove all red accounts? This action cannot be undone.')) {
+        return;
+    }
+
+    const redUsers = accountsToRemoveList.filter(account => {
+        const timeInfo = formatTimeDifference(account.timestamp);
+        return timeInfo.category === 'red';
+    });
+
+    if (redUsers.length === 0) {
+        showAlert('No red accounts found to remove.', 'info');
+        return;
+    }
+
+    // Loop through all red users and call the existing removal function
+    for (const account of redUsers) {
+        await handleRemoveAccount(account.username);
+    }
+    showNotification(`Removed ${redUsers.length} red accounts successfully!`, 'success');
+}
+
 
         async function handleApproveAccount(username) {
             // Remove from accountsManuallyAddedForReview (if it exists there)
@@ -4807,6 +4923,15 @@ async function handleRemoveAccount(username) {
             closeFollowingListModal = document.getElementById('close-following-list-modal');
             followingListContainer = document.getElementById('following-list-container');
             followingSearchInput = document.getElementById('following-search-input');
+
+
+            // New event listeners for 'Remove all' buttons
+            document.getElementById('remove-all-orange-btn').addEventListener('click', handleRemoveAllOrangeAccounts);
+            document.getElementById('remove-all-red-btn').addEventListener('click', handleRemoveAllRedAccounts);
+            // New event listeners for dashboard 'Remove all' buttons
+            document.getElementById('remove-all-orange-dashboard-btn').addEventListener('click', handleRemoveAllOrangeFromDashboard);
+            document.getElementById('remove-all-red-dashboard-btn').addEventListener('click', handleRemoveAllRedFromDashboard);
+
             // *** END OF NEW ASSIGNMENTS ***
 
 
