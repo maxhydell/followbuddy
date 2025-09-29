@@ -3372,8 +3372,7 @@ async function handleRemoveAllOrangeFromDashboard() {
         return;
     }
 
-    const nonFollowers = JSON.parse(localStorage.getItem('nonFollowers')) || [];
-    const orangeUsers = nonFollowers.filter(user => {
+    const orangeUsers = allNonFollowers.filter(user => {
         const timeInfo = formatTimeDifference(user.timestamp);
         return timeInfo.category === 'orange';
     });
@@ -3396,8 +3395,7 @@ async function handleRemoveAllRedFromDashboard() {
         return;
     }
 
-    const nonFollowers = JSON.parse(localStorage.getItem('nonFollowers')) || [];
-    const redUsers = nonFollowers.filter(user => {
+    const redUsers = allNonFollowers.filter(user => {
         const timeInfo = formatTimeDifference(user.timestamp);
         return timeInfo.category === 'red';
     });
@@ -4082,14 +4080,16 @@ async function handleRemoveAccount(username) {
         // Remove from manuallyAddedFollowing if they were added there
         manuallyAddedFollowing = manuallyAddedFollowing.filter(user => user !== username);
 
+// no longer needed as we have the emailreader putting them to banned, this just takes up time.
         // Add to bannedUsers list and sort
-        if (!bannedUsers.includes(username)) {
-            bannedUsers.push(username);
-            bannedUsers.sort();
-        }
+       // if (!bannedUsers.includes(username)) {
+         //   bannedUsers.push(username);
+          //  bannedUsers.sort();
+       // }
 
         // Save to Firebase first, since it is still used for removedAccountsList
-        await processAndSaveBannedUsers(true);
+        // await processAndSaveBannedUsers(true);
+// ^^^^^^^^^^^^^ no longer needed ^^^^^^^^^^^^^^
         await saveFollowingAndUnfollowedLists();
 
         // This single line is correct and replaces the two old save lines for banned users
