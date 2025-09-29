@@ -3372,7 +3372,7 @@ async function handleRemoveAllOrangeFromDashboard() {
         return;
     }
 
-    const nonFollowers = JSON.parse(localStorage.getItem('nonFollowers'));
+    const nonFollowers = JSON.parse(localStorage.getItem('nonFollowers')) || [];
     const orangeUsers = nonFollowers.filter(user => {
         const timeInfo = formatTimeDifference(user.timestamp);
         return timeInfo.category === 'orange';
@@ -3396,7 +3396,7 @@ async function handleRemoveAllRedFromDashboard() {
         return;
     }
 
-    const nonFollowers = JSON.parse(localStorage.getItem('nonFollowers'));
+    const nonFollowers = JSON.parse(localStorage.getItem('nonFollowers')) || [];
     const redUsers = nonFollowers.filter(user => {
         const timeInfo = formatTimeDifference(user.timestamp);
         return timeInfo.category === 'red';
