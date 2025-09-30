@@ -2017,11 +2017,13 @@
 
                         accountsToRemoveList = accountsManuallyAddedForReview.filter(account =>
                             !approvedAccountsList.includes(account.username) &&
+                            !safeUsers.includes(account.username) &&  // new line
+                            !manuallyUnfollowedList.includes(account.username) &&  // new line 
                             !removedAccountsList.includes(account.username)
                         );
                         // Sort by oldest to newest by default for this list
                         accountsToRemoveList.sort((a, b) => (a.timestamp || 0) - (b.timestamp || 0));
-
+// test
 
                         // Find the previous upload for analytics calculation
                         const currentIndex = allUserUploadsMetadata.findIndex(upload => upload.id === uploadId);
@@ -4080,17 +4082,15 @@ async function handleRemoveAccount(username) {
         // Remove from manuallyAddedFollowing if they were added there
         manuallyAddedFollowing = manuallyAddedFollowing.filter(user => user !== username);
 
-// no longer needed as we have the emailreader putting them to banned, this just takes up time.
+
         // Add to bannedUsers list and sort
-       // if (!bannedUsers.includes(username)) {
-         //   bannedUsers.push(username);
-          //  bannedUsers.sort();
-       // }
+        if (!bannedUsers.includes(username)) {
+            bannedUsers.push(username);
+            bannedUsers.sort();
+        }
 
         // Save to Firebase first, since it is still used for removedAccountsList
-        // await processAndSaveBannedUsers(true);
-// ^^^^^^^^^^^^^ no longer needed ^^^^^^^^^^^^^^
-        await saveFollowingAndUnfollowedLists();
+        await saveAccountsManagementState();
 
         // This single line is correct and replaces the two old save lines for banned users
 
