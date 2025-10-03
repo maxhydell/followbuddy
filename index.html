@@ -3059,22 +3059,36 @@
                     }
                 }
 
-                // Process recently unfollowed data for banned users list
-                if (recentlyUnfollowedData && Array.isArray(recentlyUnfollowedData.relationships_unfollowed_users)) {
-                    recentlyUnfollowedData.relationships_unfollowed_users.forEach(item => {
-                        if (item.string_list_data && item.string_list_data.length > 0) {
-                            const username = item.string_list_data[0].value.toLowerCase(); // Store in lowercase
-                            if (!bannedUsers.includes(username)) {
-                                bannedUsers.push(username);
-                            }
-                        }
-                    });
-                    bannedUsers.sort(); // Keep sorted
-                    console.log("Banned users updated from recently unfollowed:", bannedUsers);
-                } else if (recentlyUnfollowedData) {
-                    console.warn("recently_unfollowed_profiles data found but did not contain expected 'relationships_unfollowed_users' array.");
-                }
+                // Process recently unfollowed data for banned users list (NEW, SAFE LOGIC)
+                if (recentlyUnfollowedData && Array.isArray(recentlyUnfollowedData.relationships_unfollowed_users)) {
+                    const newBannedUsernames = [];
 
+                    recentlyUnfollowedData.relationships_unfollowed_users.forEach(item => {
+                        if (item.string_list_data && item.string_list_data.length > 0) {
+                            const username = item.string_list_data[0].value.toLowerCase();
+                            // Check against the current combined global list
+                            if (!bannedUsers.includes(username)) {
+                                newBannedUsernames.push(username); 
+                            }
+                        }
+                    });
+
+                    // 💥 CRITICAL: Write new users only to the secondary list and update the global list
+                    if (newBannedUsernames.length > 0) {
+                        await updateNewBannedUsers(newBannedUsernames);
+        
+                        // After successfully writing the new users, reload the entire, merged banned list 
+                        // to ensure 'bannedUsers' is current for the rest of the function's execution.
+                        bannedUsers = await getBannedUsers(); 
+        
+                        console.log(`Successfully wrote ${newBannedUsernames.length} new users. Banned users list size is now: ${bannedUsers.length}`);
+                    } else {
+                        console.log("No new banned users found to add from the uploaded file.");
+                    }
+    
+                } else if (recentlyUnfollowedData) {
+                    console.warn("recently_unfollowed_profiles data found but did not contain expected 'relationships_unfollowed_users' array.");
+                }
 
                 const followingListFromFile = new Set(); // This will be the base from the file
                 const followingMapFromFile = new Map(); // To store timestamps from the file
@@ -3150,13 +3164,13 @@
                     followersList: Array.from(followersUsernames), // Save as array for Firestore
                     originalNotFollowingBack, // This is based on file data only
                     youDontFollowBackCount: totalFollowers - new Set(Array.from(followingListFromFile).concat(manuallyAddedFollowing)).size, // This is the "followers I don't follow back" count based on combined following
-                    recentlyUnfollowedProfiles: currentRecentlyUnfollowedProfiles, // New: Save the raw data for "People You Unfollowed"
-                    safeUsers: safeUsers, // Current safe users
-                    accountsManuallyAddedForReview: currentManuallyAddedForReview, // Save accounts manually added for review
-                    approvedAccounts: currentApproved, // Save current approved accounts
-                    removedAccounts: currentRemoved, // Save current removed accounts
-                    manuallyAddedFollowing: currentManuallyAddedFollowing, // Save manually added following
-                    manuallyUnfollowedList: currentManuallyUnfollowedList // Save manually unfollowed list
+                    recentlyUnfollowedProfiles: currentRecentlyUnfollowedProfiles ?? [], 
+                    safeUsers: safeUsers ?? [], 
+                    accountsManuallyAddedForReview: currentManuallyAddedForReview ?? [], 
+                    approvedAccounts: currentApproved ?? [], 
+                    removedAccounts: currentRemoved ?? [], 
+                    manuallyAddedFollowing: currentManuallyAddedFollowing ?? [],
+                    manuallyUnfollowedList: currentManuallyUnfollowedList ?? []
                 };
 
                 // Save data to Firestore
@@ -3603,60 +3617,120 @@ async function handleRemoveAllRedFromDashboard() {
 
 //json storage online isntaed
 
-    const BLOB_ID = '1421567775025061888';
-    const API_URL = `https://jsonblob.com/api/jsonBlob/${BLOB_ID}`;
-    console.log(`Reading from ${BLOB_ID}`)
+// Add these constants at the top of your script
+const MASTER_BANNED_URL = 'https://jsonblob.com/1421567775025061888';
+const NEW_BANNED_URL = 'YOUR_NEW_JSONBLOB_URL_HERE'; // *** CRITICAL: Get a new JSONBlob URL for writable data ***
+const MIN_BANNED_COUNT = 3000; // Set a floor for the acceptable number of banned users
 
    
-    // Function to get the banned users from the API
-    async function getBannedUsers() {
-        try {
-            const response = await fetch(API_URL, {
-                method: 'GET',
-                headers: {
-                    'Content-Type': 'application/json'
-                }
-            });
-            if (!response.ok) {
-                throw new Error(`HTTP error! status: ${response.status}`);
-            }
-            const data = await response.json();
-            console.log('Successfully fetched data from JSON blob:', data);
-            return data;
-        } catch (error) {
-            console.error('Error fetching banned users:', error);
-            return []; // Return an empty array on error
+// Replace your existing getBannedUsers() function
+async function getBannedUsers() {
+    let masterList = [];
+    let newUsersList = [];
+
+    // --- 1. Fetch MASTER List (3.3K users) ---
+    try {
+        const masterResponse = await fetch(MASTER_BANNED_URL);
+        if (masterResponse.ok) {
+            masterList = await masterResponse.json();
+        } else {
+            console.error('Failed to fetch MASTER banned list:', masterResponse.status);
         }
+    } catch (e) {
+        console.error('Network error fetching MASTER banned list:', e);
+        // CRITICAL: Do NOT fail completely, proceed with the assumption that the main list might be temporarily unavailable
     }
 
-async function saveBannedUsers(bannedUsers) {
+    // --- 2. Fetch NEW Users List ---
     try {
-        console.log('Attempting to save banned users to JSON blob:', bannedUsers);
-        const response = await fetch(API_URL, {
-            method: 'PUT',
+        const newResponse = await fetch(NEW_BANNED_URL);
+        if (newResponse.ok) {
+            newUsersList = await newResponse.json();
+        } else {
+            console.warn('Failed to fetch NEW banned list. Assuming it is empty.');
+        }
+    } catch (e) {
+        console.warn('Network error fetching NEW banned list. Assuming it is empty.', e);
+    }
+    
+    // Combine and deduplicate the two lists
+    const combinedSet = new Set([...masterList, ...newUsersList]);
+    const finalBannedUsers = Array.from(combinedSet).sort();
+
+    // --- 3. Data Integrity and Rollback Check ---
+    if (finalBannedUsers.length < MIN_BANNED_COUNT) {
+        // Log the severe failure and alert the user (since we cannot text/email)
+        const discrepancy = MIN_BANNED_COUNT - finalBannedUsers.length;
+        const message = `SECURITY ALERT: Banned list count (${finalBannedUsers.length}) is ${discrepancy} less than the minimum required (${MIN_BANNED_COUNT}). This is a serious data integrity issue. Defaulting to Master List only.`;
+        
+        console.error(message);
+        showAlert(message, 'error'); // Use your existing showAlert
+        
+        // **AUTOMATIC ROLLBACK:** Return ONLY the master list if the combined list is too small.
+        return masterList.sort();
+    }
+
+    return finalBannedUsers;
+}
+
+async function updateNewBannedUsers(newUsersToAdd) {
+    if (!NEW_BANNED_URL || newUsersToAdd.length === 0) return;
+
+    let currentNewList = [];
+
+    // 1. Read current NEW list
+    try {
+        const readResponse = await fetch(NEW_BANNED_URL);
+        if (readResponse.ok) {
+            currentNewList = await readResponse.json();
+        }
+    } catch (e) {
+        console.warn('Could not read existing NEW banned users list. Starting fresh for the write.', e);
+    }
+
+    // 2. Combine and deduplicate (ensure no master users are accidentally written)
+    const combinedSet = new Set([...currentNewList, ...newUsersToAdd]);
+    const updatedNewList = Array.from(combinedSet).sort();
+    
+    // Check if the list grew. If not, don't write.
+    if (updatedNewList.length <= currentNewList.length) {
+        console.log('No new unique banned users to write to the secondary list.');
+        return;
+    }
+
+    // 3. Write back the updated NEW list
+    try {
+        const writeResponse = await fetch(NEW_BANNED_URL, {
+            method: 'PUT', // or POST, depending on your JSONBlob setup
             headers: {
                 'Content-Type': 'application/json'
             },
-            body: JSON.stringify(bannedUsers)
+            body: JSON.stringify(updatedNewList)
         });
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+
+        if (writeResponse.ok) {
+            console.log(`Successfully wrote ${updatedNewList.length} users to NEW banned list.`);
+        } else {
+            console.error('Failed to write to NEW banned list:', writeResponse.status);
+            showAlert('Failed to save new banned users to the secondary list.', 'error');
         }
-        console.log('Banned users saved successfully! ${bannedUsers} ${username}');
-    } catch (error) {
-        console.error('Error saving banned users:', error);
+    } catch (e) {
+        console.error('Network error writing to NEW banned list:', e);
+        showAlert('Network error prevented saving new banned users.', 'error');
     }
 }
 
 
-        async function processAndSaveBannedUsers(newUsersAdded = false) {
-            if (newUsersAdded && currentFileData) {
-                bannedUsers.sort();
-                await saveBannedUsers(bannedUsers);
-            }
-            renderBannedUsersList();
-        }
-
+// This function now only handles client-side updates/rendering.
+async function processAndSaveBannedUsers(newUsersAdded = false) {
+    // The actual saving is now handled by updateNewBannedUsers() inside handleFiles.
+    // We only need to ensure the list is sorted for the client, then render.
+    if (newUsersAdded) {
+        // Ensure the global list is sorted if a new user was just added/merged
+        bannedUsers.sort();
+    }
+    renderBannedUsersList();
+}
 
 // end of new shi
 
