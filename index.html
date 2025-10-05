@@ -547,11 +547,11 @@
                 class="text-gray-300 hover:text-blue-400 transition-colors duration-200 flex items-center">
                 <i class="fas fa-tachometer-alt mr-2"></i><span>Dashboard</span>
             </a>
-            <!-- New Banned Users Page Link in Header -->
-            <a href="#banned-users-page-section" id="banned-users-nav-link"
-                class="text-gray-300 hover:text-blue-400 transition-colors duration-200 flex items-center">
-                <i class="fas fa-ban mr-2"></i><span>Banned Users</span>
-            </a>
+          <!--  <!-- New Banned Users Page Link in Header -->
+           <!-- <a href="#banned-users-page-section" id="banned-users-nav-link"-->
+               <!-- class="text-gray-300 hover:text-blue-400 transition-colors duration-200 flex items-center">-->
+               <!-- <i class="fas fa-ban mr-2"></i><span>Banned Users</span>-->
+            <!--</a>-->
             <!-- New Add Account Link -->
             <a href="#add-account-page-section" id="add-account-nav-link"
                 class="text-gray-300 hover:text-blue-400 transition-colors duration-200 flex items-center">
@@ -1644,8 +1644,8 @@
         let analyticsLinkSidebarBanned;
         let accountsLinkSidebarBanned;
         let settingsLinkSidebarBanned;
-        let bannedUsersLinkSidebarBanned;
-        let addBannedUserModalBtn; // Button to open the add banned users modal
+        // let bannedUsersLinkSidebarBanned;
+        // let addBannedUserModalBtn; // Button to open the add banned users modal
         let orangeListUsersElem; // Element to display orange list users
 
         // Existing Banned Users Modal elements (now for adding/removing from permanent list)
@@ -1768,7 +1768,7 @@
                         allNonFollowers = [];
                         originalNotFollowingBack = [];
                         safeUsers = [];
-                        bannedUsers = await getBannedUsers();
+                       // bannedUsers = await getBannedUsers();
                         allUserUploadsMetadata = [];
                         accountsManuallyAddedForReview = []; // Reset accounts management list
                         approvedAccountsList = [];
@@ -1973,8 +1973,8 @@
                         // [!code focus]
                         // CORRECT: Load all necessary lists from the database first.
                         safeUsers = currentFileData.safeUsers || [];
-                        bannedUsers = await getBannedUsers();
-                        await automaticallyAddOrangeUsersToBanned();
+                        // bannedUsers = await getBannedUsers();
+                       // await automaticallyAddOrangeUsersToBanned();
                         manuallyAddedFollowing = currentFileData.manuallyAddedFollowing || [];
                         manuallyUnfollowedList = currentFileData.manuallyUnfollowedList || [];
                         removedAccountsList = currentFileData.removedAccounts || [];
@@ -2127,7 +2127,7 @@
                 allNonFollowers = [];
                 originalNotFollowingBack = [];
                 safeUsers = [];
-                bannedUsers = []; // Reset banned users
+                // bannedUsers = []; // Reset banned users
                 accountsManuallyAddedForReview = []; // Reset accounts management list
                 approvedAccountsList = [];
                 removedAccountsList = [];
@@ -2770,7 +2770,7 @@
                 allNonFollowers = [];
                 originalNotFollowingBack = [];
                 safeUsers = [];
-                bannedUsers = await getBannedUsers();
+                // bannedUsers = await getBannedUsers();
                 allUserUploadsMetadata = []; // Clear upload metadata
                 accountsManuallyAddedForReview = []; // Reset accounts management list
                 approvedAccountsList = [];
@@ -2871,7 +2871,7 @@
             allNonFollowers = []; // Clear non-followers list
             originalNotFollowingBack = []; // Clear original list
             safeUsers = [];
-            bannedUsers = []; // Clear banned users
+            // bannedUsers = []; // Clear banned users
             allUserUploadsMetadata = []; // Clear upload metadata
             accountsManuallyAddedForReview = []; // Reset accounts management list
             approvedAccountsList = [];
@@ -3075,15 +3075,15 @@
 
                     // 💥 CRITICAL: Write new users only to the secondary list and update the global list
                     if (newBannedUsernames.length > 0) {
-                        await updateNewBannedUsers(newBannedUsernames);
+                        // await updateNewBannedUsers(newBannedUsernames);
         
                         // After successfully writing the new users, reload the entire, merged banned list 
                         // to ensure 'bannedUsers' is current for the rest of the function's execution.
-                        bannedUsers = await getBannedUsers(); 
+                        // bannedUsers = await getBannedUsers(); 
         
-                        console.log(`Successfully wrote ${newBannedUsernames.length} new users. Banned users list size is now: ${bannedUsers.length}`);
-                    } else {
-                        console.log("No new banned users found to add from the uploaded file.");
+                      //  console.log(`Successfully wrote ${newBannedUsernames.length} new users. Banned users list size is now: ${bannedUsers.length}`);
+                   // } else {
+                     //   console.log("No new banned users found to add from the uploaded file.");
                     }
     
                 } else if (recentlyUnfollowedData) {
@@ -3144,7 +3144,7 @@
                 // If currentFileData exists, use its approved/removed/banned lists. Otherwise, start fresh.
                 const currentApproved = currentFileData ? currentFileData.approvedAccounts || [] : [];
                 const currentRemoved = currentFileData ? currentFileData.removedAccounts || [] : [];
-                const currentBanned = await getBannedUsers();
+              //  const currentBanned = await getBannedUsers();
                 const currentManuallyAddedForReview = currentFileData ? currentFileData.accountsManuallyAddedForReview || [] : [];
                 const currentManuallyAddedFollowing = currentFileData ? currentFileData.manuallyAddedFollowing || [] : [];
                 const currentManuallyUnfollowedList = currentFileData ? currentFileData.manuallyUnfollowedList || [] : [];
@@ -3188,7 +3188,7 @@
                     // Update global lists for unauthenticated users
                     approvedAccountsList = currentApproved;
                     removedAccountsList = currentRemoved;
-                    bannedUsers = await getBannedUsers(); 
+                   // bannedUsers = await getBannedUsers(); 
                     accountsManuallyAddedForReview = currentManuallyAddedForReview; // Update global manually added for review
                     manuallyAddedFollowing = currentManuallyAddedFollowing; // Update global manually added following
                     manuallyUnfollowedList = currentManuallyUnfollowedList; // Update global manually unfollowed list
@@ -3342,16 +3342,16 @@
                 }
 
 
-               if (!bannedUsers.includes(username)) {
-                   bannedUsers.push(username);
-                   bannedUsers.sort();
-               }
+            //   if (!bannedUsers.includes(username)) {
+             //      bannedUsers.push(username);
+             //      bannedUsers.sort();
+            //   }
 
                 manuallyAddedFollowing = manuallyAddedFollowing.filter(user => user !== username);
 
                 await saveFollowingAndUnfollowedLists();
-                await saveBannedUsers(bannedUsers);
-                console.log(`banned ${username}`)
+               // await saveBannedUsers(bannedUsers);
+              //  console.log(`banned ${username}`)
 
                 // Recalculate originalNotFollowingBack metrics
                 originalNotFollowingBack = originalNotFollowingBack.filter(account => 
@@ -3535,81 +3535,82 @@ async function handleRemoveAllRedFromDashboard() {
             }
         }
 
-        // Banned Users Add Modal Functions (NEW)
-        function openBannedUsersAddModal() {
-            bannedUsersAddModal.style.display = 'flex';
-            renderBannedUsersList();
-            populateBannedUserSuggestions(); // Populate suggestions when modal opens
-        }
+//         // Banned Users Add Modal Functions (NEW)
+//         function openBannedUsersAddModal() {
+//             bannedUsersAddModal.style.display = 'flex';
+//             renderBannedUsersList();
+//             populateBannedUserSuggestions(); // Populate suggestions when modal opens
+//         }
 
-        function closeBannedUsersAddModalFunc() {
-            bannedUsersAddModal.style.display = 'none';
-            bannedUserInput.value = '';
-            bulkBannedUserInput.value = '';
-            bannedUserSuggestionsDatalist.innerHTML = ''; // Clear suggestions
-        }
+//         function closeBannedUsersAddModalFunc() {
+//             bannedUsersAddModal.style.display = 'none';
+//             bannedUserInput.value = '';
+//             bulkBannedUserInput.value = '';
+//             bannedUserSuggestionsDatalist.innerHTML = ''; // Clear suggestions
+//         }
 
-        function renderBannedUsersList() {
-            bannedUsersListElem.innerHTML = '';
-            if (bannedUsers.length === 0) {
-                bannedUsersListElem.innerHTML = '<p class="text-gray-500 text-center">No banned users added yet.</p>';
-                return;
-            }
-            bannedUsers.forEach(user => {
-                const div = document.createElement('div');
-                div.className = 'flex justify-between items-center py-2 px-3 border-b border-gray-600 last:border-b-0 text-gray-200';
-                div.innerHTML = `
-                <span>${user}</span>
-                <button data-user="${user}" class="remove-banned-user-btn text-red-400 hover:text-red-500 transition-colors">
-                    <i class="fas fa-times-circle"></i>
-                </button>
-            `;
-                bannedUsersListElem.appendChild(div);
-            });
+//         function renderBannedUsersList() {
+//             bannedUsersListElem.innerHTML = '';
+//             if (bannedUsers.length === 0) {
+//                 bannedUsersListElem.innerHTML = '<p class="text-gray-500 text-center">No banned users added yet.</p>';
+//                 return;
+//             }
+//             bannedUsers.forEach(user => {
+//                 const div = document.createElement('div');
+//                 div.className = 'flex justify-between items-center py-2 px-3 border-b border-gray-600 last:border-b-0 text-gray-200';
+//                 div.innerHTML = `
+//                 <span>${user}</span>
+//                 <button data-user="${user}" class="remove-banned-user-btn text-red-400 hover:text-red-500 transition-colors">
+//                     <i class="fas fa-times-circle"></i>
+//                 </button>
+//             `;
+//                 bannedUsersListElem.appendChild(div);
+//             });
 
-            document.querySelectorAll('.remove-banned-user-btn').forEach(button => {
-                button.addEventListener('click', (e) => {
-                    const userToRemove = e.currentTarget.dataset.user;
-                    removeBannedUser(userToRemove);
-                });
-            });
-        }
+//             document.querySelectorAll('.remove-banned-user-btn').forEach(button => {
+//                 button.addEventListener('click', (e) => {
+//                     const userToRemove = e.currentTarget.dataset.user;
+//                     removeBannedUser(userToRemove);
+//                 });
+//             });
+//         }
 
-        async function automaticallyAddOrangeUsersToBanned() {
-            if (!originalNotFollowingBack || originalNotFollowingBack.length === 0) {
-                return;
-            }
 
-            const newBannedUsers = [];
+     //   async function automaticallyAddOrangeUsersToBanned() {
+       //     if (!originalNotFollowingBack || originalNotFollowingBack.length === 0) {
+           //     return;
+         //   }
 
-            originalNotFollowingBack.forEach(account => {
-                const username = account.username;
-                const timeInfo = formatTimeDifference(account.timestamp);
+            // const newBannedUsers = [];
+
+           // originalNotFollowingBack.forEach(account => {
+           //     const username = account.username;
+           //     const timeInfo = formatTimeDifference(account.timestamp);
                 // Check if the user is in the orange category and not already on the banned list
-                if (timeInfo.category === 'orange' && !bannedUsers.includes(username)) {
-                    newBannedUsers.push(username);
-                }
-            });
+            //    if (timeInfo.category === 'orange' && !bannedUsers.includes(username)) {
+              //      newBannedUsers.push(username);
+             //   }
+           // });
 
-            if (newBannedUsers.length > 0) {
-                bannedUsers.push(...newBannedUsers);
-                // Sort the list and save it to the database
-                await processAndSaveBannedUsers(true);
-                console.log(`Automatically added ${newBannedUsers.length} users from orange category to banned list.`);
-            }
-        }
+           // if (newBannedUsers.length > 0) {
+              //  bannedUsers.push(...newBannedUsers);
+             //   // Sort the list and save it to the database
+              //  await processAndSaveBannedUsers(true);
+              //  console.log(`Automatically added ${newBannedUsers.length} users from orange category to banned list.`);
+           // }
+       // }
 
-        const bannedUserInputHandler = () => {
-            populateBannedUserSuggestions();
-        };
+       // const bannedUserInputHandler = () => {
+        //    populateBannedUserSuggestions();
+       // };
 
-        async function addBannedUser(username) {
-            if (username && !bannedUsers.includes(username)) {
-                bannedUsers.push(username);
-                return true;
-            }
-            return false;
-        }
+       // async function addBannedUser(username) {
+         //   if (username && !bannedUsers.includes(username)) {
+          //      bannedUsers.push(username);
+           //     return true;
+           // }
+           // return false;
+      //  }
 
 
 
@@ -3618,366 +3619,367 @@ async function handleRemoveAllRedFromDashboard() {
 //json storage online isntaed
 
 // Add these constants at the top of your script
-const MASTER_BANNED_URL = 'https://jsonblob.com/1421567775025061888';
-const NEW_BANNED_URL = 'YOUR_NEW_JSONBLOB_URL_HERE'; // *** CRITICAL: Get a new JSONBlob URL for writable data ***
-const MIN_BANNED_COUNT = 3000; // Set a floor for the acceptable number of banned users
+// const MASTER_BANNED_URL = 'https://jsonblob.com/1421567775025061888';
+// const NEW_BANNED_URL = 'YOUR_NEW_JSONBLOB_URL_HERE'; // *** CRITICAL: Get a new JSONBlob URL for writable data ***
+// const MIN_BANNED_COUNT = 3000; // Set a floor for the acceptable number of banned users
 
    
 // Replace your existing getBannedUsers() function
-async function getBannedUsers() {
-    let masterList = [];
-    let newUsersList = [];
+// async function getBannedUsers() {
+  //   let masterList = [];
+   //  let newUsersList = [];
 
     // --- 1. Fetch MASTER List (3.3K users) ---
-    try {
-        const masterResponse = await fetch(MASTER_BANNED_URL);
-        if (masterResponse.ok) {
-            masterList = await masterResponse.json();
-        } else {
-            console.error('Failed to fetch MASTER banned list:', masterResponse.status);
-        }
-    } catch (e) {
-        console.error('Network error fetching MASTER banned list:', e);
-        // CRITICAL: Do NOT fail completely, proceed with the assumption that the main list might be temporarily unavailable
-    }
+  //   try {
+     //    const masterResponse = await fetch(MASTER_BANNED_URL);
+    //     if (masterResponse.ok) {
+     //        masterList = await masterResponse.json();
+      //   } else {
+      //       console.error('Failed to fetch MASTER banned list:', masterResponse.status);
+      //   }
+   //  } catch (e) {
+    //     console.error('Network error fetching MASTER banned list:', e);
+      // CRITICAL: Do NOT fail completely, proceed with the assumption that the main list might be temporarily unavailable
+   //  }
 
     // --- 2. Fetch NEW Users List ---
-    try {
-        const newResponse = await fetch(NEW_BANNED_URL);
-        if (newResponse.ok) {
-            newUsersList = await newResponse.json();
-        } else {
-            console.warn('Failed to fetch NEW banned list. Assuming it is empty.');
-        }
-    } catch (e) {
-        console.warn('Network error fetching NEW banned list. Assuming it is empty.', e);
-    }
+  //   try {
+   //      const newResponse = await fetch(NEW_BANNED_URL);
+    //     if (newResponse.ok) {
+    //         newUsersList = await newResponse.json();
+     //    } else {
+    //         console.warn('Failed to fetch NEW banned list. Assuming it is empty.');
+   //      }
+   //  } catch (e) {
+    //     console.warn('Network error fetching NEW banned list. Assuming it is empty.', e);
+   //  }
     
     // Combine and deduplicate the two lists
-    const combinedSet = new Set([...masterList, ...newUsersList]);
-    const finalBannedUsers = Array.from(combinedSet).sort();
+   //  const combinedSet = new Set([...masterList, ...newUsersList]);
+   //  const finalBannedUsers = Array.from(combinedSet).sort();
 
     // --- 3. Data Integrity and Rollback Check ---
-    if (finalBannedUsers.length < MIN_BANNED_COUNT) {
-        // Log the severe failure and alert the user (since we cannot text/email)
-        const discrepancy = MIN_BANNED_COUNT - finalBannedUsers.length;
-        const message = `SECURITY ALERT: Banned list count (${finalBannedUsers.length}) is ${discrepancy} less than the minimum required (${MIN_BANNED_COUNT}). This is a serious data integrity issue. Defaulting to Master List only.`;
+  //   if (finalBannedUsers.length < MIN_BANNED_COUNT) {
+      // Log the severe failure and alert the user (since we cannot text/email)
+     //    const discrepancy = MIN_BANNED_COUNT - finalBannedUsers.length;
+    //     const message = `SECURITY ALERT: Banned list count (${finalBannedUsers.length}) is ${discrepancy} less than the minimum required (${MIN_BANNED_COUNT}). This is a serious data integrity issue. Defaulting to Master List only.`;
         
-        console.error(message);
-        showAlert(message, 'error'); // Use your existing showAlert
+    //     console.error(message);
+      //   showAlert(message, 'error'); // Use your existing showAlert
         
         // **AUTOMATIC ROLLBACK:** Return ONLY the master list if the combined list is too small.
-        return masterList.sort();
-    }
+     //    return masterList.sort();
+    // }
 
-    return finalBannedUsers;
-}
+   //  return finalBannedUsers;
+// }
 
-async function updateNewBannedUsers(newUsersToAdd) {
-    if (!NEW_BANNED_URL || newUsersToAdd.length === 0) return;
+// async function updateNewBannedUsers(newUsersToAdd) {
+   //  if (!NEW_BANNED_URL || newUsersToAdd.length === 0) return;
 
-    let currentNewList = [];
+//     let currentNewList = [];
 
     // 1. Read current NEW list
-    try {
-        const readResponse = await fetch(NEW_BANNED_URL);
-        if (readResponse.ok) {
-            currentNewList = await readResponse.json();
-        }
-    } catch (e) {
-        console.warn('Could not read existing NEW banned users list. Starting fresh for the write.', e);
-    }
+//     try {
+   //      const readResponse = await fetch(NEW_BANNED_URL);
+      //   if (readResponse.ok) {
+         //    currentNewList = await readResponse.json();
+        // }
+//     } catch (e) {
+   //      console.warn('Could not read existing NEW banned users list. Starting fresh for the write.', e);
+    // }
 
     // 2. Combine and deduplicate (ensure no master users are accidentally written)
-    const combinedSet = new Set([...currentNewList, ...newUsersToAdd]);
-    const updatedNewList = Array.from(combinedSet).sort();
+   //  const combinedSet = new Set([...currentNewList, ...newUsersToAdd]);
+   //  const updatedNewList = Array.from(combinedSet).sort();
     
     // Check if the list grew. If not, don't write.
-    if (updatedNewList.length <= currentNewList.length) {
-        console.log('No new unique banned users to write to the secondary list.');
-        return;
-    }
+   //  if (updatedNewList.length <= currentNewList.length) {
+  //       console.log('No new unique banned users to write to the secondary list.');
+   //      return;
+  //   }
 
     // 3. Write back the updated NEW list
-    try {
-        const writeResponse = await fetch(NEW_BANNED_URL, {
-            method: 'PUT', // or POST, depending on your JSONBlob setup
-            headers: {
-                'Content-Type': 'application/json'
-            },
-            body: JSON.stringify(updatedNewList)
-        });
+  //   try {
+ //        const writeResponse = await fetch(NEW_BANNED_URL, {
+  //           method: 'PUT', // or POST, depending on your JSONBlob setup
+  //           headers: {
+   //              'Content-Type': 'application/json'
+ //            },
+   //          body: JSON.stringify(updatedNewList)
+    //     });
 
-        if (writeResponse.ok) {
-            console.log(`Successfully wrote ${updatedNewList.length} users to NEW banned list.`);
-        } else {
-            console.error('Failed to write to NEW banned list:', writeResponse.status);
-            showAlert('Failed to save new banned users to the secondary list.', 'error');
-        }
-    } catch (e) {
-        console.error('Network error writing to NEW banned list:', e);
-        showAlert('Network error prevented saving new banned users.', 'error');
-    }
-}
+      //   if (writeResponse.ok) {
+      //       console.log(`Successfully wrote ${updatedNewList.length} users to NEW banned list.`);
+     //    } else {
+     //        console.error('Failed to write to NEW banned list:', writeResponse.status);
+       //      showAlert('Failed to save new banned users to the secondary list.', 'error');
+     //   }
+   //  } catch (e) {
+        // console.error('Network error writing to NEW banned list:', e);
+        // showAlert('Network error prevented saving new banned users.', 'error');
+    // }
+// }
 
 
 // This function now only handles client-side updates/rendering.
-async function processAndSaveBannedUsers(newUsersAdded = false) {
+// async function processAndSaveBannedUsers(newUsersAdded = false) {
     // The actual saving is now handled by updateNewBannedUsers() inside handleFiles.
     // We only need to ensure the list is sorted for the client, then render.
-    if (newUsersAdded) {
-        // Ensure the global list is sorted if a new user was just added/merged
-        bannedUsers.sort();
-    }
-    renderBannedUsersList();
-}
+  //   if (newUsersAdded) {
+       // Ensure the global list is sorted if a new user was just added/merged
+     //    bannedUsers.sort();
+  //   }
+  //   renderBannedUsersList();
+// }
 
 // end of new shi
 
-        const addBannedUserButtonClickHandler = async () => {
-            const username = bannedUserInput.value.trim();
-            if (username) {
-                const added = await addBannedUser(username);
-                if (added) {
-                    bannedUserInput.value = '';
-                    await processAndSaveBannedUsers(true);
-                    showNotification('Banned user added!', 'success');
-                } else {
-                    showNotification('User is already in the banned list.', 'info');
-                }
-            }
-        };
+       //  const addBannedUserButtonClickHandler = async () => {
+        //     const username = bannedUserInput.value.trim();
+        //     if (username) {
+        //         const added = await addBannedUser(username);
+        //         if (added) {
+        //             bannedUserInput.value = '';
+        //             await processAndSaveBannedUsers(true);
+         //            showNotification('Banned user added!', 'success');
+         //        } else {
+          //           showNotification('User is already in the banned list.', 'info');
+          //       }
+         //    }
+       //  };
 
-        const addBulkBannedUserButtonClickHandlerForBanned = async () => { // Renamed to avoid conflict
-            const text = bulkBannedUserInput.value.trim();
-            if (!text) {
-                showNotification('Please enter usernames in the bulk input area.', 'info');
-                return;
-            }
+       //  const addBulkBannedUserButtonClickHandlerForBanned = async () => { // Renamed to avoid conflict
+        //     const text = bulkBannedUserInput.value.trim();
+      //       if (!text) {
+       //          showNotification('Please enter usernames in the bulk input area.', 'info');
+   //              return;
+  //           }
+// 
+   //          const usernames = text.split(/[\n,]+/).map(name => name.trim()).filter(name => name.length > 0);
+ //            let anyAdded = false;
+   //          const alreadyInList = [];
 
-            const usernames = text.split(/[\n,]+/).map(name => name.trim()).filter(name => name.length > 0);
-            let anyAdded = false;
-            const alreadyInList = [];
+       //      for (const username of usernames) {
+      //           const added = await addBannedUser(username);
+       //          if (added) {
+        //             anyAdded = true;
+        //         } else {
+         //            alreadyInList.push(username);
+         //        }
+//             }
 
-            for (const username of usernames) {
-                const added = await addBannedUser(username);
-                if (added) {
-                    anyAdded = true;
-                } else {
-                    alreadyInList.push(username);
-                }
-            }
+       //      if (anyAdded) {
+           //      bulkBannedUserInput.value = '';
+          //       await processAndSaveBannedUsers(true);
+         //        showNotification('Banned users added!', 'success');
+          //       closeBannedUsersAddModalFunc(); // Close modal after bulk add
+         //    } else if (alreadyInList.length > 0) {
+          //       showAlert(`All entered users are already in the banned list: ${alreadyInList.join(', ')}`, 'info');
+         //    } else {
+          //       showNotification('No valid users were entered.', 'info');
+         //    }
+       //  };
 
-            if (anyAdded) {
-                bulkBannedUserInput.value = '';
-                await processAndSaveBannedUsers(true);
-                showNotification('Banned users added!', 'success');
-                closeBannedUsersAddModalFunc(); // Close modal after bulk add
-            } else if (alreadyInList.length > 0) {
-                showAlert(`All entered users are already in the banned list: ${alreadyInList.join(', ')}`, 'info');
-            } else {
-                showNotification('No valid users were entered.', 'info');
-            }
-        };
+      //   async function removeBannedUser(username) {
+       //      bannedUsers = bannedUsers.filter(user => user !== username);
+      //       await processAndSaveBannedUsers(true);
+       //      showNotification('Banned user removed!', 'info');
+       //  }
 
-        async function removeBannedUser(username) {
-            bannedUsers = bannedUsers.filter(user => user !== username);
-            await processAndSaveBannedUsers(true);
-            showNotification('Banned user removed!', 'info');
-        }
-
-async function saveBannedUsersToFirestore() {
-    if (currentUserId && authInstance.currentUser && dbInstance && currentFileData) {
-        try {
+// async function saveBannedUsersToFirestore() {
+  //   if (currentUserId && authInstance.currentUser && dbInstance && currentFileData) {
+  //       try {
             // 🔹 Instead of Firestore, save to your local JSON file
-            await saveBannedUsersToFile(bannedUsers);
+   //          await saveBannedUsersToFile(bannedUsers);
 
-            console.log('Banned users saved to local JSON file for current upload.');
-        } catch (error) {
-            console.error('Error saving banned users to local file:', error);
-            showAlert('Failed to save banned users to local storage file.', 'error');
-        }
-    } else {
-        console.warn('Cannot save banned users: User not authenticated or currentFileData not available.');
-    }
-}
+    //         console.log('Banned users saved to local JSON file for current upload.');
+     //    } catch (error) {
+      //       console.error('Error saving banned users to local file:', error);
+      //       showAlert('Failed to save banned users to local storage file.', 'error');
+     //    }
+   //  } else {
+   //      console.warn('Cannot save banned users: User not authenticated or currentFileData not available.');
+   //  }
+// }
 
-async function handleCheckBannedUsers() {
-    console.log("--- Starting handleCheckBannedUsers function ---");
-    let inputUsernames = [];
-    const originalInput = [];
+// async function handleCheckBannedUsers() {
+//     console.log("--- Starting handleCheckBannedUsers function ---");
+//     let inputUsernames = [];
+//     const originalInput = [];
 
-    // Handle file input
-    if (bannedUsersFileInput.files.length > 0) {
-        // ... (File input parsing logic, no changes needed here)
-        const file = bannedUsersFileInput.files[0];
-        const fileExtension = file.name.split('.').pop().toLowerCase();
-        if (!['txt', 'html'].includes(fileExtension)) {
-            showAlert('Invalid file type. Please upload a .txt or .html file.', 'error');
-            return;
-        }
-        try {
-            const fileContent = await file.text();
-            if (fileExtension === 'html') {
-                const parser = new DOMParser();
-                const doc = parser.parseFromString(fileContent, 'text/html');
-                const preElements = doc.querySelectorAll('pre');
-                let foundData = false;
-                for (const pre of preElements) {
-                    try {
-                        const jsonData = JSON.parse(pre.textContent);
-                        if (Array.isArray(jsonData) && jsonData.every(item => item.string_list_data)) {
-                            inputUsernames = inputUsernames.concat(jsonData.map(item => item.string_list_data[0].value));
-                            foundData = true;
-                            break;
-                        }
-                    } catch (e) {
-                    }
-                }
-                if (!foundData) {
-                    const scriptElements = doc.querySelectorAll('script[type="application/json"]');
-                    for (const script of scriptElements) {
-                        try {
-                            const jsonData = JSON.parse(script.textContent);
-                            if (Array.isArray(jsonData) && jsonData.every(item => item.string_list_data)) {
-                                inputUsernames = inputUsernames.concat(jsonData.map(item => item.string_list_data[0].value));
-                                foundData = true;
-                                break;
-                            }
-                        } catch (e) {
-                        }
-                    }
-                }
-                if (!foundData) {
-                    showAlert('Could not extract usernames from the HTML file. Ensure it contains Instagram data in expected JSON format within <pre> or <script> tags.', 'error');
-                    return;
-                }
-            } else { // txt file
-                inputUsernames = parseUsernamesFromText(fileContent);
-            }
-        } catch (error) {
-            showAlert('Error reading file: ' + error.message, 'error');
-            return;
-        }
-    } else if (bannedUsersTextInput.value.trim()) {
-        inputUsernames = parseUsernamesFromText(bannedUsersTextInput.value);
-    } else {
-        showAlert('Please upload a .txt or .html file or enter usernames/links in the text area.', 'info');
-        return;
-    }
+//     // Handle file input
+//     if (bannedUsersFileInput.files.length > 0) {
+//         // ... (File input parsing logic, no changes needed here)
+//         const file = bannedUsersFileInput.files[0];
+//         const fileExtension = file.name.split('.').pop().toLowerCase();
+//         if (!['txt', 'html'].includes(fileExtension)) {
+//             showAlert('Invalid file type. Please upload a .txt or .html file.', 'error');
+//             return;
+//         }
+//         try {
+//             const fileContent = await file.text();
+//             if (fileExtension === 'html') {
+//                 const parser = new DOMParser();
+//                 const doc = parser.parseFromString(fileContent, 'text/html');
+//                 const preElements = doc.querySelectorAll('pre');
+//                 let foundData = false;
+//                 for (const pre of preElements) {
+//                     try {
+//                         const jsonData = JSON.parse(pre.textContent);
+//                         if (Array.isArray(jsonData) && jsonData.every(item => item.string_list_data)) {
+//                             inputUsernames = inputUsernames.concat(jsonData.map(item => item.string_list_data[0].value));
+//                             foundData = true;
+//                             break;
+//                         }
+//                     } catch (e) {
+//                     }
+//                 }
+//                 if (!foundData) {
+//                     const scriptElements = doc.querySelectorAll('script[type="application/json"]');
+//                     for (const script of scriptElements) {
+//                         try {
+//                             const jsonData = JSON.parse(script.textContent);
+//                             if (Array.isArray(jsonData) && jsonData.every(item => item.string_list_data)) {
+//                                 inputUsernames = inputUsernames.concat(jsonData.map(item => item.string_list_data[0].value));
+//                                 foundData = true;
+//                                 break;
+//                             }
+//                         } catch (e) {
+//                         }
+//                     }
+//                 }
+//                 if (!foundData) {
+//                     showAlert('Could not extract usernames from the HTML file. Ensure it contains Instagram data in expected JSON format within <pre> or <script> tags.', 'error');
+//                     return;
+//                 }
+//             } else { // txt file
+//                 inputUsernames = parseUsernamesFromText(fileContent);
+//             }
+//         } catch (error) {
+//             showAlert('Error reading file: ' + error.message, 'error');
+//             return;
+//         }
+//     } else if (bannedUsersTextInput.value.trim()) {
+//         inputUsernames = parseUsernamesFromText(bannedUsersTextInput.value);
+//     } else {
+//         showAlert('Please upload a .txt or .html file or enter usernames/links in the text area.', 'info');
+//         return;
+//     }
 
-    // Copy the original, case-sensitive input usernames before any modification
-    originalInput.push(...inputUsernames);
-    console.log("1. Original Input Users:", originalInput);
+//     // Copy the original, case-sensitive input usernames before any modification
+//     originalInput.push(...inputUsernames);
+//     console.log("1. Original Input Users:", originalInput);
 
-    // -----------------------------
-    // 1️⃣ Duplicate detection
-    // -----------------------------
-    const seenUsernames = new Set();
-    const duplicates = new Set();
-    inputUsernames.forEach(name => {
-        const username = name.toLowerCase();
-        if (seenUsernames.has(username)) {
-            duplicates.add(username);
-        }
-        seenUsernames.add(username);
-    });
-    console.log("2. Duplicates Found (lowercase):", Array.from(duplicates));
+//     // -----------------------------
+//     // 1️⃣ Duplicate detection
+//     // -----------------------------
+//     const seenUsernames = new Set();
+//     const duplicates = new Set();
+//     inputUsernames.forEach(name => {
+//         const username = name.toLowerCase();
+//         if (seenUsernames.has(username)) {
+//             duplicates.add(username);
+//         }
+//         seenUsernames.add(username);
+//     });
+//     console.log("2. Duplicates Found (lowercase):", Array.from(duplicates));
 
-    const duplicatesListElem = document.getElementById('duplicates-list');
-    const duplicatesCountTextElem = document.getElementById('duplicates-count-text');
-    const duplicateUsersDisplayElem = document.getElementById('banned-users-matches-display');
+//     const duplicatesListElem = document.getElementById('duplicates-list');
+//     const duplicatesCountTextElem = document.getElementById('duplicates-count-text');
+//     const duplicateUsersDisplayElem = document.getElementById('banned-users-matches-display');
 
-    if (duplicatesListElem && duplicatesCountTextElem && duplicateUsersDisplayElem) {
-        duplicatesListElem.innerHTML = '';
-        if (duplicates.size > 0) {
-            duplicatesCountTextElem.textContent = `${duplicates.size} duplicate username${duplicates.size === 1 ? '' : 's'} found:`;
-            duplicates.forEach(username => {
-                const li = document.createElement('li');
-                li.innerHTML = `<a href="https://www.instagram.com/${username}/" target="_blank" rel="noopener noreferrer" class="font-medium text-yellow-400 hover:underline">${username}</a>`;
-                duplicatesListElem.appendChild(li);
-            });
-        } else {
-            duplicatesCountTextElem.textContent = 'No duplicate usernames found.';
-        }
-        duplicateUsersDisplayElem.classList.remove('hidden');
-    }
+//     if (duplicatesListElem && duplicatesCountTextElem && duplicateUsersDisplayElem) {
+//         duplicatesListElem.innerHTML = '';
+//         if (duplicates.size > 0) {
+//             duplicatesCountTextElem.textContent = `${duplicates.size} duplicate username${duplicates.size === 1 ? '' : 's'} found:`;
+//             duplicates.forEach(username => {
+//                 const li = document.createElement('li');
+//                 li.innerHTML = `<a href="https://www.instagram.com/${username}/" target="_blank" rel="noopener noreferrer" class="font-medium text-yellow-400 hover:underline">${username}</a>`;
+//                 duplicatesListElem.appendChild(li);
+//             });
+//         } else {
+//             duplicatesCountTextElem.textContent = 'No duplicate usernames found.';
+//         }
+//         duplicateUsersDisplayElem.classList.remove('hidden');
+//     }
 
-    // -----------------------------
-    // 2️⃣ Banned users check
-    // -----------------------------
-    const uniqueInputUsernames = Array.from(new Set(inputUsernames.map(name => name.toLowerCase())));
-    const bannedUsersLower = bannedUsers.map(user => user.toLowerCase());
-    const matchedUsers = uniqueInputUsernames.filter(username => bannedUsersLower.includes(username));
+//     // -----------------------------
+//     // 2️⃣ Banned users check
+//     // -----------------------------
+//     const uniqueInputUsernames = Array.from(new Set(inputUsernames.map(name => name.toLowerCase())));
+//     const bannedUsersLower = bannedUsers.map(user => user.toLowerCase());
+//     const matchedUsers = uniqueInputUsernames.filter(username => bannedUsersLower.includes(username));
 
-    console.log("3. Unique Input Users (for check):", uniqueInputUsernames);
-    console.log("4. Banned Users (from list):", bannedUsersLower);
-    console.log("5. Matched/Banned Users:", matchedUsers);
+//     console.log("3. Unique Input Users (for check):", uniqueInputUsernames);
+//     console.log("4. Banned Users (from list):", bannedUsersLower);
+//     console.log("5. Matched/Banned Users:", matchedUsers);
 
-    matchesCountText.textContent = `${matchedUsers.length} match${matchedUsers.length === 1 ? '' : 'es'} found:`;
-    matchesList.innerHTML = '';
-    if (matchedUsers.length > 0) {
-        matchedUsers.forEach(username => {
-            const li = document.createElement('li');
-            li.innerHTML = `<a href="https://www.instagram.com/${username}/" target="_blank" rel="noopener noreferrer" class="font-medium text-blue-400 hover:underline">${username}</a>`;
-            matchesList.appendChild(li);
-        });
-    } else {
-        const li = document.createElement('li');
-        li.textContent = 'No matches found.';
-        matchesList.appendChild(li);
-    }
-    bannedUsersMatchesDisplay.classList.remove('hidden');
+//     matchesCountText.textContent = `${matchedUsers.length} match${matchedUsers.length === 1 ? '' : 'es'} found:`;
+//     matchesList.innerHTML = '';
+//     if (matchedUsers.length > 0) {
+//         matchedUsers.forEach(username => {
+//             const li = document.createElement('li');
+//             li.innerHTML = `<a href="https://www.instagram.com/${username}/" target="_blank" rel="noopener noreferrer" class="font-medium text-blue-400 hover:underline">${username}</a>`;
+//             matchesList.appendChild(li);
+//         });
+//     } else {
+//         const li = document.createElement('li');
+//         li.textContent = 'No matches found.';
+//         matchesList.appendChild(li);
+//     }
+//     bannedUsersMatchesDisplay.classList.remove('hidden');
 
-    // -----------------------------
-    // 3️⃣ Display final unique users
-    // -----------------------------
-    const finalUniqueUsers = uniqueInputUsernames.filter(username => !bannedUsersLower.includes(username));
-  const finalUniqueUsersListElem = document.getElementById('unique-users-list');
+//     // -----------------------------
+//     // 3️⃣ Display final unique users
+//     // -----------------------------
+//     const finalUniqueUsers = uniqueInputUsernames.filter(username => !bannedUsersLower.includes(username));
+//   const finalUniqueUsersListElem = document.getElementById('unique-users-list');
 
-        console.log("6. Final Unique Users (before display):", finalUniqueUsers);
+//         console.log("6. Final Unique Users (before display):", finalUniqueUsers);
 
-        finalUniqueUsersListElem.innerHTML = '';
-        if (finalUniqueUsers.length > 0) {
-            finalUniqueUsers.forEach(username => {
-                const li = document.createElement('li');
-                li.innerHTML = `<a href="https://www.instagram.com/${username}/" target="_blank" rel="noopener noreferrer" class="font-medium text-gray-300 hover:underline">https://www.instagram.com/${username}/</a>`;
-                finalUniqueUsersListElem.appendChild(li);
-            });
-        } else {
-            const li = document.createElement('li');
-            li.textContent = 'No users to display.';
-            finalUniqueUsersListElem.appendChild(li);
-        }
-    }
+//         finalUniqueUsersListElem.innerHTML = '';
+//         if (finalUniqueUsers.length > 0) {
+//             finalUniqueUsers.forEach(username => {
+//                 const li = document.createElement('li');
+//                 li.innerHTML = `<a href="https://www.instagram.com/${username}/" target="_blank" rel="noopener noreferrer" class="font-medium text-gray-300 hover:underline">https://www.instagram.com/${username}/</a>`;
+//                 finalUniqueUsersListElem.appendChild(li);
+//             });
+//         } else {
+//             const li = document.createElement('li');
+//             li.textContent = 'No users to display.';
+//             finalUniqueUsersListElem.appendChild(li);
+//         }
+//     }
 
-    console.log("--- Finished handleCheckBannedUsers function ---");
+//     console.log("--- Finished handleCheckBannedUsers function ---");
 
 
-function parseUsernamesFromText(text) {
-    const instagramLinkRegex = /(?:https?:\/\/)?(?:www\.)?instagram\.com\/([a-zA-Z0-9_.]+)(?:\/)?/g;
-    const atUsernameRegex = /(?<!\w)@([a-zA-Z0-9_.]+)(?!\w)/g;
-    const extractedUsernames = []; // Change from Set() to []
-    // Extract from links
-    let match;
-    while ((match = instagramLinkRegex.exec(text)) !== null) {
-        extractedUsernames.push(match[1]); // Change from .add() to .push()
-    }
-    instagramLinkRegex.lastIndex = 0;
-    // Extract from @usernames
-    while ((match = atUsernameRegex.exec(text)) !== null) {
-        if (match[1].length > 2 && !match[1].includes('.')) {
-            extractedUsernames.push(match[1]); // Change from .add() to .push()
-        }
-    }
-    atUsernameRegex.lastIndex = 0;
-    // Also consider lines/comma-separated values as direct usernames
-    const directUsernames = text.split(/[\n,]+/)
-        .map(name => name.trim())
-        .filter(name => name.length > 0 && !name.startsWith('http') && !name.startsWith('@'));
-    directUsernames.forEach(username => extractedUsernames.push(username)); // Change from .add() to .push()
-    return extractedUsernames; // Change from Array.from(extractedUsernames) to extractedUsernames
-}
+// function parseUsernamesFromText(text) {
+//     const instagramLinkRegex = /(?:https?:\/\/)?(?:www\.)?instagram\.com\/([a-zA-Z0-9_.]+)(?:\/)?/g;
+//     const atUsernameRegex = /(?<!\w)@([a-zA-Z0-9_.]+)(?!\w)/g;
+//     const extractedUsernames = []; // Change from Set() to []
+//     // Extract from links
+//     let match;
+//     while ((match = instagramLinkRegex.exec(text)) !== null) {
+//         extractedUsernames.push(match[1]); // Change from .add() to .push()
+//     }
+//     instagramLinkRegex.lastIndex = 0;
+//     // Extract from @usernames
+//     while ((match = atUsernameRegex.exec(text)) !== null) {
+//         if (match[1].length > 2 && !match[1].includes('.')) {
+//             extractedUsernames.push(match[1]); // Change from .add() to .push()
+//         }
+//     }
+//     atUsernameRegex.lastIndex = 0;
+//     // Also consider lines/comma-separated values as direct usernames
+//     const directUsernames = text.split(/[\n,]+/)
+//         .map(name => name.trim())
+//         .filter(name => name.length > 0 && !name.startsWith('http') && !name.startsWith('@'));
+//     directUsernames.forEach(username => extractedUsernames.push(username)); // Change from .add() to .push()
+//     return extractedUsernames; // Change from Array.from(extractedUsernames) to extractedUsernames
+// }
+
 
 // Function to apply search and time filters and render accounts
 function applyFiltersAndRenderAccounts() {
@@ -4158,10 +4160,10 @@ async function handleRemoveAccount(username) {
 
 
         // Add to bannedUsers list and sort
-        if (!bannedUsers.includes(username)) {
-            bannedUsers.push(username);
-            bannedUsers.sort();
-        }
+       // if (!bannedUsers.includes(username)) {
+       //     bannedUsers.push(username);
+        //    bannedUsers.sort();
+      //  }
 
         // Save to Firebase first, since it is still used for removedAccountsList
         await saveAccountsManagementState();
@@ -4999,19 +5001,20 @@ document.addEventListener('DOMContentLoaded', () => {
             analyticsLinkSidebarBanned = document.getElementById('analytics-link-sidebar-banned');
             accountsLinkSidebarBanned = document.getElementById('accounts-link-sidebar-banned');
             settingsLinkSidebarBanned = document.getElementById('settings-link-sidebar-banned');
-            bannedUsersLinkSidebarBanned = document.getElementById('banned-users-link-sidebar-banned');
-            addBannedUserModalBtn = document.getElementById('add-banned-user-modal-btn'); // New button
+           // bannedUsersLinkSidebarBanned = document.getElementById('banned-users-link-sidebar-banned');
+           // addBannedUserModalBtn = document.getElementById('add-banned-user-modal-btn'); // New button
             orangeListUsersElem = document.getElementById('orange-list-users'); // New element
 
-            // Existing Banned Users Modal elements (now for adding/removing from permanent list)
-            bannedUsersAddModal = document.getElementById('banned-users-add-modal'); // Renamed
-            closeBannedUsersAddModal = document.getElementById('close-banned-users-add-modal'); // Renamed
-            bannedUserInput = document.getElementById('banned-user-input');
-            bannedUserSuggestionsDatalist = document.getElementById('banned-user-suggestions');
-            addBannedUserBtn = document.getElementById('add-banned-user-btn');
-            bulkBannedUserInput = document.getElementById('bulk-banned-user-input');
-            addBulkBannedUserBtn = document.getElementById('add-bulk-banned-user-btn'); // Renamed
-            bannedUsersListElem = document.getElementById('banned-users-list');
+//             // Existing Banned Users Modal elements (now for adding/removing from permanent list)
+//             bannedUsersAddModal = document.getElementById('banned-users-add-modal'); // Renamed
+//             closeBannedUsersAddModal = document.getElementById('close-banned-users-add-modal'); // Renamed
+//             bannedUserInput = document.getElementById('banned-user-input');
+//             bannedUserSuggestionsDatalist = document.getElementById('banned-user-suggestions');
+//             addBannedUserBtn = document.getElementById('add-banned-user-btn');
+//             bulkBannedUserInput = document.getElementById('bulk-banned-user-input');
+//             addBulkBannedUserBtn = document.getElementById('add-bulk-banned-user-btn'); // Renamed
+//             bannedUsersListElem = document.getElementById('banned-users-list');
+
 
             // Existing Banned Users Check elements (now on the new page)
             bannedUsersFileInput = document.getElementById('banned-users-file-input');
@@ -5222,12 +5225,12 @@ document.addEventListener('DOMContentLoaded', () => {
             accountsLinkSidebarBanned.addEventListener('click', accountsLinkClickHandler); // New sidebar link
 
             // Banned Users Page links
-            document.getElementById('banned-users-nav-link').addEventListener('click', bannedUsersPageLinkClickHandler);
-            document.getElementById('banned-users-nav-link-mobile').addEventListener('click', bannedUsersPageLinkClickHandler);
-            bannedUsersLinkSidebarDashboard.addEventListener('click', bannedUsersPageLinkClickHandler);
-            bannedUsersLinkSidebarAnalytics.addEventListener('click', bannedUsersPageLinkClickHandler);
-            bannedUsersLinkSidebarAccounts.addEventListener('click', bannedUsersPageLinkClickHandler);
-            bannedUsersLinkSidebarBanned.addEventListener('click', bannedUsersPageLinkClickHandler);
+           // document.getElementById('banned-users-nav-link').addEventListener('click', bannedUsersPageLinkClickHandler);
+          //  document.getElementById('banned-users-nav-link-mobile').addEventListener('click', bannedUsersPageLinkClickHandler);
+          //  bannedUsersLinkSidebarDashboard.addEventListener('click', bannedUsersPageLinkClickHandler);
+         //   bannedUsersLinkSidebarAnalytics.addEventListener('click', bannedUsersPageLinkClickHandler);
+          //  bannedUsersLinkSidebarAccounts.addEventListener('click', bannedUsersPageLinkClickHandler);
+         //   bannedUsersLinkSidebarBanned.addEventListener('click', bannedUsersPageLinkClickHandler);
 
             // Add Account links
             addAccountNavLink.addEventListener('click', addAccountLinkClickHandler);
@@ -5257,20 +5260,20 @@ document.addEventListener('DOMContentLoaded', () => {
             addBulkSafeUserBtn.addEventListener('click', addBulkSafeUserButtonClickHandler); // Corrected to new function name
 
             // Event listeners for Banned Users Add modal (NEW)
-            addBannedUserModalBtn.addEventListener('click', openBannedUsersAddModal); // Button on the new page
-            closeBannedUsersAddModal.addEventListener('click', closeBannedUsersAddModalFunc);
-            bannedUserInput.addEventListener('keypress', (e) => {
-                if (e.key === 'Enter') {
-                    addBannedUserBtn.click();
-                }
-            });
-            bannedUserInput.addEventListener('input', bannedUserInputHandler); // Add listener for suggestions
-            addBannedUserBtn.addEventListener('click', addBannedUserButtonClickHandler);
-            addBulkBannedUserBtn.addEventListener('click', addBulkBannedUserButtonClickHandlerForBanned); // Corrected to new function name
+            // addBannedUserModalBtn.addEventListener('click', openBannedUsersAddModal); // Button on the new page
+         //   closeBannedUsersAddModal.addEventListener('click', closeBannedUsersAddModalFunc);
+         //   bannedUserInput.addEventListener('keypress', (e) => {
+             //   if (e.key === 'Enter') {
+              //      addBannedUserBtn.click();
+              //  }
+           // });
+          //  bannedUserInput.addEventListener('input', bannedUserInputHandler); // Add listener for suggestions
+           // addBannedUserBtn.addEventListener('click', addBannedUserButtonClickHandler);
+          //  addBulkBannedUserBtn.addEventListener('click', addBulkBannedUserButtonClickHandlerForBanned); // Corrected to new function name
 
             // Event listeners for Banned Users Check functionality (on the new page)
-            bannedUsersFileInput.addEventListener('change', handleCheckBannedUsers); // Auto-check on file upload
-            checkBannedUsersBtn.addEventListener('click', handleCheckBannedUsers); // Manual check button
+           // bannedUsersFileInput.addEventListener('change', handleCheckBannedUsers); // Auto-check on file upload
+          //  checkBannedUsersBtn.addEventListener('click', handleCheckBannedUsers); // Manual check button
 
             // Handle "Upload New Data" button click in dashboard (opens modal)
             uploadNewDataBtn.addEventListener('click', openUploadDataModal);
